@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::cell::{RefCell, Cell};
+use std::rc::Weak;
 
 pub trait Observer<E> {
     fn notify(&self, event: &E);
@@ -8,22 +9,22 @@ pub trait Observer<E> {
 #[derive(Copy, Clone, Hash, Eq, PartialEq, Default)]
 pub struct ObserverRegistration(usize);
 
-type ObserversStore<E> = HashMap<ObserverRegistration, Box<dyn Observer<E>>>;
+type ObserversStore<E> = HashMap<ObserverRegistration, Weak<dyn Observer<E>>>;
 
 pub struct Observers<E> {
-    observers: Box<RefCell<ObserversStore<E>>>,
+    observers: RefCell<ObserversStore<E>>,
     next: Cell<ObserverRegistration>,
 }
 
 impl<E> Observers<E> {
     pub fn new() -> Self {
         Observers {
-            observers: Box::new(RefCell::new(Default::default())),
+            observers: RefCell::new(Default::default()),
             next: Default::default(),
         }
     }
 
-    pub fn register(&self, observer: Box<dyn Observer<E>>) -> ObserverRegistration {
+    pub fn register(&self, observer: Weak<dyn Observer<E>>) -> ObserverRegistration {
         let mut observers = self.observers.borrow_mut();
         let panic_point = self.next.get();
         observers.insert(panic_point, observer);
@@ -39,18 +40,22 @@ impl<E> Observers<E> {
         self.next.get()
     }
 
-    pub fn deregister(&self, registration: &ObserverRegistration) -> Option<Box<dyn Observer<E>>> {
+    pub fn deregister(&self, registration: &ObserverRegistration) -> Option<Weak<dyn Observer<E>>> {
         self.observers.borrow_mut().remove(registration)
     }
 }
 
 pub trait Observable<E> {
-    fn observers(&self) -> &Observers< E>;
+    fn observers(&self) -> &Observers<E>;
 
     fn notify_all(&self, event: &E)
     {
-        for (_, observer) in self.observers().observers.borrow().iter() {
-            observer.notify(event);
+        for (registration, maybe_observer) in self.observers().observers.borrow().iter() {
+            if let Some(observer) = maybe_observer.upgrade() {
+                observer.notify(event);
+            } else {
+                self.observers().deregister(registration);
+            }
         }
     }
 }

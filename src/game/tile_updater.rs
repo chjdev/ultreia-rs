@@ -1,6 +1,6 @@
-use crate::observable::{Observer, ObserverRegistration};
+use crate::observable::Observer;
 use crate::clock::{Tick, Clock};
-use std::rc::Weak;
+use std::rc::{Weak, Rc};
 use crate::map::Map;
 
 struct TileUpdateObserver {
@@ -19,26 +19,16 @@ impl Observer<Tick> for TileUpdateObserver {
 
 pub struct TileUpdater {
     clock: Weak<Clock>,
-    registration: Option<ObserverRegistration>,
+    observer: Rc<dyn Observer<Tick>>,
 }
 
 impl TileUpdater {
     pub fn new(clock: Weak<Clock>, map: Weak<Map>) -> Self {
+        let observer: Rc<dyn Observer<Tick>> = Rc::new(TileUpdateObserver { map });
+        clock.upgrade().map(|rc_clock| { rc_clock.tickers().register(Rc::downgrade(&observer)) });
         TileUpdater {
-            registration: clock.upgrade().map(|rc_clock| { rc_clock.tickers().register(Box::new(TileUpdateObserver { map })) }),
+            observer,
             clock,
         }
     }
 }
-
-impl Drop for TileUpdater {
-    fn drop(&mut self) {
-        if let Some(clock) = self.clock.upgrade() {
-            if let Some(registration) = self.registration {
-                clock.tickers().deregister(&registration);
-            }
-        }
-    }
-}
-
-
