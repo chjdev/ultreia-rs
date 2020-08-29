@@ -10,7 +10,7 @@ struct TileUpdateObserver {
 impl Observer<Tick> for TileUpdateObserver {
     fn notify(&self, _: &Tick) {
         if let Some(map) = self.map.upgrade() {
-            for (_, tile_instance) in map.tiles().map().iter_mut() {
+            for (_, tile_instance) in map.tiles_mut().iter_mut() {
                 tile_instance.update();
             }
         }

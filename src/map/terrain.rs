@@ -1,4 +1,4 @@
-use crate::coordinate::Coordinate;
+use crate::coordinate::{Coordinate, Offset};
 use noise::{Perlin, Seedable, NoiseFn};
 
 #[repr(C)]
@@ -19,6 +19,12 @@ pub enum TerrainType {
     TropicalRainForest,
     TropicalSeasonalForest,
     Tundra,
+}
+
+impl Default for TerrainType {
+    fn default() -> Self {
+        Self::None
+    }
 }
 
 impl TerrainType {
@@ -81,17 +87,12 @@ impl TerrainType {
 
 
 #[repr(C)]
+#[derive(Default)]
 pub struct TerrainTile {
-    pub elevation: f64,
-    pub moisture: f64,
-    pub terrain_type: TerrainType,
+    elevation: f64,
+    moisture: f64,
+    terrain_type: TerrainType,
 }
-
-const NONE_TERRAIN_TILE: TerrainTile = TerrainTile {
-    elevation: 0.0,
-    moisture: 0.0,
-    terrain_type: TerrainType::None,
-};
 
 impl TerrainTile {
     pub fn new(elevation: f64, moisture: f64, terrain_type: TerrainType) -> Self {
@@ -101,27 +102,27 @@ impl TerrainTile {
             terrain_type,
         }
     }
-
-    pub fn none() -> Self {
-        NONE_TERRAIN_TILE
-    }
 }
 
 pub struct Terrain {
-    perlin: Perlin
+    width: f64,
+    height: f64,
+    perlin: Perlin,
 }
 
 impl Terrain {
-    pub fn new_seeded(seed: u32) -> Self {
+    pub fn new_seeded(rows: usize, columns: usize, seed: u32) -> Self {
         let perlin = Perlin::new();
         perlin.set_seed(seed);
         Terrain {
-            perlin
+            width: rows as f64,
+            height: columns as f64,
+            perlin,
         }
     }
 
-    pub fn new() -> Self {
-        Terrain::new_seeded(0)
+    pub fn new(rows: usize, columns: usize) -> Self {
+        Terrain::new_seeded(rows, columns, 0)
     }
 
     fn noise(&self, x: f64, y: f64) -> f64 {
@@ -129,13 +130,15 @@ impl Terrain {
     }
 
     // https://www.redblobgames.com/maps/terrain-from-noise/#islands
-    pub fn get(&self, _coordinate: &Coordinate) -> TerrainTile {
-        let x = 0.0;
-        let y = 0.0;
-        let width = 0.0;
-        let height = 0.0;
-        let nx: f64 = x / width - 0.5;
-        let ny: f64 = y / height - 0.5;
+    pub fn get(&self, coordinate: &Coordinate) -> TerrainTile {
+        let offset: Offset = coordinate.into();
+        let x = offset.column as f64;
+        let y = offset.row as f64;
+        if x > self.width || y > self.height {
+            return Default::default();
+        }
+        let nx = x / self.width - 0.5;
+        let ny = y / self.height - 0.5;
         // 3 octaves and valley smoothing via pow
         let elevation: f64 = (1. * self.noise(1. * nx, 1. * ny)
             + 0.5 * self.noise(2. * nx, 2. * ny)
@@ -150,6 +153,5 @@ impl Terrain {
             moisture,
             terrain_type,
         )
-        // NONE_TERRAIN_TILE
     }
 }

@@ -1,7 +1,7 @@
-use crate::coordinate::range::Range;
-
 pub mod indexed;
 pub mod range;
+mod faces;
+mod dist;
 
 #[derive(Debug, Copy, Clone)]
 pub struct World {
@@ -42,18 +42,19 @@ pub struct Coordinate {
     z: i32,
 }
 
+pub const ZERO: Coordinate = Coordinate::new(0, 0, 0);
+
 impl Coordinate {
-    /// Create a new coordinate. Will return an error if the coordinates don't add up to 0.
-    pub fn new(x: i32, y: i32, z: i32) -> Result<Self, &'static str> {
+    pub const fn new(x: i32, y: i32, z: i32) -> Self {
         if x + y + z == 0 {
-            Ok(Self { x, y, z })
+            Self { x, y, z }
         } else {
-            Err("Coordinates do not constitute a valid point")
+            Self { x: 0, y: 0, z: 0 }
         }
     }
 
     /// convert floating point coordinates to the nearest coordinate
-    pub fn round(x: f32, y: f32, z: f32) -> Result<Self, &'static str> {
+    pub fn round(x: f64, y: f64, z: f64) -> Self {
         let mut rx = x.round();
         let mut ry = y.round();
         let mut rz = z.round();
@@ -70,18 +71,6 @@ impl Coordinate {
         }
         Self::new(rx as i32, ry as i32, rz as i32)
     }
-
-    pub fn line_to(&self, end: &Coordinate) -> Range {
-        Range::line(self, end)
-    }
-
-    pub fn circle(&self, radius: u32) -> Range {
-        Range::circle(self, radius)
-    }
-
-    pub fn rectangle(&self, to_corner: &Coordinate) -> Range {
-        Range::rectangle(self, to_corner)
-    }
 }
 
 impl From<Offset> for Coordinate {
@@ -91,7 +80,7 @@ impl From<Offset> for Coordinate {
                 let x = column - (row - (row & 1)) / 2;
                 let z = row;
                 let y = -x - z;
-                Coordinate::new(x, y, z).unwrap()
+                Coordinate::new(x, y, z)
             }
         }
     }
@@ -175,6 +164,70 @@ impl From<World> for Coordinate {
                 Offset::new(part_x, row).into()
             }
         };
+    }
+}
+
+impl std::ops::Add<&Coordinate> for &Coordinate {
+    type Output = Coordinate;
+
+    fn add(self, rhs: &Coordinate) -> Self::Output {
+        Coordinate::new(self.x + rhs.x, self.y + rhs.y, self.z + rhs.z)
+    }
+}
+
+impl std::ops::Add<Coordinate> for &Coordinate {
+    type Output = Coordinate;
+
+    fn add(self, rhs: Coordinate) -> Self::Output {
+        self + (&rhs)
+    }
+}
+
+impl std::ops::Add<Coordinate> for Coordinate {
+    type Output = Coordinate;
+
+    fn add(self, rhs: Coordinate) -> Self::Output {
+        (&self) + (&rhs)
+    }
+}
+
+impl std::ops::Sub<&Coordinate> for &Coordinate {
+    type Output = Coordinate;
+
+    fn sub(self, rhs: &Coordinate) -> Self::Output {
+        Coordinate::new(self.x - rhs.x, self.y - rhs.y, self.z - rhs.z)
+    }
+}
+
+impl std::ops::Sub<Coordinate> for &Coordinate {
+    type Output = Coordinate;
+
+    fn sub(self, rhs: Coordinate) -> Self::Output {
+        (self) - (&rhs)
+    }
+}
+
+impl std::ops::Sub<Coordinate> for Coordinate {
+    type Output = Coordinate;
+
+    fn sub(self, rhs: Coordinate) -> Self::Output {
+        (&self) - (&rhs)
+    }
+}
+
+impl std::ops::Mul<f64> for &Coordinate {
+    type Output = Coordinate;
+
+    fn mul(self, scale: f64) -> Self::Output {
+        Coordinate::round((self.x as f64) * scale, (self.y as f64) * scale, (self.z as f64) * scale)
+    }
+}
+
+impl std::ops::Mul<f64> for Coordinate {
+    type Output = Coordinate;
+
+    fn mul(self, scale: f64) -> Self::Output {
+        (&self) * scale
     }
 }
 
