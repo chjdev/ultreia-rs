@@ -1,10 +1,7 @@
-use std::borrow::Borrow;
-use std::cell::{Ref, RefCell, RefMut};
-use std::ops::Deref;
-use std::rc::Rc;
-
 use crate::coordinate::indexed::Indexed;
 use crate::tile::TileInstance;
+use std::cell::{RefCell, RefMut};
+use std::rc::Rc;
 
 pub type Map = Indexed<Box<dyn TileInstance>>;
 

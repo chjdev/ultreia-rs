@@ -2,9 +2,6 @@ use crate::map::ground::Ground;
 use crate::map::road::RoadNetwork;
 use crate::map::territory::Territories;
 use crate::map::tiles::TileMap;
-use std::ops::Deref;
-use std::rc::Rc;
-use std::cell::{RefCell, RefMut};
 
 pub mod unit;
 pub mod road;
@@ -31,6 +28,10 @@ impl Map {
 
     pub fn tiles(&self) -> &TileMap {
         &self.tiles
+    }
+
+    pub fn tiles_mut(&mut self) -> &mut TileMap {
+        &mut self.tiles
     }
 
     pub fn ground(&self) -> &Ground {

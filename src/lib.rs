@@ -1,13 +1,8 @@
-use std::ops::Deref;
-use std::rc::Rc;
+// todo remove
+#![allow(dead_code)]
 
-use crate::clock::Tick;
-use crate::game::Game;
-use crate::map::Map;
-use crate::observable::Observable;
-use crate::observable::Observer;
-use crate::tile::Tiles;
-use crate::tile_updater::TileUpdater;
+mod ffi;
+pub use ffi::*;
 
 mod coordinate;
 mod game;
@@ -16,7 +11,7 @@ mod good;
 mod map;
 mod observable;
 mod clock;
-mod tile_updater;
+// mod tile_updater;
 
 pub fn hello() {
     // let mut game = Game::new();
@@ -33,14 +28,5 @@ pub fn hello() {
     println!("Hello, world! 2");
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn create_game() -> *mut Game {
-    Box::into_raw(Box::new(Game::new()))
-}
 
-#[no_mangle]
-pub unsafe extern "C" fn bla(game: *mut Game) -> usize {
-    game.as_ref().unwrap().map().ground().map().len()
-    // 123
-}
 

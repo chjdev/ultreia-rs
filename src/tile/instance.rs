@@ -1,4 +1,4 @@
-use crate::tile::{State, Tile, TileInstance, Tiles};
+use crate::tile::{TileInstance, Tiles, State};
 
 pub struct DefaultInstance {
     tile: Tiles,

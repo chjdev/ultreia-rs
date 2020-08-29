@@ -2,6 +2,8 @@ use crate::coordinate::Coordinate;
 
 pub struct Range(Vec<Coordinate>);
 
+// todo remove
+#[allow(unused_variables)]
 impl Range {
     pub fn new(coordinates: Vec<Coordinate>) -> Self {
         Range(coordinates)

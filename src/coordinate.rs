@@ -35,6 +35,7 @@ impl Offset {
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Default)]
+#[repr(C)]
 pub struct Coordinate {
     x: i32,
     y: i32,
