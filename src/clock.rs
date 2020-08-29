@@ -8,13 +8,13 @@ pub struct Tock;
 
 const TOCK: Tock = Tock {};
 
-pub struct Clock<'a> {
-    tickers: Observers<'a, Tick>,
-    tockers: Observers<'a, Tock>,
+pub struct Clock {
+    tickers: Observers<Tick>,
+    tockers: Observers<Tock>,
 }
 
 
-impl<'a> Clock<'a> {
+impl Clock {
     pub fn new() -> Self {
         Clock {
             tickers: Observers::new(),
@@ -22,11 +22,11 @@ impl<'a> Clock<'a> {
         }
     }
 
-    pub fn tickers(&self) -> &Observers<'a, Tick> {
+    pub fn tickers(&self) -> &Observers<Tick> {
         &self.tickers
     }
 
-    pub fn tockers(&self) -> &Observers<'a, Tock> {
+    pub fn tockers(&self) -> &Observers<Tock> {
         &self.tockers
     }
 
@@ -40,14 +40,14 @@ impl<'a> Clock<'a> {
     }
 }
 
-impl<'a> Observable<'a, Tick> for Clock<'a> {
-    fn observers(&self) -> &Observers<'a, Tick> {
+impl Observable<Tick> for Clock {
+    fn observers(&self) -> &Observers<Tick> {
         &self.tickers
     }
 }
 
-impl<'a> Observable<'a, Tock> for Clock<'a> {
-    fn observers(&self) -> &Observers<'a, Tock> {
+impl Observable<Tock> for Clock {
+    fn observers(&self) -> &Observers<Tock> {
         &self.tockers
     }
 }

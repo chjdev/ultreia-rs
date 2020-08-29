@@ -17,13 +17,13 @@ impl Observer<Tick> for TileUpdateObserver {
     }
 }
 
-pub struct TileUpdater<'a> {
-    clock: Weak<Clock<'a>>,
+pub struct TileUpdater {
+    clock: Weak<Clock>,
     registration: Option<ObserverRegistration>,
 }
 
-impl<'a> TileUpdater<'a> {
-    pub fn new(clock: Weak<Clock<'a>>, map: Weak<Map>) -> Self {
+impl TileUpdater {
+    pub fn new(clock: Weak<Clock>, map: Weak<Map>) -> Self {
         TileUpdater {
             registration: clock.upgrade().map(|rc_clock| { rc_clock.tickers().register(Box::new(TileUpdateObserver { map })) }),
             clock,
@@ -31,7 +31,7 @@ impl<'a> TileUpdater<'a> {
     }
 }
 
-impl<'a> Drop for TileUpdater<'a> {
+impl Drop for TileUpdater {
     fn drop(&mut self) {
         if let Some(clock) = self.clock.upgrade() {
             if let Some(registration) = self.registration {

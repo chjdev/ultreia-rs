@@ -6,14 +6,14 @@ use crate::tile::TileFactory;
 use crate::game::tile_updater::TileUpdater;
 use std::rc::Rc;
 
-pub struct Game<'a> {
-    clock: Rc<Clock<'a>>,
+pub struct Game {
+    clock: Rc<Clock>,
     map: Rc<Map>,
     tile_factory: TileFactory,
-    tile_updater: TileUpdater<'a>,
+    tile_updater: TileUpdater,
 }
 
-impl<'a> Game<'a> {
+impl Game {
     pub fn new() -> Self {
         let clock = Rc::new(Clock::new());
         let map = Rc::new(Map::new());
@@ -30,7 +30,7 @@ impl<'a> Game<'a> {
         &self.map
     }
 
-    pub fn clock(&self) -> &Clock<'a> {
+    pub fn clock(&self) -> &Clock {
         &self.clock
     }
 

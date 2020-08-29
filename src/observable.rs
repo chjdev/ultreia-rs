@@ -8,14 +8,14 @@ pub trait Observer<E> {
 #[derive(Copy, Clone, Hash, Eq, PartialEq, Default)]
 pub struct ObserverRegistration(usize);
 
-type ObserversStore<'a, E> = HashMap<ObserverRegistration, Box<dyn Observer<E> + 'a>>;
+type ObserversStore<E> = HashMap<ObserverRegistration, Box<dyn Observer<E>>>;
 
-pub struct Observers<'a, E> {
-    observers: Box<RefCell<ObserversStore<'a, E>>>,
+pub struct Observers<E> {
+    observers: Box<RefCell<ObserversStore<E>>>,
     next: Cell<ObserverRegistration>,
 }
 
-impl<'a, E> Observers<'a, E> {
+impl<E> Observers<E> {
     pub fn new() -> Self {
         Observers {
             observers: Box::new(RefCell::new(Default::default())),
@@ -23,7 +23,7 @@ impl<'a, E> Observers<'a, E> {
         }
     }
 
-    pub fn register(&self, observer: Box<dyn Observer<E> + 'a>) -> ObserverRegistration {
+    pub fn register(&self, observer: Box<dyn Observer<E>>) -> ObserverRegistration {
         let mut observers = self.observers.borrow_mut();
         let panic_point = self.next.get();
         observers.insert(panic_point, observer);
@@ -39,13 +39,13 @@ impl<'a, E> Observers<'a, E> {
         self.next.get()
     }
 
-    pub fn deregister(&self, registration: &ObserverRegistration) -> Option<Box<dyn Observer<E> + 'a>> {
+    pub fn deregister(&self, registration: &ObserverRegistration) -> Option<Box<dyn Observer<E>>> {
         self.observers.borrow_mut().remove(registration)
     }
 }
 
-pub trait Observable<'a, E> {
-    fn observers(&self) -> &Observers<'a, E>;
+pub trait Observable<E> {
+    fn observers(&self) -> &Observers< E>;
 
     fn notify_all(&self, event: &E)
     {

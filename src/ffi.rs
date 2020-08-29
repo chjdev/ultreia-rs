@@ -6,7 +6,7 @@ trait MaybeMut {
     fn maybe_mut<F, R>(&self, fun: F) -> Option<R> where F: FnMut(&mut Game) -> R;
 }
 
-impl MaybeMut for *mut Game<'_> {
+impl MaybeMut for *mut Game {
     fn maybe_mut<F, R>(&self, fun: F) -> Option<R> where F: FnMut(&mut Game) -> R {
         unsafe {
             self.as_mut().map(fun)
@@ -18,7 +18,7 @@ trait Maybe {
     fn maybe<F, R>(&self, fun: F) -> Option<R> where F: Fn(&Game) -> R;
 }
 
-impl Maybe for *const Game<'_> {
+impl Maybe for *const Game {
     fn maybe<F, R>(&self, fun: F) -> Option<R> where F: Fn(&Game) -> R {
         unsafe {
             self.as_ref().map(fun)
@@ -26,17 +26,15 @@ impl Maybe for *const Game<'_> {
     }
 }
 
-impl Maybe for *mut Game<'_> {
+impl Maybe for *mut Game {
     fn maybe<F, R>(&self, fun: F) -> Option<R> where F: Fn(&Game) -> R {
-        (*self as *const Game<'_>).maybe(fun)
+        (*self as *const Game).maybe(fun)
     }
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn create_game<'a>() -> *mut Game<'a> {
-    let boxed: Box<Game<'a>> = Box::new(Game::new());
-    let game_ptr: *mut Game<'a> = Box::into_raw(boxed);
-    game_ptr
+pub unsafe extern "C" fn create_game() -> *mut Game {
+    Box::into_raw(Box::new(Game::new()))
 }
 
 #[no_mangle]
