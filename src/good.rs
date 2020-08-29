@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[repr(C)]
 pub enum NaturalGood {
     CoalRepo,
     CopperOreRepo,
@@ -16,17 +17,19 @@ pub enum NaturalGood {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[repr(C)]
 pub enum BuildingMaterial {
+    Bells,
+    Brick,
+    Engineer,
+    Marble,
+    Stone,
     Tool,
     Wood,
-    Marble,
-    Brick,
-    Stone,
-    Bells,
-    Engineer,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[repr(C)]
 pub enum HarvestableGood {
     Cattle,
     CocoaPlant,
@@ -50,6 +53,7 @@ pub enum HarvestableGood {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[repr(C)]
 pub enum ProductionGood {
     Alcohol,
     Amber,
@@ -74,7 +78,6 @@ pub enum ProductionGood {
     Food,
     GemStone,
     GoldBar,
-    Wheat,
     GunPowder,
     Hemp,
     Honey,
@@ -111,22 +114,25 @@ pub enum ProductionGood {
     Tobacco,
     TobaccoLeaf,
     WhaleTallow,
+    Wheat,
     Wine,
     Wool,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[repr(C)]
 pub enum Weapon {
-    Pike,
-    Sword,
     Armor,
-    Musket,
     Cannon,
     Mortar,
+    Musket,
+    Pike,
+    Sword,
     WarHorse,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[repr(C)]
 pub enum ImmaterialGood {
     Culture,
     Education,
@@ -137,13 +143,14 @@ pub enum ImmaterialGood {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[repr(C)]
 pub enum Good {
-    NaturalGood(NaturalGood),
     BuildingMaterial(BuildingMaterial),
     HarvestableGood(HarvestableGood),
+    ImmaterialGood(ImmaterialGood),
+    NaturalGood(NaturalGood),
     ProductionGood(ProductionGood),
     Weapon(Weapon),
-    ImmaterialGood(ImmaterialGood),
 }
 
 pub type Inventory = HashMap<Good, i32>;

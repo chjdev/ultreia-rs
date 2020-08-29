@@ -9,6 +9,11 @@ edition = "2018"
 [dependencies]
 log = "0.4"
 
+[dependencies.noise]
+version = "0.6"
+# we don't need the image dep
+default-features = false
+
 [lib]
 name = "ultreia"
 crate-type = ["staticlib", "cdylib"]

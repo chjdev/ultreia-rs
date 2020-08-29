@@ -1,6 +1,9 @@
 use log::warn;
 use crate::game::Game;
 use crate::coordinate::Coordinate;
+use crate::good::Good;
+use crate::good::NaturalGood::CoalRepo;
+use crate::map::terrain::TerrainTile;
 
 trait MaybeMut {
     fn maybe_mut<F, R>(&self, fun: F) -> Option<R> where F: FnMut(&mut Game) -> R;
@@ -57,9 +60,13 @@ pub unsafe extern "C" fn clock_tick(game_ptr: *mut Game) {
 }
 
 #[no_mangle]
-pub extern "C" fn map_get(game_ptr: *const Game, coordinate: Coordinate) -> i32 {
-    game_ptr.maybe(|game| -> i32 {
-        game.map().ground().map().get(&coordinate);
-        1
-    }).unwrap_or(-1)
+pub extern "C" fn map_terrain_get(game_ptr: *const Game, coordinate: Coordinate) -> TerrainTile {
+    game_ptr.maybe(|game| {
+        game.map().terrain().get(&coordinate)
+    }).unwrap_or(TerrainTile::none())
+}
+
+#[no_mangle]
+pub extern "C" fn bla() -> Good {
+    Good::NaturalGood(CoalRepo)
 }
