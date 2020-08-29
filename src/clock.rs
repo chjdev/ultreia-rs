@@ -22,20 +22,20 @@ impl<'a> Clock<'a> {
         }
     }
 
-    pub fn tickers(&'a self) -> &'a Observers<Tick> {
+    pub fn tickers(&self) -> &Observers<'a, Tick> {
         &self.tickers
     }
 
-    pub fn tockers(&'a self) -> &'a Observers<Tock> {
+    pub fn tockers(&self) -> &Observers<'a, Tock> {
         &self.tockers
     }
 
-    pub fn tick(&mut self) {
+    pub fn tick(&self) {
         self.notify_all(&TICK);
         self.tock();
     }
 
-    fn tock(&mut self) {
+    fn tock(&self) {
         self.notify_all(&TOCK);
     }
 }
