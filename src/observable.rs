@@ -9,7 +9,9 @@ pub trait Observer<E> {
 #[derive(Copy, Clone, Hash, Eq, PartialEq, Default)]
 pub struct ObserverRegistration(usize);
 
-type ObserversStore<E> = HashMap<ObserverRegistration, Weak<dyn Observer<E>>>;
+pub type WeakObserver<E> = Weak<dyn Observer<E>>;
+
+type ObserversStore<E> = HashMap<ObserverRegistration, WeakObserver<E>>;
 
 pub struct Observers<E> {
     observers: RefCell<ObserversStore<E>>,
@@ -24,7 +26,7 @@ impl<E> Observers<E> {
         }
     }
 
-    pub fn register(&self, observer: Weak<dyn Observer<E>>) -> ObserverRegistration {
+    pub fn register(&self, observer: WeakObserver<E>) -> ObserverRegistration {
         let mut observers = self.observers.borrow_mut();
         let panic_point = self.next.get();
         observers.insert(panic_point, observer);
@@ -40,7 +42,7 @@ impl<E> Observers<E> {
         self.next.get()
     }
 
-    pub fn deregister(&self, registration: &ObserverRegistration) -> Option<Weak<dyn Observer<E>>> {
+    pub fn deregister(&self, registration: &ObserverRegistration) -> Option<WeakObserver<E>> {
         self.observers.borrow_mut().remove(registration)
     }
 }

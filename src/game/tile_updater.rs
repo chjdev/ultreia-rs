@@ -1,4 +1,4 @@
-use crate::observable::Observer;
+use crate::observable::{Observer, WeakObserver};
 use crate::clock::{Tick, Clock};
 use std::rc::{Weak, Rc};
 use crate::map::Map;
@@ -19,13 +19,14 @@ impl Observer<Tick> for TileUpdateObserver {
 
 pub struct TileUpdater {
     clock: Weak<Clock>,
-    observer: Rc<dyn Observer<Tick>>,
+    observer: Rc<TileUpdateObserver>,
 }
 
 impl TileUpdater {
     pub fn new(clock: Weak<Clock>, map: Weak<Map>) -> Self {
-        let observer: Rc<dyn Observer<Tick>> = Rc::new(TileUpdateObserver { map });
-        clock.upgrade().map(|rc_clock| { rc_clock.tickers().register(Rc::downgrade(&observer)) });
+        let observer = Rc::new(TileUpdateObserver { map });
+        let weak_observer: WeakObserver<Tick> = Rc::downgrade(&observer) as WeakObserver<Tick>;
+        clock.upgrade().map(|rc_clock| { rc_clock.tickers().register(weak_observer) });
         TileUpdater {
             observer,
             clock,
