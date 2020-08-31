@@ -1,5 +1,6 @@
 use crate::coordinate::{Coordinate, Offset};
 use noise::{Perlin, Seedable, NoiseFn};
+use crate::coordinate::range::{Range, RangeFrom};
 
 #[repr(C)]
 pub enum TerrainType {
@@ -107,17 +108,22 @@ impl TerrainTile {
 pub struct Terrain {
     width: f64,
     height: f64,
-    perlin: Perlin,
+    random_elevation: Perlin,
+    random_moisture: Perlin,
 }
 
 impl Terrain {
     pub fn new_seeded(rows: usize, columns: usize, seed: u32) -> Self {
-        let perlin = Perlin::new();
-        perlin.set_seed(seed);
+        let random_elevation = Perlin::new();
+        random_elevation.set_seed(seed);
+        let random_moisture = Perlin::new();
+        // todo
+        random_moisture.set_seed(3 * seed);
         Terrain {
             width: rows as f64,
             height: columns as f64,
-            perlin,
+            random_elevation,
+            random_moisture,
         }
     }
 
@@ -125,8 +131,12 @@ impl Terrain {
         Terrain::new_seeded(rows, columns, 0)
     }
 
-    fn noise(&self, x: f64, y: f64) -> f64 {
-        (self.perlin.get([x, y]) + 1.) / 2.
+    fn random_elevation(&self, x: f64, y: f64) -> f64 {
+        (self.random_elevation.get([x, y]) + 1.) / 2.
+    }
+
+    fn random_moisture(&self, x: f64, y: f64) -> f64 {
+        (self.random_moisture.get([x, y]) + 1.) / 2.
     }
 
     // https://www.redblobgames.com/maps/terrain-from-noise/#islands
@@ -137,21 +147,25 @@ impl Terrain {
         if x > self.width || y > self.height {
             return Default::default();
         }
-        let nx = x / self.width - 0.5;
-        let ny = y / self.height - 0.5;
-        // 3 octaves and valley smoothing via pow
-        let elevation: f64 = (1. * self.noise(1. * nx, 1. * ny)
-            + 0.5 * self.noise(2. * nx, 2. * ny)
-            + 0.25 * self.noise(4. * nx, 4. * ny)).powf(1.28);
-        // 3 octaves
-        let moisture: f64 = 1. * self.noise(1. * nx, 1. * ny)
-            + 0.5 * self.noise(2. * nx, 2. * ny)
-            + 0.25 * self.noise(4. * nx, 4. * ny);
+        let nx = 2.0 * (x / self.width - 0.5);
+        let ny = 2.0 * (y / self.height - 0.5);
+        // 4 octaves and valley smoothing via pow
+        let elevation: f64 = self.random_elevation(8. * nx, 8. * ny).powf(1.5);
+        // 4 octaves
+        let moisture: f64 = self.random_moisture(8. * nx, 8. * ny);
         let terrain_type = TerrainType::new(elevation, moisture);
         TerrainTile::new(
             elevation,
             moisture,
             terrain_type,
         )
+    }
+
+    pub fn range(&self, range: &Range) -> Vec<TerrainTile> {
+        range.into_iter().map(|c| self.get(c)).collect()
+    }
+
+    pub fn rectangle(&self, from_corner: &Coordinate, to_corner: &Coordinate) -> Vec<TerrainTile> {
+        self.range(&from_corner.rectangle_to(to_corner))
     }
 }

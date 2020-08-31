@@ -1,4 +1,4 @@
-use crate::coordinate::{Coordinate, ZERO};
+use crate::coordinate::{Coordinate, ZERO, Offset};
 
 pub struct Range(Vec<Coordinate>);
 
@@ -39,7 +39,7 @@ impl Range {
                 results.push(center + offset);
             }
         }
-        Self(results)
+        Range(results)
     }
 
     pub fn circle0(radius: u16) -> Self {
@@ -55,7 +55,10 @@ impl Range {
     }
 
     pub fn rectangle(from_corner: &Coordinate, to_corner: &Coordinate) -> Self {
-        unimplemented!()
+        let Offset { row: row_from, column: column_from } = from_corner.into();
+        let Offset { row: row_to, column: column_to } = to_corner.into();
+        Range((row_from..=row_to).flat_map(move |row| (column_from..=column_to).map(move |column| -> Coordinate
+            { Offset::new(column, row).into() })).into_iter().collect())
     }
 
     pub fn rectangle0(to_corner: &Coordinate) -> Self {
