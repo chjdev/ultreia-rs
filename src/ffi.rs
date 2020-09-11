@@ -3,7 +3,7 @@ use crate::game::{Game, Configuration};
 use crate::coordinate::Coordinate;
 use crate::good::Good;
 use crate::good::NaturalGood::CoalRepo;
-use crate::map::terrain::TerrainTile;
+use crate::map::terrain::{TerrainTile, TerrainType};
 
 trait MaybeMut {
     fn maybe_mut<F, R>(&self, fun: F) -> R where F: FnMut(&mut Game) -> R, R: Default;
@@ -115,6 +115,21 @@ pub extern "C" fn free_terrain_tile_array(array: Array<TerrainTile>) {
     }
 }
 
+#[no_mangle]
+pub extern "C" fn map_terrain_minimap(game_ptr: *const Game, width: u16, height: u16) -> Array<TerrainType> {
+    game_ptr.maybe(|game| {
+        game.map().terrain().minimap(width, height).into()
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn free_terrain_type_array(array: Array<TerrainType>) {
+    let s = unsafe { std::slice::from_raw_parts_mut(array.pointer, array.length as usize) };
+    let s = s.as_mut_ptr();
+    unsafe {
+        Box::from_raw(s);
+    }
+}
 
 
 #[no_mangle]
