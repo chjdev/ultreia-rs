@@ -1,6 +1,8 @@
+use std::iter::FromIterator;
 use crate::coordinate::{Coordinate, ZERO, Offset};
+use std::collections::HashSet;
 
-pub struct Range(Vec<Coordinate>);
+pub type Range = HashSet<Coordinate>;
 
 const DIRECTIONS: [Coordinate; 6] = [
     Coordinate::new(1, -1, 0),
@@ -11,23 +13,21 @@ const DIRECTIONS: [Coordinate; 6] = [
     Coordinate::new(0, -1, 1),
 ];
 
-// todo remove
-#[allow(unused_variables)]
-impl Range {
-    pub fn new(coordinates: Vec<Coordinate>) -> Self {
-        Range(coordinates)
+pub trait RangeFactory {
+    fn new(coordinates: &[Coordinate]) -> Range {
+        Range::from_iter(coordinates.into_iter().cloned())
     }
 
-    pub fn neighbors(coordinate: &Coordinate) -> Self {
+    fn neighbors(coordinate: &Coordinate) -> Range {
         if *coordinate == ZERO {
-            return Self(DIRECTIONS.to_vec());
+            return Range::from_iter(DIRECTIONS.iter().cloned());
         }
-        Range(DIRECTIONS.iter().map(|d| {
+        Range::from_iter(DIRECTIONS.iter().map(|d| {
             coordinate + d
-        }).collect())
+        }))
     }
 
-    pub fn circle(center: &Coordinate, radius: u16) -> Self {
+    fn circle(center: &Coordinate, radius: u16) -> Range {
         let mut results = vec![];
         let i_radius = radius as i32;
         for x in -i_radius..=i_radius {
@@ -39,32 +39,34 @@ impl Range {
                 results.push(center + offset);
             }
         }
-        Range(results)
+        Range::from_iter(results)
     }
 
-    pub fn circle0(radius: u16) -> Self {
+    fn circle0(radius: u16) -> Range {
         Self::circle(&Default::default(), radius)
     }
 
-    pub fn line(start: &Coordinate, end: &Coordinate) -> Self {
+    fn line(_start: &Coordinate, _end: &Coordinate) -> Range {
         unimplemented!()
     }
 
-    pub fn line0(end: &Coordinate) -> Self {
+    fn line0(end: &Coordinate) -> Range {
         Self::line(&Default::default(), end)
     }
 
-    pub fn rectangle(from_corner: &Coordinate, to_corner: &Coordinate) -> Self {
+    fn rectangle(from_corner: &Coordinate, to_corner: &Coordinate) -> Range {
         let Offset { row: row_from, column: column_from } = from_corner.into();
         let Offset { row: row_to, column: column_to } = to_corner.into();
-        Range((row_from..=row_to).flat_map(move |row| (column_from..=column_to).map(move |column| -> Coordinate
-            { Offset::new(column, row).into() })).into_iter().collect())
+        Range::from_iter((row_from..=row_to).flat_map(move |row| (column_from..=column_to).map(move |column| -> Coordinate
+            { Offset::new(column, row).into() })).into_iter())
     }
 
-    pub fn rectangle0(to_corner: &Coordinate) -> Self {
+    fn rectangle0(to_corner: &Coordinate) -> Range {
         Self::rectangle(&Default::default(), to_corner)
     }
 }
+
+impl RangeFactory for Range {}
 
 pub trait RangeFrom {
     fn line_to(&self, end: &Coordinate) -> Range;
@@ -85,31 +87,3 @@ impl RangeFrom for Coordinate {
         Range::rectangle(self, to_corner)
     }
 }
-
-impl IntoIterator for Range {
-    type Item = Coordinate;
-    type IntoIter = std::vec::IntoIter<Self::Item>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.0.into_iter()
-    }
-}
-
-
-impl<'a> IntoIterator for &'a Range {
-    type Item = &'a Coordinate;
-    type IntoIter = std::slice::Iter<'a, Coordinate>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.0.iter()
-    }
-}
-//
-// impl<'a> IntoIterator for &'a mut Range {
-//     type Item = &'a mut Coordinate;
-//     type IntoIter = std::slice::IterMut<'a, Coordinate>;
-//
-//     fn into_iter(self) -> Self::IntoIter {
-//         self.0.iter_mut()
-//     }
-// }

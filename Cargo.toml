@@ -8,6 +8,9 @@ edition = "2018"
 
 [dependencies]
 log = "0.4"
+# for enums
+strum = "0.19"
+strum_macros = "0.19"
 
 [dependencies.noise]
 version = "0.6"

@@ -11,6 +11,7 @@ mod good;
 mod map;
 mod observable;
 mod clock;
+mod player;
 // mod tile_updater;
 
 pub fn hello() {

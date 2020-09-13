@@ -1,7 +1,9 @@
 use crate::coordinate::Coordinate;
-use crate::coordinate::range::Range;
-use crate::tile::{Consumes, State, Tile, TileInstance, Tiles};
+use crate::coordinate::range::{Range, RangeFactory};
+use crate::tile::{Consumes, Tile, TileInstance, Tiles};
 use crate::tile::instance::DefaultInstance;
+use crate::good::ProductionGood::Fish;
+use crate::good::Good::ProductionGood;
 
 pub struct Pioneer {
     tile: Tiles,
@@ -12,7 +14,7 @@ impl Pioneer {
     pub fn new() -> Self {
         Pioneer {
             tile: Tiles::Pioneer,
-            consumes: Consumes(Default::default()),
+            consumes: Consumes::from(&[(ProductionGood(Fish), 3)]),
         }
     }
 }
@@ -22,18 +24,12 @@ impl Tile for Pioneer {
         &self.tile
     }
 
-    fn consumes(&self) -> &Consumes {
-        &self.consumes
-    }
-
     fn influence_at(&self, at: &Coordinate) -> Range {
         Range::circle(at, 2)
     }
 
     fn create(&self) -> Box<dyn TileInstance> {
-        Box::new(DefaultInstance::new(
-            self.tile,
-            State(Default::default()),
-        ))
+        DefaultInstance::from(self)
     }
+
 }

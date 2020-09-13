@@ -1,6 +1,7 @@
 use std::collections::HashMap;
+use strum_macros::EnumIter;
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, EnumIter)]
 #[repr(C)]
 pub enum NaturalGood {
     CoalRepo,
@@ -16,7 +17,7 @@ pub enum NaturalGood {
     WildFish,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, EnumIter)]
 #[repr(C)]
 pub enum BuildingMaterial {
     Bells,
@@ -28,7 +29,7 @@ pub enum BuildingMaterial {
     Wood,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, EnumIter)]
 #[repr(C)]
 pub enum HarvestableGood {
     Cattle,
@@ -52,7 +53,7 @@ pub enum HarvestableGood {
     UntamedHorse,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, EnumIter)]
 #[repr(C)]
 pub enum ProductionGood {
     Alcohol,
@@ -119,7 +120,7 @@ pub enum ProductionGood {
     Wool,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, EnumIter)]
 #[repr(C)]
 pub enum Weapon {
     Armor,
@@ -131,7 +132,7 @@ pub enum Weapon {
     WarHorse,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, EnumIter)]
 #[repr(C)]
 pub enum ImmaterialGood {
     Culture,

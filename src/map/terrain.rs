@@ -72,7 +72,7 @@ impl TerrainType {
                 return TerrainType::Scorched;
             }
             if moisture < 0.2 {
-                return TerrainType::Bare;
+                return TerrainType::Beach;
             }
         }
         if elevation > 0.8 {
@@ -150,6 +150,22 @@ impl TerrainTile {
             moisture,
             terrain_type,
         }
+    }
+
+    pub fn is_none(&self) -> bool {
+        return self.terrain_type == TerrainType::None;
+    }
+
+    pub fn terrain_type(&self) -> TerrainType {
+        self.terrain_type
+    }
+
+    pub fn elevation(&self) -> f64 {
+        self.elevation
+    }
+
+    pub fn moisture(&self) -> f64 {
+        self.moisture
     }
 }
 

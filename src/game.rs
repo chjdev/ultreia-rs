@@ -17,20 +17,21 @@ pub struct Game {
     configuration: Configuration,
     clock: Rc<Clock>,
     map: Rc<Map>,
-    tile_factory: TileFactory,
+    tile_factory: Rc<TileFactory>,
     tile_updater: TileUpdater,
 }
 
 impl Game {
     pub fn new(configuration: Configuration) -> Self {
+        let tile_factory = Rc::new(TileFactory::new());
         let clock = Rc::new(Clock::new());
-        let map = Rc::new(Map::new(configuration.rows, configuration.columns));
+        let map = Rc::new(Map::new(configuration.rows, configuration.columns, Rc::downgrade(&tile_factory)));
         let tile_updater = TileUpdater::new(Rc::downgrade(&clock), Rc::downgrade(&map));
         Game {
             configuration,
             clock,
             map,
-            tile_factory: TileFactory::new(),
+            tile_factory,
             tile_updater,
         }
     }

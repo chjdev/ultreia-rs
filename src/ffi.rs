@@ -1,9 +1,8 @@
 use log::warn;
 use crate::game::{Game, Configuration};
 use crate::coordinate::Coordinate;
-use crate::good::Good;
-use crate::good::NaturalGood::CoalRepo;
 use crate::map::terrain::{TerrainTile, TerrainType};
+use crate::tile::Tiles;
 
 trait MaybeMut {
     fn maybe_mut<F, R>(&self, fun: F) -> R where F: FnMut(&mut Game) -> R, R: Default;
@@ -131,8 +130,9 @@ pub extern "C" fn free_terrain_type_array(array: Array<TerrainType>) {
     }
 }
 
-
 #[no_mangle]
-pub extern "C" fn bla() -> Good {
-    Good::NaturalGood(CoalRepo)
+pub extern "C" fn map_can_construct(game_ptr: *const Game, coordinate: Coordinate, tile: Tiles) -> bool {
+    game_ptr.maybe(|game| {
+        game.map().can_construct(&coordinate, tile)
+    })
 }
