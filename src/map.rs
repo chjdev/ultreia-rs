@@ -4,6 +4,7 @@ use crate::map::territory::Territory;
 use crate::coordinate::Coordinate;
 use crate::tile::{Tiles, TileFactory};
 use std::rc::{Rc, Weak};
+use crate::coordinate::range::Range;
 
 pub mod unit;
 pub mod road;
@@ -61,6 +62,10 @@ impl Map {
                 };
             }
             false
-        }
+        };
+    }
+
+    pub fn can_construct_range(&self, range: &Range, tile: Tiles) -> Vec<bool> {
+        range.iter().map(|coordinate| self.can_construct(coordinate, tile)).collect()
     }
 }

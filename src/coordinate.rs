@@ -1,3 +1,5 @@
+use serde::{Serialize, Deserialize};
+
 pub mod indexed;
 pub mod range;
 mod faces;
@@ -34,7 +36,7 @@ impl Offset {
     }
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Default)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Default, Serialize, Deserialize)]
 #[repr(C)]
 pub struct Coordinate {
     x: i32,

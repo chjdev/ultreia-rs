@@ -1,5 +1,6 @@
 mod tile_updater;
 
+use serde::{Serialize, Deserialize};
 use crate::clock::Clock;
 use crate::map::Map;
 use crate::tile::TileFactory;
@@ -7,10 +8,19 @@ use crate::game::tile_updater::TileUpdater;
 use std::rc::Rc;
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Serialize, Deserialize)]
 pub struct Configuration {
     rows: usize,
     columns: usize,
+}
+
+impl Configuration {
+    pub fn new(rows: usize, columns: usize) -> Self {
+        Configuration {
+            rows,
+            columns,
+        }
+    }
 }
 
 pub struct Game {
@@ -34,6 +44,10 @@ impl Game {
             tile_factory,
             tile_updater,
         }
+    }
+
+    pub fn configuration(&self) -> &Configuration {
+        &self.configuration
     }
 
     pub fn map(&self) -> &Map {

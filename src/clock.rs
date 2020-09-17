@@ -1,4 +1,5 @@
 use crate::observable::{Observable, Observers};
+use std::cell::Cell;
 
 pub struct Tick;
 
@@ -9,6 +10,7 @@ pub struct Tock;
 const TOCK: Tock = Tock {};
 
 pub struct Clock {
+    epoch: Cell<usize>,
     tickers: Observers<Tick>,
     tockers: Observers<Tock>,
 }
@@ -17,9 +19,14 @@ pub struct Clock {
 impl Clock {
     pub fn new() -> Self {
         Clock {
+            epoch: Cell::new(0),
             tickers: Observers::new(),
             tockers: Observers::new(),
         }
+    }
+
+    pub fn epoch(&self) -> usize {
+        *&self.epoch.get()
     }
 
     pub fn tickers(&self) -> &Observers<Tick> {
@@ -31,6 +38,7 @@ impl Clock {
     }
 
     pub fn tick(&self) {
+        self.epoch.set(self.epoch.get() + 1);
         self.notify_all(&TICK);
         self.tock();
     }

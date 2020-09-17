@@ -1,10 +1,12 @@
+use serde::{Serialize, Deserialize};
+use serde_repr::{Serialize_repr, Deserialize_repr};
 use crate::coordinate::{Coordinate, Offset};
 use noise::{Perlin, Seedable, NoiseFn};
-use crate::coordinate::range::{Range, RangeFrom};
+use crate::coordinate::range::Range;
 use std::ops::{Mul};
 
-#[repr(C)]
-#[derive(PartialEq, Eq, Copy, Clone)]
+#[derive(PartialEq, Eq, Copy, Clone, Deserialize_repr, Serialize_repr)]
+#[repr(u8)]
 pub enum TerrainType {
     Bare,
     Beach,
@@ -136,7 +138,7 @@ impl TerrainType {
 
 
 #[repr(C)]
-#[derive(Default)]
+#[derive(Default, Serialize, Deserialize)]
 pub struct TerrainTile {
     elevation: f64,
     moisture: f64,
@@ -238,10 +240,6 @@ impl Terrain {
 
     pub fn range(&self, range: &Range) -> Vec<TerrainTile> {
         range.into_iter().map(|c| self.get(c)).collect()
-    }
-
-    pub fn rectangle(&self, from_corner: &Coordinate, to_corner: &Coordinate) -> Vec<TerrainTile> {
-        self.range(&from_corner.rectangle_to(to_corner))
     }
 
     pub fn minimap(&self, width: u16, height: u16) -> Vec<TerrainType> {

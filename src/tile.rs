@@ -1,3 +1,4 @@
+use serde_repr::{Serialize_repr, Deserialize_repr};
 use std::collections::HashMap;
 use crate::good::{Inventory, Good};
 use crate::tile::pioneer::Pioneer;
@@ -243,8 +244,8 @@ impl PartialOrd<&Costs> for State {
     }
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash)]
-#[repr(C)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Deserialize_repr, Serialize_repr)]
+#[repr(u8)]
 pub enum Tiles {
     Pioneer,
     Warehouse,
