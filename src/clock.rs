@@ -1,5 +1,5 @@
 use crate::observable::{Observable, Observers};
-use std::cell::Cell;
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 pub struct Tick;
 
@@ -10,7 +10,7 @@ pub struct Tock;
 const TOCK: Tock = Tock {};
 
 pub struct Clock {
-    epoch: Cell<usize>,
+    epoch: AtomicUsize,
     tickers: Observers<Tick>,
     tockers: Observers<Tock>,
 }
@@ -19,14 +19,14 @@ pub struct Clock {
 impl Clock {
     pub fn new() -> Self {
         Clock {
-            epoch: Cell::new(0),
+            epoch: AtomicUsize::new(0),
             tickers: Observers::new(),
             tockers: Observers::new(),
         }
     }
 
     pub fn epoch(&self) -> usize {
-        *&self.epoch.get()
+        self.epoch.load(Ordering::Acquire)
     }
 
     pub fn tickers(&self) -> &Observers<Tick> {
@@ -38,7 +38,7 @@ impl Clock {
     }
 
     pub fn tick(&self) {
-        self.epoch.set(self.epoch.get() + 1);
+        self.epoch.fetch_add(1, Ordering::Release);
         self.notify_all(&TICK);
         self.tock();
     }

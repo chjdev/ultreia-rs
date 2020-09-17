@@ -1,12 +1,11 @@
-use std::rc::{Weak};
+use std::sync::Weak;
 
 use crate::coordinate::indexed::Indexed;
 use crate::coordinate::Coordinate;
-use crate::tile::{Tiles, TileInstance, TileFactory, State};
+use crate::tile::{Tiles, TileFactory, State, SomeTileInstance};
 use crate::coordinate::range::Range;
 use crate::map::terrain::Terrain;
 
-pub type SomeTileInstance = Box<dyn TileInstance>;
 pub type TerritoryMap = Indexed<SomeTileInstance>;
 
 pub struct Territory {
@@ -79,7 +78,8 @@ impl Territory {
                             break;
                         }
                         let warehouse = self.get(&warehouse_coordinate).unwrap();
-                        let mut warehouse_state = &mut *warehouse.state_mut().unwrap();
+                        let mut state_lock = warehouse.state_mut();
+                        let mut warehouse_state = state_lock.as_mut().unwrap();
                         let has = *warehouse_state.get(good);
                         let consumes = value.min(&has);
                         rest -= consumes;
@@ -108,8 +108,9 @@ impl Territory {
     pub fn state(&self) -> State {
         self.warehouses.iter().map(|coordinate| self.get(coordinate)).fold(State::new(), |mut acc, maybe_warehouse| {
             if let Some(warehouse) = maybe_warehouse.filter(|instance| instance.tile() == &Tiles::Warehouse) {
-                let warehouse_state = warehouse.state().unwrap();
-                acc += &*warehouse_state;
+                let state_lock = warehouse.state();
+                let warehouse_state = state_lock.as_ref().unwrap();
+                acc += &warehouse_state;
             }
             acc
         })

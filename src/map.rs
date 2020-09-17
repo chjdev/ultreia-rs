@@ -3,7 +3,7 @@ use crate::map::road::RoadNetwork;
 use crate::map::territory::Territory;
 use crate::coordinate::Coordinate;
 use crate::tile::{Tiles, TileFactory};
-use std::rc::{Rc, Weak};
+use std::sync::{Arc, Weak};
 use crate::coordinate::range::Range;
 
 pub mod unit;
@@ -14,7 +14,7 @@ pub mod territory;
 pub struct Map {
     rows: usize,
     columns: usize,
-    terrain: Rc<Terrain>,
+    terrain: Arc<Terrain>,
     territories: Vec<Territory>,
     roads: RoadNetwork,
     tile_factory: Weak<TileFactory>,
@@ -25,7 +25,7 @@ impl Map {
         Map {
             rows,
             columns,
-            terrain: Rc::new(Terrain::new(rows, columns)),
+            terrain: Arc::new(Terrain::new(rows, columns)),
             territories: Default::default(),
             roads: Default::default(),
             tile_factory,

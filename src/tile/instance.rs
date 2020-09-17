@@ -1,20 +1,20 @@
-use crate::tile::{TileInstance, Tiles, State, Tile};
-use std::cell::{RefCell, Ref, RefMut};
+use crate::tile::{TileInstance, Tiles, State, Tile, SomeTileInstance};
+use std::sync::{RwLock, RwLockWriteGuard, RwLockReadGuard};
 
 pub struct DefaultInstance {
     tile: Tiles,
-    state: RefCell<State>,
+    state: RwLock<Option<State>>,
 }
 
 impl DefaultInstance {
-    pub fn new(tile: Tiles, state: State) -> Self {
+    pub fn new(tile: Tiles, state: Option<State>) -> Self {
         DefaultInstance {
             tile,
-            state: RefCell::new(state),
+            state: RwLock::new(state),
         }
     }
 
-    pub fn from(tile: &impl Tile) -> Box<dyn TileInstance> {
+    pub fn from(tile: &impl Tile) -> SomeTileInstance {
         Box::new(DefaultInstance::new(
             *tile.tile(),
             State::from(tile.consumes(), tile.produces()),
@@ -27,12 +27,12 @@ impl TileInstance for DefaultInstance {
         &self.tile
     }
 
-    fn state(&self) -> Option<Ref<State>> {
-        self.state.try_borrow().ok()
+    fn state(&self) -> RwLockReadGuard<Option<State>> {
+        self.state.read().expect("could not acquire read lock on tile instance")
     }
 
-    fn state_mut(&self) -> Option<RefMut<State>> {
-        self.state.try_borrow_mut().ok()
+    fn state_mut(&self) -> RwLockWriteGuard<Option<State>> {
+        self.state.write().expect("could not acquire read lock on tile instance")
     }
 
     fn update(&self) {

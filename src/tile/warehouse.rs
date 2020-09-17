@@ -2,7 +2,7 @@ use std::iter::FromIterator;
 use strum::IntoEnumIterator;
 use crate::coordinate::Coordinate;
 use crate::coordinate::range::Range;
-use crate::tile::{Consumes, Tile, TileInstance, Tiles};
+use crate::tile::{Consumes, Tile, Tiles, SomeTileInstance};
 use crate::tile::instance::DefaultInstance;
 use crate::good::{BuildingMaterial, Weapon, ProductionGood, Good};
 use crate::coordinate::range::RangeFactory;
@@ -43,7 +43,7 @@ impl Tile for Warehouse {
         Range::circle(at, 6)
     }
 
-    fn create(&self) -> Box<dyn TileInstance> {
+    fn create(&self) -> SomeTileInstance {
         DefaultInstance::from(self)
     }
 

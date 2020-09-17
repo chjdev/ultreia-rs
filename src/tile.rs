@@ -6,10 +6,10 @@ use crate::coordinate::range::Range;
 use crate::coordinate::Coordinate;
 use std::iter::FromIterator;
 use crate::tile::warehouse::Warehouse;
-use std::cell::{Ref, RefMut};
 use std::cmp::Ordering;
 use crate::map::terrain::Terrain;
 use crate::map::territory::Territory;
+use std::sync::{RwLockReadGuard, RwLockWriteGuard};
 
 mod pioneer;
 mod instance;
@@ -117,7 +117,10 @@ impl State {
         Default::default()
     }
 
-    pub fn from(maybe_consumes: Option<&Consumes>, maybe_produces: Option<&Produces>) -> Self {
+    pub fn from(maybe_consumes: Option<&Consumes>, maybe_produces: Option<&Produces>) -> Option<Self> {
+        if maybe_consumes.is_none() && maybe_produces.is_none() {
+            return None;
+        }
         let mut state = State(Default::default());
         if let Some(consumes) = maybe_consumes {
             for good in consumes.0.keys() {
@@ -129,7 +132,7 @@ impl State {
                 state.0.insert(*good, 0);
             }
         }
-        state
+        Some(state)
     }
 
     pub fn get(&self, good: &Good) -> &i32 {
@@ -187,6 +190,14 @@ impl std::ops::AddAssign<&State> for State {
             let old = *self.0.get(good).unwrap_or(&0);
             self.0.insert(*good, *value + old);
         }
+    }
+}
+
+impl std::ops::SubAssign<(&Good, &i32)> for State {
+    fn sub_assign(&mut self, rhs: (&Good, &i32)) {
+        let (good, value) = rhs;
+        let old = *self.0.get(good).unwrap_or(&0);
+        self.0.insert(*good, *value - old);
     }
 }
 
@@ -251,6 +262,8 @@ pub enum Tiles {
     Warehouse,
 }
 
+pub type SomeTileInstance = Box<dyn TileInstance + Send + Sync>;
+
 pub trait Tile {
     fn tile(&self) -> &Tiles;
     fn costs(&self) -> Option<&Costs> {
@@ -266,7 +279,7 @@ pub trait Tile {
     fn influence(&self) -> Range {
         self.influence_at(&Default::default())
     }
-    fn create(&self) -> Box<dyn TileInstance>;
+    fn create(&self) -> SomeTileInstance;
     fn allowed(&self, _at: &Coordinate, _terrain: &Terrain, _territory: Option<&Territory>) -> bool {
         false
     }
@@ -274,18 +287,20 @@ pub trait Tile {
 
 pub trait TileInstance {
     fn tile(&self) -> &Tiles;
-    fn state(&self) -> Option<Ref<State>>;
-    fn state_mut(&self) -> Option<RefMut<State>>;
+    fn state(&self) -> RwLockReadGuard<Option<State>>;
+    fn state_mut(&self) -> RwLockWriteGuard<Option<State>>;
     fn update(&self);
 }
 
+pub type SomeTile = Box<dyn Tile + Send + Sync>;
+
 pub struct TileFactory {
-    tiles: HashMap<Tiles, Box<dyn Tile>>,
+    tiles: HashMap<Tiles, SomeTile>,
 }
 
 impl TileFactory {
     pub fn new() -> Self {
-        let mut tiles: HashMap<Tiles, Box<dyn Tile>> = HashMap::new();
+        let mut tiles: HashMap<Tiles, SomeTile> = HashMap::new();
         tiles.insert(Tiles::Pioneer, Box::new(Pioneer::new()));
         tiles.insert(Tiles::Warehouse, Box::new(Warehouse::new()));
         TileFactory {
@@ -293,7 +308,7 @@ impl TileFactory {
         }
     }
 
-    pub fn create(&self, tile: Tiles) -> Box<dyn TileInstance> {
+    pub fn create(&self, tile: Tiles) -> SomeTileInstance {
         self.tiles.get(&tile).unwrap().create()
     }
 

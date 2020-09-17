@@ -5,7 +5,7 @@ use crate::clock::Clock;
 use crate::map::Map;
 use crate::tile::TileFactory;
 use crate::game::tile_updater::TileUpdater;
-use std::rc::Rc;
+use std::sync::Arc;
 
 #[repr(C)]
 #[derive(Copy, Clone, Serialize, Deserialize)]
@@ -25,18 +25,18 @@ impl Configuration {
 
 pub struct Game {
     configuration: Configuration,
-    clock: Rc<Clock>,
-    map: Rc<Map>,
-    tile_factory: Rc<TileFactory>,
+    clock: Arc<Clock>,
+    map: Arc<Map>,
+    tile_factory: Arc<TileFactory>,
     tile_updater: TileUpdater,
 }
 
 impl Game {
     pub fn new(configuration: Configuration) -> Self {
-        let tile_factory = Rc::new(TileFactory::new());
-        let clock = Rc::new(Clock::new());
-        let map = Rc::new(Map::new(configuration.rows, configuration.columns, Rc::downgrade(&tile_factory)));
-        let tile_updater = TileUpdater::new(Rc::downgrade(&clock), Rc::downgrade(&map));
+        let tile_factory = Arc::new(TileFactory::new());
+        let clock = Arc::new(Clock::new());
+        let map = Arc::new(Map::new(configuration.rows, configuration.columns, Arc::downgrade(&tile_factory)));
+        let tile_updater = TileUpdater::new(Arc::downgrade(&clock), Arc::downgrade(&map));
         Game {
             configuration,
             clock,

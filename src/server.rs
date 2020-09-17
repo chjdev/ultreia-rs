@@ -4,7 +4,7 @@ mod game_pointer;
 use std::iter::FromIterator;
 
 use serde::{Deserialize, Serialize};
-use std::sync::{mpsc, Mutex};
+use std::sync::mpsc;
 use std::sync::mpsc::{Sender, RecvError};
 use actix_web::{get, post, web, App, HttpServer, HttpResponse};
 use crate::game::{Configuration, Game};
@@ -15,10 +15,6 @@ use crate::tile::Tiles;
 
 fn ok<T: Serialize>(value: T) -> HttpResponse {
     HttpResponse::Ok().json(value)
-}
-
-struct SafeGame {
-    game: Mutex<Game>
 }
 
 #[get("/")]
@@ -86,10 +82,9 @@ async fn map_terrain_minimap(game: web::Data<Game>, size: web::Query<Size>) -> H
 
 #[actix_web::main]
 async fn await_game_server(tx: Sender<u16>, configuration: Configuration) -> std::io::Result<()> {
-    let game = web::Data::new(SafeGame { game: Mutex::new(Game::new(configuration)) });
-    let server = HttpServer::new(|| App::new()
+    let server = HttpServer::new(move || App::new()
         .data(web::JsonConfig::default().limit(10000000)) // around 10mb
-        .app_data(game)
+        .app_data(web::Data::new(Game::new(configuration)))
         .service(game_info)
         .service(clock_epoch)
         .service(clock_tick)
@@ -106,6 +101,6 @@ async fn await_game_server(tx: Sender<u16>, configuration: Configuration) -> std
 
 pub fn start_game_server(configuration: Configuration) -> Result<u16, RecvError> {
     let (tx, rx) = mpsc::channel::<u16>();
-    std::thread::spawn(|| await_game_server(tx, configuration));
+    std::thread::spawn(move || await_game_server(tx, configuration));
     rx.recv()
 }
