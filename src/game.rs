@@ -24,16 +24,16 @@ impl Configuration {
 
 pub struct Game {
     configuration: Configuration,
-    clock: Arc<Clock>,
+    clock: Clock,
     map: Arc<Map>,
     tile_updater: TileUpdater,
 }
 
 impl Game {
     pub fn new(configuration: Configuration) -> Self {
-        let clock = Arc::new(Clock::new());
+        let clock = Clock::new();
         let map = Arc::new(Map::new(configuration.rows, configuration.columns));
-        let tile_updater = TileUpdater::new(Arc::downgrade(&clock), Arc::downgrade(&map));
+        let tile_updater = TileUpdater::new(&clock, &map);
         Game {
             configuration,
             clock,

@@ -1,6 +1,6 @@
 use serde::{Serialize, Deserialize};
 use crate::coordinate::Coordinate;
-use crate::server::Range;
+use crate::coordinate::range::Range;
 
 #[derive(Serialize, Deserialize)]
 pub struct WithCoordinate<T: Serialize>(Coordinate, T);
