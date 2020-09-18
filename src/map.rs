@@ -3,7 +3,6 @@ use crate::map::road::RoadNetwork;
 use crate::map::territory::Territory;
 use crate::coordinate::Coordinate;
 use crate::tile::{Tiles, TileFactory};
-use std::sync::{Arc, Weak};
 use crate::coordinate::range::Range;
 
 pub mod unit;
@@ -14,21 +13,21 @@ pub mod territory;
 pub struct Map {
     rows: usize,
     columns: usize,
-    terrain: Arc<Terrain>,
+    terrain: Terrain,
     territories: Vec<Territory>,
     roads: RoadNetwork,
-    tile_factory: Weak<TileFactory>,
+    tile_factory: TileFactory,
 }
 
 impl Map {
-    pub fn new(rows: usize, columns: usize, tile_factory: Weak<TileFactory>) -> Self {
+    pub fn new(rows: usize, columns: usize) -> Self {
         Map {
             rows,
             columns,
-            terrain: Arc::new(Terrain::new(rows, columns)),
+            terrain: Terrain::new(rows, columns),
             territories: Default::default(),
             roads: Default::default(),
-            tile_factory,
+            tile_factory: TileFactory::new(),
         }
     }
 
@@ -55,11 +54,7 @@ impl Map {
             territory.can_construct(&at, tile)
         } else {
             if tile == Tiles::Warehouse && self.territories.is_empty() {
-                return if let Some(tile_factory) = self.tile_factory.upgrade() {
-                    tile_factory.tile(Tiles::Warehouse).allowed(at, self.terrain(), None)
-                } else {
-                    false
-                };
+                return self.tile_factory.tile(Tiles::Warehouse).allowed(at, self.terrain(), None);
             }
             false
         };

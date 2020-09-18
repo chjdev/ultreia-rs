@@ -2,6 +2,7 @@ use crate::observable::{Observer, WeakObserver};
 use crate::clock::{Tick, Clock};
 use std::sync::{Weak, Arc};
 use crate::map::Map;
+use std::hash::Hash;
 
 struct TileUpdateObserver {
     map: Weak<Map>,

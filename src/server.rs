@@ -30,7 +30,7 @@ async fn clock_epoch(game: web::Data<Game>) -> HttpResponse {
 #[post("/clock")]
 async fn clock_tick(game: web::Data<Game>) -> HttpResponse {
     game.clock().tick();
-    ok(())
+    ok(game.clock().epoch())
 }
 
 #[derive(Deserialize)]
