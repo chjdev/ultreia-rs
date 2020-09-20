@@ -13,7 +13,8 @@ type WeakObserver<E> = Weak<SomeObserver<E>>;
 
 pub struct ObserverRegistration<E> {
     weak: WeakObserver<E>,
-    ptr: *const SomeObserver<E>,
+    // todo hmm is this safe? only used for the hash value
+    ptr: usize,
 }
 
 impl<E> Clone for ObserverRegistration<E> {
@@ -35,7 +36,7 @@ impl<E> Eq for ObserverRegistration<E> {}
 
 impl<E> PartialEq for ObserverRegistration<E> {
     fn eq(&self, other: &Self) -> bool {
-        std::ptr::eq(self.ptr, other.ptr)
+        self.ptr == other.ptr
     }
 }
 
@@ -56,7 +57,7 @@ impl<E> Observers<E> {
         let mut observers = self.observers.write().expect("failed to acquire write lock in register");
         let next_observer = ObserverRegistration {
             weak: Arc::downgrade(observer) as WeakObserver<E>,
-            ptr: Arc::as_ptr(observer) as *const SomeObserver<E>,
+            ptr: Arc::as_ptr(observer) as usize,
         };
         observers.insert(next_observer.clone());
         next_observer

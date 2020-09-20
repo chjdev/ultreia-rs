@@ -2,9 +2,10 @@ use std::sync::Weak;
 
 use crate::coordinate::indexed::Indexed;
 use crate::coordinate::Coordinate;
-use crate::tile::{Tiles, TileFactory, State, SomeTileInstance};
+use crate::tile::{Tiles, TileFactory, SomeTileInstance};
 use crate::coordinate::range::Range;
 use crate::map::terrain::Terrain;
+use crate::tile::state::State;
 
 pub type TerritoryMap = Indexed<SomeTileInstance>;
 
@@ -80,7 +81,7 @@ impl Territory {
                         let warehouse = self.get(&warehouse_coordinate).unwrap();
                         let mut state_lock = warehouse.state_mut();
                         let mut warehouse_state = state_lock.as_mut().unwrap();
-                        let has = *warehouse_state.get(good);
+                        let has = *warehouse_state.get(good).unwrap_or(&0);
                         let consumes = value.min(&has);
                         rest -= consumes;
                         warehouse_state -= (good, consumes);

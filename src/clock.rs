@@ -1,13 +1,18 @@
+use serde::{Serialize, Deserialize};
 use crate::observable::{Observable, Observers};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-pub struct Tick;
+#[derive(Copy, Clone, Eq, PartialOrd, PartialEq, Ord, Serialize, Deserialize)]
+pub struct Tick(usize);
 
-const TICK: Tick = Tick {};
+#[derive(Copy, Clone, Eq, PartialOrd, PartialEq, Ord, Serialize, Deserialize)]
+pub struct Tock(usize);
 
-pub struct Tock;
-
-const TOCK: Tock = Tock {};
+impl From<Tick> for Tock {
+    fn from(tick: Tick) -> Self {
+        Tock(tick.0)
+    }
+}
 
 pub struct Clock {
     epoch: AtomicUsize,
@@ -39,12 +44,14 @@ impl Clock {
 
     pub fn tick(&self) {
         self.epoch.fetch_add(1, Ordering::Release);
-        self.notify_all(&TICK);
-        self.tock();
+        let tick = Tick(self.epoch());
+        self.notify_all(&tick);
+        self.tock(tick);
     }
 
-    fn tock(&self) {
-        self.notify_all(&TOCK);
+    fn tock(&self, tick: Tick) {
+        let tock = Tock::from(tick);
+        self.notify_all(&tock);
     }
 }
 
