@@ -1,13 +1,28 @@
-use crate::good::{Inventory, Good};
+use crate::good::{Inventory, Good, InventoryAmount};
 use std::iter::FromIterator;
 use crate::tile::consumes::Consumes;
 use crate::tile::produces::Produces;
 use crate::tile::costs::Costs;
 use std::cmp::Ordering;
-use std::collections::hash_map::Keys;
+use std::ops::{Deref, DerefMut};
+use crate::tile::helpers::{add_assign, sub_assign};
 
-#[derive(Default)]
+#[derive(Default, Clone, PartialEq, Eq)]
 pub struct State(Inventory);
+
+impl Deref for State {
+    type Target = Inventory;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for State {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
 
 impl State {
     pub fn new() -> Self {
@@ -31,31 +46,23 @@ impl State {
         }
         Some(state)
     }
-
-    pub fn keys(&self) -> Keys<'_, Good, i32> {
-        self.0.keys()
-    }
-
-    pub fn get(&self, key: &Good) -> Option<&i32> {
-        self.0.get(key)
-    }
 }
 
-impl FromIterator<(Good, i32)> for State {
-    fn from_iter<T: IntoIterator<Item=(Good, i32)>>(iter: T) -> Self {
+impl FromIterator<(Good, InventoryAmount)> for State {
+    fn from_iter<T: IntoIterator<Item=(Good, InventoryAmount)>>(iter: T) -> Self {
         Self(iter.into_iter().collect::<Inventory>())
     }
 }
 
-impl<'a> FromIterator<&'a (Good, i32)> for State {
-    fn from_iter<T: IntoIterator<Item=&'a (Good, i32)>>(iter: T) -> Self {
+impl<'a> FromIterator<&'a (Good, InventoryAmount)> for State {
+    fn from_iter<T: IntoIterator<Item=&'a (Good, InventoryAmount)>>(iter: T) -> Self {
         Self(iter.into_iter().cloned().collect::<Inventory>())
     }
 }
 
 impl IntoIterator for State {
-    type Item = (Good, i32);
-    type IntoIter = std::collections::hash_map::IntoIter<Good, i32>;
+    type Item = (Good, InventoryAmount);
+    type IntoIter = std::collections::hash_map::IntoIter<Good, InventoryAmount>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
@@ -63,8 +70,8 @@ impl IntoIterator for State {
 }
 
 impl<'a> IntoIterator for &'a State {
-    type Item = (&'a Good, &'a i32);
-    type IntoIter = std::collections::hash_map::Iter<'a, Good, i32>;
+    type Item = (&'a Good, &'a InventoryAmount);
+    type IntoIter = std::collections::hash_map::Iter<'a, Good, InventoryAmount>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.iter()
@@ -72,74 +79,109 @@ impl<'a> IntoIterator for &'a State {
 }
 
 impl<'a> IntoIterator for &'a mut State {
-    type Item = (&'a Good, &'a mut i32);
-    type IntoIter = std::collections::hash_map::IterMut<'a, Good, i32>;
+    type Item = (&'a Good, &'a mut InventoryAmount);
+    type IntoIter = std::collections::hash_map::IterMut<'a, Good, InventoryAmount>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.iter_mut()
     }
 }
 
-impl std::ops::AddAssign<(&Good, &i32)> for &mut State {
-    fn add_assign(&mut self, rhs: (&Good, &i32)) {
-        let (good, value) = rhs;
-        let old = *self.0.get(good).unwrap_or(&0);
-        self.0.insert(*good, *value + old);
+impl std::ops::AddAssign<(&Good, &InventoryAmount)> for State {
+    fn add_assign(&mut self, rhs: (&Good, &InventoryAmount)) {
+        add_assign(self, rhs)
     }
 }
 
-impl std::ops::AddAssign<&State> for &mut State {
-    fn add_assign(&mut self, rhs: &State) {
+impl std::ops::AddAssign<(&Good, &InventoryAmount)> for &mut State {
+    fn add_assign(&mut self, rhs: (&Good, &InventoryAmount)) {
+        add_assign(*self, rhs)
+    }
+}
+
+impl std::ops::SubAssign<(&Good, &InventoryAmount)> for State {
+    fn sub_assign(&mut self, rhs: (&Good, &InventoryAmount)) {
+        sub_assign(self, rhs)
+    }
+}
+
+impl std::ops::SubAssign<(&Good, &InventoryAmount)> for &mut State {
+    fn sub_assign(&mut self, rhs: (&Good, &InventoryAmount)) {
+        sub_assign(*self, rhs)
+    }
+}
+
+impl std::ops::AddAssign<&Inventory> for State {
+    fn add_assign(&mut self, rhs: &Inventory) {
         for tuple in rhs {
             *self += tuple;
         }
     }
 }
 
-impl std::ops::AddAssign<&State> for State {
-    fn add_assign(&mut self, rhs: &State) {
-        // wont let me borrow self as mut for some reason
-        for (good, value) in rhs {
-            let old = *self.0.get(good).unwrap_or(&0);
-            self.0.insert(*good, *value + old);
+impl std::ops::AddAssign<&Inventory> for &mut State {
+    fn add_assign(&mut self, rhs: &Inventory) {
+        for tuple in rhs {
+            *self += tuple;
         }
     }
 }
 
-impl std::ops::SubAssign<(&Good, &i32)> for State {
-    fn sub_assign(&mut self, rhs: (&Good, &i32)) {
-        let (good, value) = rhs;
-        let old = *self.0.get(good).unwrap_or(&0);
-        self.0.insert(*good, *value - old);
+impl std::ops::SubAssign<&Inventory> for State {
+    fn sub_assign(&mut self, rhs: &Inventory) {
+        for tuple in rhs {
+            *self -= tuple;
+        }
     }
 }
 
-impl std::ops::SubAssign<(&Good, &i32)> for &mut State {
-    fn sub_assign(&mut self, rhs: (&Good, &i32)) {
-        let (good, value) = rhs;
-        let old = *self.0.get(good).unwrap_or(&0);
-        self.0.insert(*good, *value - old);
+impl std::ops::SubAssign<&Inventory> for &mut State {
+    fn sub_assign(&mut self, rhs: &Inventory) {
+        for tuple in rhs {
+            *self -= tuple;
+        }
     }
 }
 
+impl std::ops::AddAssign<&State> for State {
+    fn add_assign(&mut self, rhs: &State) {
+        *self += &**rhs
+    }
+}
+
+impl std::ops::AddAssign<&State> for &mut State {
+    fn add_assign(&mut self, rhs: &State) {
+        *self += &**rhs
+    }
+}
+
+impl std::ops::SubAssign<&State> for State {
+    fn sub_assign(&mut self, rhs: &State) {
+        *self -= &**rhs
+    }
+}
+
+impl std::ops::SubAssign<&State> for &mut State {
+    fn sub_assign(&mut self, rhs: &State) {
+        *self -= &**rhs
+    }
+}
+
+impl std::ops::SubAssign<&Costs> for State {
+    fn sub_assign(&mut self, rhs: &Costs) {
+        *self -= &**rhs
+    }
+}
+
+impl std::ops::SubAssign<&Costs> for &mut State {
+    fn sub_assign(&mut self, rhs: &Costs) {
+        *self -= &**rhs
+    }
+}
 
 impl PartialEq<Costs> for State {
     fn eq(&self, other: &Costs) -> bool {
-        for key in other.keys() {
-            if !self.0.contains_key(key) {
-                return false;
-            }
-            if other.get(key).unwrap_or(&0) != self.0.get(key).unwrap_or(&0) {
-                return false;
-            }
-        }
-        true
-    }
-}
-
-impl PartialEq<&Costs> for State {
-    fn eq(&self, other: &&Costs) -> bool {
-        self.eq(*other)
+        **self == **other
     }
 }
 
@@ -159,6 +201,12 @@ impl PartialOrd<Costs> for State {
             }
         }
         Some(if is_less { Ordering::Less } else { Ordering::Equal })
+    }
+}
+
+impl PartialEq<&Costs> for State {
+    fn eq(&self, other: &&Costs) -> bool {
+        self.eq(*other)
     }
 }
 

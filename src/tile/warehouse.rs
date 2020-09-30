@@ -4,7 +4,7 @@ use crate::coordinate::Coordinate;
 use crate::coordinate::range::Range;
 use crate::tile::{Consumes, Tile, Tiles, SomeTileInstance};
 use crate::tile::instance::DefaultInstance;
-use crate::good::{BuildingMaterial, Weapon, ProductionGood, Good};
+use crate::good::{BuildingMaterial, Weapon, ProductionGood, Good, InventoryAmount};
 use crate::coordinate::range::RangeFactory;
 use crate::map::territory::Territory;
 use crate::map::terrain::{Terrain, TerrainType};
@@ -17,11 +17,11 @@ pub struct Warehouse {
 impl Warehouse {
     pub fn new() -> Self {
         let mut pairs = vec![];
-        let production_goods: Vec<(Good, i32)> = ProductionGood::iter().map(|g| (Good::ProductionGood(g), 100)).collect();
+        let production_goods: Vec<(Good, InventoryAmount)> = ProductionGood::iter().map(|g| (Good::ProductionGood(g), 100)).collect();
         pairs.extend(production_goods);
-        let weapons: Vec<(Good, i32)>  = Weapon::iter().map(|g| (Good::Weapon(g), 100)).collect();
+        let weapons: Vec<(Good, InventoryAmount)>  = Weapon::iter().map(|g| (Good::Weapon(g), 100)).collect();
         pairs.extend(weapons);
-        let building_materials: Vec<(Good, i32)> = BuildingMaterial::iter().map(|g| (Good::BuildingMaterial(g), 100)).collect();
+        let building_materials: Vec<(Good, InventoryAmount)> = BuildingMaterial::iter().map(|g| (Good::BuildingMaterial(g), 100)).collect();
         pairs.extend(building_materials);
         Warehouse {
             tile: Tiles::Warehouse,

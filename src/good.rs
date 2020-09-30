@@ -154,4 +154,5 @@ pub enum Good {
     Weapon(Weapon),
 }
 
-pub type Inventory = HashMap<Good, i32>;
+pub type InventoryAmount = u32;
+pub type Inventory = HashMap<Good, InventoryAmount>;

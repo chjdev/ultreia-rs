@@ -16,7 +16,6 @@ pub struct Map {
     terrain: Terrain,
     territories: Vec<Territory>,
     roads: RoadNetwork,
-    tile_factory: TileFactory,
 }
 
 impl Map {
@@ -27,7 +26,6 @@ impl Map {
             terrain: Terrain::new(rows, columns),
             territories: Default::default(),
             roads: Default::default(),
-            tile_factory: TileFactory::new(),
         }
     }
 
@@ -54,7 +52,7 @@ impl Map {
             territory.can_construct(&at, tile)
         } else {
             if tile == Tiles::Warehouse && self.territories.is_empty() {
-                return self.tile_factory.tile(Tiles::Warehouse).allowed(at, self.terrain(), None);
+                return TileFactory::instance().tile(Tiles::Warehouse).allowed(at, self.terrain(), None);
             }
             false
         };

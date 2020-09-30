@@ -181,14 +181,9 @@ pub struct Terrain {
 
 impl Terrain {
     pub fn new_seeded(rows: usize, columns: usize, seed: u32) -> Self {
-        let random_elevation = Perlin::new();
-        random_elevation.set_seed(seed);
-        let random_moisture = Perlin::new();
-        // todo
-        random_moisture.set_seed(3 * seed);
-        let random_latitude = Perlin::new();
-        // todo
-        random_latitude.set_seed(3 * seed);
+        let random_elevation = Perlin::new().set_seed(seed);
+        let random_moisture = Perlin::new().set_seed(3 * seed);
+        let random_latitude = Perlin::new().set_seed(7 * seed);
         Terrain {
             width: columns as f64,
             height: rows as f64,
@@ -199,7 +194,7 @@ impl Terrain {
     }
 
     pub fn new(rows: usize, columns: usize) -> Self {
-        Terrain::new_seeded(rows, columns, 0)
+        Terrain::new_seeded(rows, columns, 12345)
     }
 
     fn random_elevation(&self, x: f64, y: f64) -> f64 {
