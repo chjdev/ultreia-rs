@@ -1,7 +1,7 @@
+use crate::good::{Good, Inventory, InventoryAmount};
 use std::ops::DerefMut;
-use crate::good::{Inventory, Good, InventoryAmount};
 
-pub fn add_assign(me: &mut impl DerefMut<Target=Inventory>, rhs: (&Good, &InventoryAmount)) {
+pub fn add_assign(me: &mut impl DerefMut<Target = Inventory>, rhs: (&Good, &InventoryAmount)) {
     let (good, value) = rhs;
     let inventory: &mut Inventory = me.deref_mut();
     if let Some(old) = inventory.get_mut(good) {
@@ -9,7 +9,7 @@ pub fn add_assign(me: &mut impl DerefMut<Target=Inventory>, rhs: (&Good, &Invent
     }
 }
 
-pub fn sub_assign(me: &mut impl DerefMut<Target=Inventory>, rhs: (&Good, &InventoryAmount)) {
+pub fn sub_assign(me: &mut impl DerefMut<Target = Inventory>, rhs: (&Good, &InventoryAmount)) {
     let (good, value) = rhs;
     let inventory: &mut Inventory = me.deref_mut();
     if let Some(old) = inventory.get_mut(good) {

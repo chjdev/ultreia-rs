@@ -1,30 +1,27 @@
-
-
-use serde_repr::{Serialize_repr, Deserialize_repr};
-use std::collections::HashMap;
-use crate::tile::pioneer::Pioneer;
 use crate::coordinate::range::Range;
 use crate::coordinate::Coordinate;
-use crate::tile::warehouse::Warehouse;
+use crate::good::{Good, Inventory, InventoryAmount};
 use crate::map::terrain::Terrain;
 use crate::map::territory::Territory;
-use crate::tile::costs::Costs;
 use crate::tile::consumes::Consumes;
+use crate::tile::costs::Costs;
+use crate::tile::pioneer::Pioneer;
 use crate::tile::produces::Produces;
 use crate::tile::state::State;
+use crate::tile::warehouse::Warehouse;
+use std::collections::HashMap;
 use std::sync::{RwLockReadGuard, RwLockWriteGuard};
-use crate::good::{Inventory, Good, InventoryAmount};
 
-mod pioneer;
-mod instance;
-mod warehouse;
-pub mod state;
-pub mod costs;
 pub mod consumes;
-pub mod produces;
+pub mod costs;
 mod helpers;
+mod instance;
+mod pioneer;
+pub mod produces;
+pub mod state;
+mod warehouse;
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash, Deserialize_repr, Serialize_repr)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash)]
 #[repr(u8)]
 pub enum Tiles {
     Pioneer,
@@ -49,12 +46,19 @@ pub trait Tile {
         self.influence_at(&Default::default())
     }
     fn create(&self) -> SomeTileInstance;
-    fn allowed(&self, _at: &Coordinate, _terrain: &Terrain, _territory: Option<&Territory>) -> bool {
+    fn allowed(
+        &self,
+        _at: &Coordinate,
+        _terrain: &Terrain,
+        _territory: Option<&Territory>,
+    ) -> bool {
         false
     }
 }
 
-pub trait TileInstance: std::ops::AddAssign<Inventory> + std::ops::AddAssign<(Good, InventoryAmount)> {
+pub trait TileInstance:
+    std::ops::AddAssign<Inventory> + std::ops::AddAssign<(Good, InventoryAmount)>
+{
     fn tile(&self) -> &Tiles;
     fn state(&self) -> Option<RwLockReadGuard<State>> {
         None
@@ -75,7 +79,7 @@ pub struct TileFactory {
 }
 
 lazy_static! {
-  static ref TILE_FACTORY_INSTANCE: TileFactory = TileFactory::new();
+    static ref TILE_FACTORY_INSTANCE: TileFactory = TileFactory::new();
 }
 
 impl TileFactory {
@@ -83,9 +87,7 @@ impl TileFactory {
         let mut tiles: HashMap<Tiles, SomeTile> = HashMap::new();
         tiles.insert(Tiles::Pioneer, Box::new(Pioneer::new()));
         tiles.insert(Tiles::Warehouse, Box::new(Warehouse::new()));
-        TileFactory {
-            tiles,
-        }
+        TileFactory { tiles }
     }
 
     pub fn instance() -> &'static Self {

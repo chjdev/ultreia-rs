@@ -1,11 +1,10 @@
-use serde::{Serialize, Deserialize};
 use crate::observable::{Observable, Observers};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-#[derive(Copy, Clone, Eq, PartialOrd, PartialEq, Ord, Serialize, Deserialize)]
+#[derive(Copy, Clone, Eq, PartialOrd, PartialEq, Ord)]
 pub struct Tick(usize);
 
-#[derive(Copy, Clone, Eq, PartialOrd, PartialEq, Ord, Serialize, Deserialize)]
+#[derive(Copy, Clone, Eq, PartialOrd, PartialEq, Ord)]
 pub struct Tock(usize);
 
 impl From<Tick> for Tock {
@@ -19,7 +18,6 @@ pub struct Clock {
     tickers: Observers<Tick>,
     tockers: Observers<Tock>,
 }
-
 
 impl Clock {
     pub fn new() -> Self {

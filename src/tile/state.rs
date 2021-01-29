@@ -1,11 +1,11 @@
-use crate::good::{Inventory, Good, InventoryAmount};
-use std::iter::FromIterator;
+use crate::good::{Good, Inventory, InventoryAmount};
 use crate::tile::consumes::Consumes;
-use crate::tile::produces::Produces;
 use crate::tile::costs::Costs;
-use std::cmp::Ordering;
-use std::ops::{Deref, DerefMut};
 use crate::tile::helpers::{add_assign, sub_assign};
+use crate::tile::produces::Produces;
+use std::cmp::Ordering;
+use std::iter::FromIterator;
+use std::ops::{Deref, DerefMut};
 
 #[derive(Default, Clone, PartialEq, Eq)]
 pub struct State(Inventory);
@@ -29,7 +29,10 @@ impl State {
         Default::default()
     }
 
-    pub fn from(maybe_consumes: Option<&Consumes>, maybe_produces: Option<&Produces>) -> Option<Self> {
+    pub fn from(
+        maybe_consumes: Option<&Consumes>,
+        maybe_produces: Option<&Produces>,
+    ) -> Option<Self> {
         if maybe_consumes.is_none() && maybe_produces.is_none() {
             return None;
         }
@@ -49,13 +52,13 @@ impl State {
 }
 
 impl FromIterator<(Good, InventoryAmount)> for State {
-    fn from_iter<T: IntoIterator<Item=(Good, InventoryAmount)>>(iter: T) -> Self {
+    fn from_iter<T: IntoIterator<Item = (Good, InventoryAmount)>>(iter: T) -> Self {
         Self(iter.into_iter().collect::<Inventory>())
     }
 }
 
 impl<'a> FromIterator<&'a (Good, InventoryAmount)> for State {
-    fn from_iter<T: IntoIterator<Item=&'a (Good, InventoryAmount)>>(iter: T) -> Self {
+    fn from_iter<T: IntoIterator<Item = &'a (Good, InventoryAmount)>>(iter: T) -> Self {
         Self(iter.into_iter().cloned().collect::<Inventory>())
     }
 }
@@ -200,7 +203,11 @@ impl PartialOrd<Costs> for State {
                 is_less = true;
             }
         }
-        Some(if is_less { Ordering::Less } else { Ordering::Equal })
+        Some(if is_less {
+            Ordering::Less
+        } else {
+            Ordering::Equal
+        })
     }
 }
 

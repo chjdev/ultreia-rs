@@ -1,11 +1,11 @@
-use std::sync::Weak;
 use crate::coordinate::indexed::Indexed;
-use crate::coordinate::Coordinate;
-use crate::tile::{Tiles, TileFactory, SomeTileInstance};
 use crate::coordinate::range::Range;
+use crate::coordinate::Coordinate;
+use crate::good::Good;
 use crate::map::terrain::Terrain;
 use crate::tile::state::State;
-use crate::good::Good;
+use crate::tile::{SomeTileInstance, TileFactory, Tiles};
+use std::sync::Weak;
 
 pub type TerritoryMap = Indexed<SomeTileInstance>;
 
@@ -75,7 +75,9 @@ impl Territory {
         let mut states = vec![];
         for warehouse_coordinate in &self.warehouses {
             let warehouse = self.get(&warehouse_coordinate).unwrap();
-            let warehouse_state = warehouse.state_mut().expect("a warehouse always has a state!");
+            let warehouse_state = warehouse
+                .state_mut()
+                .expect("a warehouse always has a state!");
             states.push(warehouse_state);
         }
 
@@ -114,12 +116,17 @@ impl Territory {
     }
 
     pub fn state(&self) -> State {
-        self.warehouses.iter()
+        self.warehouses
+            .iter()
             .map(|coordinate| self.get(coordinate))
             .filter(Option::is_some)
             .map(|option| option.unwrap())
             .filter(|maybe_warehouse| maybe_warehouse.tile() == &Tiles::Warehouse)
-            .map(|warehouse| warehouse.state().expect("warehouses are supposed to have states"))
+            .map(|warehouse| {
+                warehouse
+                    .state()
+                    .expect("warehouses are supposed to have states")
+            })
             .fold(State::new(), |mut acc, warehouse_state| {
                 acc += &*warehouse_state;
                 acc

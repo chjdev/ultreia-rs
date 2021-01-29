@@ -1,13 +1,13 @@
+use crate::coordinate::range::Range;
+use crate::coordinate::range::RangeFactory;
+use crate::coordinate::Coordinate;
+use crate::good::{BuildingMaterial, Good, InventoryAmount, ProductionGood, Weapon};
+use crate::map::terrain::{Terrain, TerrainType};
+use crate::map::territory::Territory;
+use crate::tile::instance::DefaultInstance;
+use crate::tile::{Consumes, SomeTileInstance, Tile, Tiles};
 use std::iter::FromIterator;
 use strum::IntoEnumIterator;
-use crate::coordinate::Coordinate;
-use crate::coordinate::range::Range;
-use crate::tile::{Consumes, Tile, Tiles, SomeTileInstance};
-use crate::tile::instance::DefaultInstance;
-use crate::good::{BuildingMaterial, Weapon, ProductionGood, Good, InventoryAmount};
-use crate::coordinate::range::RangeFactory;
-use crate::map::territory::Territory;
-use crate::map::terrain::{Terrain, TerrainType};
 
 pub struct Warehouse {
     tile: Tiles,
@@ -17,15 +17,20 @@ pub struct Warehouse {
 impl Warehouse {
     pub fn new() -> Self {
         let mut pairs = vec![];
-        let production_goods: Vec<(Good, InventoryAmount)> = ProductionGood::iter().map(|g| (Good::ProductionGood(g), 100)).collect();
+        let production_goods: Vec<(Good, InventoryAmount)> = ProductionGood::iter()
+            .map(|g| (Good::ProductionGood(g), 100))
+            .collect();
         pairs.extend(production_goods);
-        let weapons: Vec<(Good, InventoryAmount)>  = Weapon::iter().map(|g| (Good::Weapon(g), 100)).collect();
+        let weapons: Vec<(Good, InventoryAmount)> =
+            Weapon::iter().map(|g| (Good::Weapon(g), 100)).collect();
         pairs.extend(weapons);
-        let building_materials: Vec<(Good, InventoryAmount)> = BuildingMaterial::iter().map(|g| (Good::BuildingMaterial(g), 100)).collect();
+        let building_materials: Vec<(Good, InventoryAmount)> = BuildingMaterial::iter()
+            .map(|g| (Good::BuildingMaterial(g), 100))
+            .collect();
         pairs.extend(building_materials);
         Warehouse {
             tile: Tiles::Warehouse,
-            consumes: Consumes::from_iter(pairs)
+            consumes: Consumes::from_iter(pairs),
         }
     }
 }
@@ -35,7 +40,7 @@ impl Tile for Warehouse {
         &self.tile
     }
 
-    fn consumes(&self)-> Option<&Consumes> {
+    fn consumes(&self) -> Option<&Consumes> {
         Some(&self.consumes)
     }
 

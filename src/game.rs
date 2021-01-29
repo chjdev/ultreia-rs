@@ -1,13 +1,11 @@
 mod tile_updater;
 
-use serde::{Serialize, Deserialize};
 use crate::clock::Clock;
-use crate::map::Map;
 use crate::game::tile_updater::TileUpdater;
+use crate::map::Map;
 use std::sync::Arc;
 
-#[repr(C)]
-#[derive(Copy, Clone, Serialize, Deserialize)]
+#[derive(Copy, Clone)]
 pub struct Configuration {
     rows: usize,
     columns: usize,
@@ -15,10 +13,15 @@ pub struct Configuration {
 
 impl Configuration {
     pub fn new(rows: usize, columns: usize) -> Self {
-        Configuration {
-            rows,
-            columns,
-        }
+        Configuration { rows, columns }
+    }
+
+    pub fn rows(&self) -> usize {
+        self.rows
+    }
+
+    pub fn columns(&self) -> usize {
+        self.columns
     }
 }
 

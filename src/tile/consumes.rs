@@ -1,7 +1,7 @@
-use crate::good::{Inventory, Good, InventoryAmount};
+use crate::good::{Good, Inventory, InventoryAmount};
+use crate::tile::helpers::{add_assign, sub_assign};
 use std::iter::FromIterator;
 use std::ops::{Deref, DerefMut};
-use crate::tile::helpers::{add_assign, sub_assign};
 
 #[derive(Default, Clone, PartialEq, Eq)]
 pub struct Consumes(Inventory);
@@ -31,13 +31,13 @@ impl Consumes {
 }
 
 impl FromIterator<(Good, InventoryAmount)> for Consumes {
-    fn from_iter<T: IntoIterator<Item=(Good, InventoryAmount)>>(iter: T) -> Self {
+    fn from_iter<T: IntoIterator<Item = (Good, InventoryAmount)>>(iter: T) -> Self {
         Self(iter.into_iter().collect::<Inventory>())
     }
 }
 
 impl<'a> FromIterator<&'a (Good, InventoryAmount)> for Consumes {
-    fn from_iter<T: IntoIterator<Item=&'a (Good, InventoryAmount)>>(iter: T) -> Self {
+    fn from_iter<T: IntoIterator<Item = &'a (Good, InventoryAmount)>>(iter: T) -> Self {
         Self(iter.into_iter().cloned().collect::<Inventory>())
     }
 }

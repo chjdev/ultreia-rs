@@ -1,6 +1,6 @@
-use crate::tile::{TileInstance, Tiles, State, Tile, SomeTileInstance};
+use crate::good::{Good, Inventory, InventoryAmount};
+use crate::tile::{SomeTileInstance, State, Tile, TileInstance, Tiles};
 use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
-use crate::good::{Inventory, Good, InventoryAmount};
 
 pub struct DefaultInstance {
     tile: Tiles,
@@ -55,7 +55,7 @@ impl std::ops::AddAssign<Inventory> for DefaultInstance {
             let mut state = s.write().expect("could not lock state for reading");
             *state += &rhs;
         }
-   }
+    }
 }
 
 impl std::ops::AddAssign<(Good, InventoryAmount)> for DefaultInstance {

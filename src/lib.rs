@@ -4,16 +4,12 @@
 #[macro_use]
 extern crate lazy_static;
 
-mod ffi;
-
-pub use ffi::*;
-
+mod clock;
 mod coordinate;
 mod game;
-mod tile;
+mod godot;
 mod good;
 mod map;
 mod observable;
-mod clock;
 mod player;
-mod server;
+mod tile;

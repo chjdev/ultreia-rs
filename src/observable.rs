@@ -1,6 +1,6 @@
 use std::collections::HashSet;
-use std::sync::{Weak, RwLock, Arc};
 use std::hash::{Hash, Hasher};
+use std::sync::{Arc, RwLock, Weak};
 
 pub trait Observer<E> {
     fn notify(&self, event: &E);
@@ -53,8 +53,14 @@ impl<E> Observers<E> {
         }
     }
 
-    pub fn register<SO>(&self, observer: &Arc<SO>) -> ObserverRegistration<E> where SO: 'static + Observer<E> + Send + Sync {
-        let mut observers = self.observers.write().expect("failed to acquire write lock in register");
+    pub fn register<SO>(&self, observer: &Arc<SO>) -> ObserverRegistration<E>
+    where
+        SO: 'static + Observer<E> + Send + Sync,
+    {
+        let mut observers = self
+            .observers
+            .write()
+            .expect("failed to acquire write lock in register");
         let next_observer = ObserverRegistration {
             weak: Arc::downgrade(observer) as WeakObserver<E>,
             ptr: Arc::as_ptr(observer) as usize,
@@ -64,16 +70,24 @@ impl<E> Observers<E> {
     }
 
     pub fn deregister(&self, registration: &ObserverRegistration<E>) -> bool {
-        self.observers.write().expect("failed to acquire write lock in deregister").remove(registration)
+        self.observers
+            .write()
+            .expect("failed to acquire write lock in deregister")
+            .remove(registration)
     }
 }
 
 pub trait Observable<E> {
     fn observers(&self) -> &Observers<E>;
 
-    fn notify_all(&self, event: &E)
-    {
-        for registration in self.observers().observers.read().expect("failed to acquire read lock").iter() {
+    fn notify_all(&self, event: &E) {
+        for registration in self
+            .observers()
+            .observers
+            .read()
+            .expect("failed to acquire read lock")
+            .iter()
+        {
             if let Some(observer) = registration.weak.upgrade() {
                 observer.notify(event);
             } else {
@@ -82,5 +96,3 @@ pub trait Observable<E> {
         }
     }
 }
-
-

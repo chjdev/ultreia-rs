@@ -1,14 +1,14 @@
-use crate::map::terrain::Terrain;
-use crate::map::road::RoadNetwork;
-use crate::map::territory::Territory;
-use crate::coordinate::Coordinate;
-use crate::tile::{Tiles, TileFactory};
 use crate::coordinate::range::Range;
+use crate::coordinate::Coordinate;
+use crate::map::road::RoadNetwork;
+use crate::map::terrain::Terrain;
+use crate::map::territory::Territory;
+use crate::tile::{TileFactory, Tiles};
 
-pub mod unit;
 pub mod road;
 pub mod terrain;
 pub mod territory;
+pub mod unit;
 
 pub struct Map {
     rows: usize,
@@ -52,13 +52,20 @@ impl Map {
             territory.can_construct(&at, tile)
         } else {
             if tile == Tiles::Warehouse && self.territories.is_empty() {
-                return TileFactory::instance().tile(Tiles::Warehouse).allowed(at, self.terrain(), None);
+                return TileFactory::instance().tile(Tiles::Warehouse).allowed(
+                    at,
+                    self.terrain(),
+                    None,
+                );
             }
             false
         };
     }
 
     pub fn can_construct_range(&self, range: &Range, tile: Tiles) -> Vec<bool> {
-        range.iter().map(|coordinate| self.can_construct(coordinate, tile)).collect()
+        range
+            .iter()
+            .map(|coordinate| self.can_construct(coordinate, tile))
+            .collect()
     }
 }

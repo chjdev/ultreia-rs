@@ -1,19 +1,17 @@
-use serde::{Serialize, Deserialize};
-use serde_repr::{Serialize_repr, Deserialize_repr};
-use crate::coordinate::{Coordinate, Offset};
-use noise::{Perlin, Seedable, NoiseFn};
 use crate::coordinate::range::Range;
-use std::ops::{Mul};
+use crate::coordinate::{Coordinate, Offset};
+use noise::{NoiseFn, Perlin, Seedable};
+use std::ops::Mul;
+use strum_macros;
 
-#[derive(PartialEq, Eq, Copy, Clone, Deserialize_repr, Serialize_repr)]
-#[repr(u8)]
+#[derive(PartialEq, Eq, Copy, Clone, strum_macros::EnumIter, strum_macros::EnumCount)]
 pub enum TerrainType {
+    None,
     Bare,
     Beach,
     Grassland,
     Ice,
     Marsh,
-    None,
     Ocean,
     Scorched,
     Shrubland,
@@ -136,9 +134,7 @@ impl TerrainType {
     }
 }
 
-
-#[repr(C)]
-#[derive(Default, Serialize, Deserialize)]
+#[derive(Default)]
 pub struct TerrainTile {
     elevation: f64,
     moisture: f64,
@@ -194,7 +190,7 @@ impl Terrain {
     }
 
     pub fn new(rows: usize, columns: usize) -> Self {
-        Terrain::new_seeded(rows, columns, 12345)
+        Terrain::new_seeded(rows, columns, 123)
     }
 
     fn random_elevation(&self, x: f64, y: f64) -> f64 {
@@ -212,25 +208,19 @@ impl Terrain {
     // https://www.redblobgames.com/maps/terrain-from-noise/#islands
     pub fn get(&self, coordinate: &Coordinate) -> TerrainTile {
         let offset: Offset = coordinate.into();
-        let x = offset.column as f64;
-        let y = offset.row as f64;
-        if x < 0. || x >= self.width || y < 0. || y >= self.height {
-            return Default::default();
-        }
+        let x = offset.column() as f64;
+        let y = offset.row() as f64;
         let nx = 2.0 * ((x / self.width) - 0.5);
         let hard_ny = 2.0 * ((y / self.height) - 0.5);
         let ny = self.smudge_latitude(nx, hard_ny);
-        let elevation: f64 = (
-            self.random_elevation(nx, ny) +
-                self.random_elevation(16. * nx, 16. * ny)).mul(0.5).powf(3.);
+        let elevation: f64 = (self.random_elevation(nx, ny)
+            + self.random_elevation(16. * nx, 16. * ny))
+        .mul(0.5)
+        .powf(3.);
         let moisture: f64 = self.random_moisture(64. * nx, 64. * ny);
         let latitude: f64 = ((ny * std::f64::consts::FRAC_PI_2).sin() * 90.).abs();
         let terrain_type = TerrainType::new(latitude, elevation, moisture);
-        TerrainTile::new(
-            elevation,
-            moisture,
-            terrain_type,
-        )
+        TerrainTile::new(elevation, moisture, terrain_type)
     }
 
     pub fn range(&self, range: &Range) -> Vec<TerrainTile> {

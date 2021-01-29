@@ -1,9 +1,9 @@
-use crate::coordinate::Coordinate;
 use crate::coordinate::range::{Range, RangeFactory};
-use crate::tile::{Consumes, Tile, Tiles, SomeTileInstance};
-use crate::tile::instance::DefaultInstance;
-use crate::good::ProductionGood::Fish;
+use crate::coordinate::Coordinate;
 use crate::good::Good::ProductionGood;
+use crate::good::ProductionGood::Fish;
+use crate::tile::instance::DefaultInstance;
+use crate::tile::{Consumes, SomeTileInstance, Tile, Tiles};
 
 pub struct Pioneer {
     tile: Tiles,
@@ -31,5 +31,4 @@ impl Tile for Pioneer {
     fn create(&self) -> SomeTileInstance {
         DefaultInstance::from(self)
     }
-
 }

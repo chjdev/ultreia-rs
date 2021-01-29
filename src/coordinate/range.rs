@@ -1,16 +1,16 @@
-use std::iter::FromIterator;
-use crate::coordinate::{Coordinate, ZERO, Offset};
+use crate::coordinate::{Coordinate, Offset, ZERO};
 use std::collections::HashSet;
+use std::iter::FromIterator;
 
 pub type Range = HashSet<Coordinate>;
 
 const DIRECTIONS: [Coordinate; 6] = [
-    Coordinate::new(1, -1, 0),
-    Coordinate::new(1, 0, -1),
-    Coordinate::new(0, 1, -1),
-    Coordinate::new(-1, 1, 0),
-    Coordinate::new(-1, 0, 1),
-    Coordinate::new(0, -1, 1),
+    Coordinate::new(1, -1),
+    Coordinate::new(1, 0),
+    Coordinate::new(0, 1),
+    Coordinate::new(-1, 1),
+    Coordinate::new(-1, 0),
+    Coordinate::new(0, -1),
 ];
 
 pub trait RangeFactory {
@@ -22,9 +22,7 @@ pub trait RangeFactory {
         if *coordinate == ZERO {
             return Range::from_iter(DIRECTIONS.iter().cloned());
         }
-        Range::from_iter(DIRECTIONS.iter().map(|d| {
-            coordinate + d
-        }))
+        Range::from_iter(DIRECTIONS.iter().map(|d| coordinate + d))
     }
 
     fn circle(center: &Coordinate, radius: u16) -> Range {
@@ -34,8 +32,7 @@ pub trait RangeFactory {
             let lower = (-i_radius).max(-x - i_radius);
             let upper = (i_radius).max(-x + i_radius);
             for y in lower..=upper {
-                let z = -x - y;
-                let offset = Coordinate::new(x, y, z);
+                let offset = Coordinate::new(x, y);
                 results.push(center + offset);
             }
         }
@@ -55,10 +52,22 @@ pub trait RangeFactory {
     }
 
     fn rectangle(from_corner: &Coordinate, to_corner: &Coordinate) -> Range {
-        let Offset { row: row_from, column: column_from } = from_corner.into();
-        let Offset { row: row_to, column: column_to } = to_corner.into();
-        Range::from_iter((row_from..=row_to).flat_map(move |row| (column_from..=column_to).map(move |column| -> Coordinate
-            { Offset::new(column, row).into() })).into_iter())
+        let Offset {
+            row: row_from,
+            column: column_from,
+        } = from_corner.into();
+        let Offset {
+            row: row_to,
+            column: column_to,
+        } = to_corner.into();
+        Range::from_iter(
+            (row_from..=row_to)
+                .flat_map(move |row| {
+                    (column_from..=column_to)
+                        .map(move |column| -> Coordinate { Offset::new(column, row).into() })
+                })
+                .into_iter(),
+        )
     }
 
     fn rectangle0(to_corner: &Coordinate) -> Range {

@@ -2,7 +2,6 @@ use std::collections::HashMap;
 use strum_macros::EnumIter;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, EnumIter)]
-#[repr(C)]
 pub enum NaturalGood {
     CoalRepo,
     CopperOreRepo,
@@ -18,7 +17,6 @@ pub enum NaturalGood {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, EnumIter)]
-#[repr(C)]
 pub enum BuildingMaterial {
     Bells,
     Brick,
@@ -30,7 +28,6 @@ pub enum BuildingMaterial {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, EnumIter)]
-#[repr(C)]
 pub enum HarvestableGood {
     Cattle,
     CocoaPlant,
@@ -54,7 +51,6 @@ pub enum HarvestableGood {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, EnumIter)]
-#[repr(C)]
 pub enum ProductionGood {
     Alcohol,
     Amber,
@@ -121,7 +117,6 @@ pub enum ProductionGood {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, EnumIter)]
-#[repr(C)]
 pub enum Weapon {
     Armor,
     Cannon,
@@ -133,7 +128,6 @@ pub enum Weapon {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, EnumIter)]
-#[repr(C)]
 pub enum ImmaterialGood {
     Culture,
     Education,
@@ -144,7 +138,6 @@ pub enum ImmaterialGood {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-#[repr(C)]
 pub enum Good {
     BuildingMaterial(BuildingMaterial),
     HarvestableGood(HarvestableGood),

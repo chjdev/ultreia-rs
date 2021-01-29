@@ -4,5 +4,5 @@ pub struct Road;
 
 #[derive(Default)]
 pub struct RoadNetwork {
-    pub map: Indexed<Road>
+    pub map: Indexed<Road>,
 }

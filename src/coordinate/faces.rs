@@ -1,7 +1,6 @@
-use crate::coordinate::Coordinate;
 use crate::coordinate::dist::Dist;
+use crate::coordinate::Coordinate;
 
-#[repr(C)]
 pub enum Face {
     Left,
     TopLeft,
