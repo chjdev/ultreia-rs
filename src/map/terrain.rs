@@ -3,12 +3,10 @@ use crate::coordinate::{Coordinate, Offset};
 use noise::{NoiseFn, Perlin, Seedable};
 use std::ops::Mul;
 use strum_macros;
-
 #[derive(PartialEq, Eq, Copy, Clone, strum_macros::EnumIter, strum_macros::EnumCount)]
 pub enum TerrainType {
     None,
     Bare,
-    Beach,
     Grassland,
     Ice,
     Marsh,
@@ -66,14 +64,6 @@ impl TerrainType {
 
         if elevation < 0.1 {
             return TerrainType::Ocean;
-        }
-        if elevation < 0.12 {
-            if moisture < 0.1 {
-                return TerrainType::Scorched;
-            }
-            if moisture < 0.2 {
-                return TerrainType::Beach;
-            }
         }
         if elevation > 0.8 {
             if moisture < 0.1 {
@@ -170,27 +160,29 @@ impl TerrainTile {
 pub struct Terrain {
     width: f64,
     height: f64,
+    island_noise: f64,
     random_latitude: Perlin,
     random_elevation: Perlin,
     random_moisture: Perlin,
 }
 
 impl Terrain {
-    pub fn new_seeded(rows: usize, columns: usize, seed: u32) -> Self {
+    pub fn new_seeded(rows: usize, columns: usize, island_noise: f64, seed: u32) -> Self {
         let random_elevation = Perlin::new().set_seed(seed);
         let random_moisture = Perlin::new().set_seed(3 * seed);
         let random_latitude = Perlin::new().set_seed(7 * seed);
         Terrain {
             width: columns as f64,
             height: rows as f64,
+            island_noise,
             random_latitude,
             random_elevation,
             random_moisture,
         }
     }
 
-    pub fn new(rows: usize, columns: usize) -> Self {
-        Terrain::new_seeded(rows, columns, 123)
+    pub fn new(rows: usize, columns: usize, island_noise: f64) -> Self {
+        Terrain::new_seeded(rows, columns, island_noise, 1234)
     }
 
     fn random_elevation(&self, x: f64, y: f64) -> f64 {
@@ -208,16 +200,18 @@ impl Terrain {
     // https://www.redblobgames.com/maps/terrain-from-noise/#islands
     pub fn get(&self, coordinate: &Coordinate) -> TerrainTile {
         let offset: Offset = coordinate.into();
-        let x = offset.column() as f64;
-        let y = offset.row() as f64;
+        // offset 0,0 to middle of width/height
+        let x = offset.column() as f64 + self.width / 2.;
+        let y = offset.row() as f64 + self.height / 2.;
         let nx = 2.0 * ((x / self.width) - 0.5);
         let hard_ny = 2.0 * ((y / self.height) - 0.5);
         let ny = self.smudge_latitude(nx, hard_ny);
         let elevation: f64 = (self.random_elevation(nx, ny)
-            + self.random_elevation(16. * nx, 16. * ny))
+            + self.random_elevation(self.island_noise * nx, self.island_noise * ny))
         .mul(0.5)
         .powf(3.);
-        let moisture: f64 = self.random_moisture(64. * nx, 64. * ny);
+        let moisture: f64 =
+            self.random_moisture(self.island_noise * 4. * nx, self.island_noise * 4. * ny);
         let latitude: f64 = ((ny * std::f64::consts::FRAC_PI_2).sin() * 90.).abs();
         let terrain_type = TerrainType::new(latitude, elevation, moisture);
         TerrainTile::new(elevation, moisture, terrain_type)
@@ -228,14 +222,17 @@ impl Terrain {
     }
 
     pub fn minimap(&self, width: u16, height: u16) -> Vec<TerrainType> {
-        let mut minimap: Vec<TerrainType> = Vec::with_capacity((width * height) as usize);
+        // with_capacity does not work in godot context for some reason
+        let mut minimap: Vec<TerrainType> = Vec::new();
         let scale_x = self.width / (width as f64);
         let scale_y = self.height / (height as f64);
-        for y in 0..height {
-            let row_id = y as usize * width as usize;
+        let height_half = (height / 2) as i16;
+        let width_half = (width / 2) as i16;
+        for y in -height_half..height_half {
+            let row_id = (y + height_half) as usize * width as usize;
             let row = (y as f64 * scale_y) as i32;
-            for x in 0..width {
-                let idx = row_id + x as usize;
+            for x in -width_half..width_half {
+                let idx = row_id + (x + width_half) as usize;
                 let column = (x as f64 * scale_x) as i32;
                 let coordinate: Coordinate = Offset::new(column, row).into();
                 minimap.insert(idx as usize, self.get(&coordinate).terrain_type);

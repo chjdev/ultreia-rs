@@ -4,8 +4,20 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 #[derive(Copy, Clone, Eq, PartialOrd, PartialEq, Ord)]
 pub struct Tick(usize);
 
+impl Tick {
+    pub fn epoch(&self) -> usize {
+        self.0
+    }
+}
+
 #[derive(Copy, Clone, Eq, PartialOrd, PartialEq, Ord)]
 pub struct Tock(usize);
+
+impl Tock {
+    pub fn epoch(&self) -> usize {
+        self.0
+    }
+}
 
 impl From<Tick> for Tock {
     fn from(tick: Tick) -> Self {

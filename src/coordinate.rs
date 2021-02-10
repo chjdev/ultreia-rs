@@ -66,8 +66,8 @@ impl From<Offset> for Coordinate {
     fn from(offset: Offset) -> Self {
         match offset {
             Offset { row, column } => {
-                let x = column - (row - (row & 1)) / 2;
-                let z = row;
+                let x = column;
+                let z = row - (column + (column & 1)) / 2;
                 let y = -x - z;
                 Coordinate::new(x, y)
             }
@@ -79,8 +79,8 @@ impl From<&Coordinate> for Offset {
     fn from(coordinate: &Coordinate) -> Self {
         let x = coordinate.x();
         let z = coordinate.z();
-        let column = x + (z - (z & 1)) / 2;
-        let row = z;
+        let column = x;
+        let row = z + (x + (x & 1)) / 2;
         Offset { column, row }
     }
 }

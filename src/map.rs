@@ -19,11 +19,11 @@ pub struct Map {
 }
 
 impl Map {
-    pub fn new(rows: usize, columns: usize) -> Self {
+    pub fn new(rows: usize, columns: usize, island_noise: f64) -> Self {
         Map {
             rows,
             columns,
-            terrain: Terrain::new(rows, columns),
+            terrain: Terrain::new(rows, columns, island_noise),
             territories: Default::default(),
             roads: Default::default(),
         }

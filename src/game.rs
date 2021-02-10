@@ -9,11 +9,16 @@ use std::sync::Arc;
 pub struct Configuration {
     rows: usize,
     columns: usize,
+    island_noise: f64,
 }
 
 impl Configuration {
-    pub fn new(rows: usize, columns: usize) -> Self {
-        Configuration { rows, columns }
+    pub fn new(rows: usize, columns: usize, island_noise: f64) -> Self {
+        Configuration {
+            rows,
+            columns,
+            island_noise,
+        }
     }
 
     pub fn rows(&self) -> usize {
@@ -22,6 +27,10 @@ impl Configuration {
 
     pub fn columns(&self) -> usize {
         self.columns
+    }
+
+    pub fn island_noise(&self) -> f64 {
+        self.island_noise
     }
 }
 
@@ -35,7 +44,11 @@ pub struct Game {
 impl Game {
     pub fn new(configuration: Configuration) -> Self {
         let clock = Clock::new();
-        let map = Arc::new(Map::new(configuration.rows, configuration.columns));
+        let map = Arc::new(Map::new(
+            configuration.rows,
+            configuration.columns,
+            configuration.island_noise,
+        ));
         let tile_updater = TileUpdater::new(&clock, &map);
         Game {
             configuration,
