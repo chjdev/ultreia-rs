@@ -1,6 +1,8 @@
 use crate::map::terrain::TerrainType;
-use gdnative::core_types::{FromVariant, FromVariantError, ToVariant, Variant};
-use strum::{EnumCount, IntoEnumIterator};
+use gdnative::core_types::{FromVariant, FromVariantError, ToVariant, ToVariantEq, Variant};
+use strum::IntoEnumIterator;
+
+impl ToVariantEq for TerrainType {}
 
 impl ToVariant for TerrainType {
     fn to_variant(&self) -> Variant {
@@ -16,10 +18,9 @@ impl FromVariant for TerrainType {
                 "could not convert variant into a TerrainType",
             ))
             .and_then(|value| {
-                if (value as usize) >= TerrainType::COUNT {
-                    return Err(FromVariantError::custom("number outside enum scope"));
-                }
-                Ok(TerrainType::iter().nth(value as usize).unwrap())
+                Ok(TerrainType::iter()
+                    .nth(value as usize)
+                    .unwrap_or(TerrainType::default()))
             })
     }
 }

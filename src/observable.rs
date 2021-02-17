@@ -1,12 +1,13 @@
+use std::cell::RefCell;
 use std::collections::HashSet;
 use std::hash::{Hash, Hasher};
-use std::sync::{Arc, RwLock, Weak};
+use std::rc::{Rc, Weak};
 
 pub trait Observer<E> {
     fn notify(&self, event: &E);
 }
 
-type SomeObserver<E> = dyn Observer<E> + Send + Sync;
+type SomeObserver<E> = dyn Observer<E>;
 
 /// weak pointer so it will deregister itself automatically when dropped
 type WeakObserver<E> = Weak<SomeObserver<E>>;
@@ -43,37 +44,31 @@ impl<E> PartialEq for ObserverRegistration<E> {
 type ObserversStore<E> = HashSet<ObserverRegistration<E>>;
 
 pub struct Observers<E> {
-    observers: RwLock<ObserversStore<E>>,
+    observers: RefCell<ObserversStore<E>>,
 }
 
 impl<E> Observers<E> {
     pub fn new() -> Self {
         Observers {
-            observers: RwLock::new(Default::default()),
+            observers: Default::default(),
         }
     }
 
-    pub fn register<SO>(&self, observer: &Arc<SO>) -> ObserverRegistration<E>
+    pub fn register<SO>(&self, observer: &Rc<SO>) -> ObserverRegistration<E>
     where
-        SO: 'static + Observer<E> + Send + Sync,
+        SO: 'static + Observer<E>,
     {
-        let mut observers = self
-            .observers
-            .write()
-            .expect("failed to acquire write lock in register");
+        let mut observers = self.observers.borrow_mut();
         let next_observer = ObserverRegistration {
-            weak: Arc::downgrade(observer) as WeakObserver<E>,
-            ptr: Arc::as_ptr(observer) as usize,
+            weak: Rc::downgrade(observer) as WeakObserver<E>,
+            ptr: Rc::as_ptr(observer) as usize,
         };
         observers.insert(next_observer.clone());
         next_observer
     }
 
     pub fn deregister(&self, registration: &ObserverRegistration<E>) -> bool {
-        self.observers
-            .write()
-            .expect("failed to acquire write lock in deregister")
-            .remove(registration)
+        self.observers.borrow_mut().remove(registration)
     }
 }
 
@@ -81,13 +76,7 @@ pub trait Observable<E> {
     fn observers(&self) -> &Observers<E>;
 
     fn notify_all(&self, event: &E) {
-        for registration in self
-            .observers()
-            .observers
-            .read()
-            .expect("failed to acquire read lock")
-            .iter()
-        {
+        for registration in self.observers().observers.borrow().iter() {
             if let Some(observer) = registration.weak.upgrade() {
                 observer.notify(event);
             } else {

@@ -1,161 +1,14 @@
+mod terrain_tile;
+mod terrain_type;
+mod terrain_yields;
+
 use crate::coordinate::range::Range;
 use crate::coordinate::{Coordinate, Offset};
 use noise::{NoiseFn, Perlin, Seedable};
 use std::ops::Mul;
-use strum_macros;
-#[derive(PartialEq, Eq, Copy, Clone, strum_macros::EnumIter, strum_macros::EnumCount)]
-pub enum TerrainType {
-    None,
-    Bare,
-    Grassland,
-    Ice,
-    Marsh,
-    Ocean,
-    Scorched,
-    Shrubland,
-    Snow,
-    SubtropicalDesert,
-    Taiga,
-    TemperateDeciduousForest,
-    TemperateDesert,
-    TemperateRainForest,
-    TropicalRainForest,
-    TropicalSeasonalForest,
-    Tundra,
-    TundraMarsh,
-}
-
-impl Default for TerrainType {
-    fn default() -> Self {
-        Self::None
-    }
-}
-
-impl TerrainType {
-    pub fn new(latitude: f64, elevation: f64, moisture: f64) -> Self {
-        if latitude > 89.25 {
-            if elevation < 0.1 {
-                return TerrainType::Ice;
-            }
-            return TerrainType::Snow;
-        }
-        // arctic starts at 66.5
-        if latitude > 83. {
-            if elevation < 0.1 {
-                if moisture > 0.5 {
-                    return TerrainType::Ocean;
-                }
-                return TerrainType::Ice;
-            }
-            if moisture < 0.1 {
-                return TerrainType::Scorched;
-            }
-            if moisture < 0.2 {
-                return TerrainType::Bare;
-            }
-            if elevation < 0.7 {
-                if moisture < 0.7 {
-                    return TerrainType::Tundra;
-                }
-                return TerrainType::TundraMarsh;
-            }
-            return TerrainType::Snow;
-        }
-
-        if elevation < 0.1 {
-            return TerrainType::Ocean;
-        }
-        if elevation > 0.8 {
-            if moisture < 0.1 {
-                return TerrainType::Scorched;
-            }
-            if moisture < 0.2 {
-                return TerrainType::Bare;
-            }
-            return TerrainType::Snow;
-        }
-
-        if latitude > 67. {
-            if moisture < 0.1 {
-                return TerrainType::Scorched;
-            }
-            if moisture < 0.2 {
-                return TerrainType::Bare;
-            }
-            if moisture < 0.7 {
-                return TerrainType::Taiga;
-            }
-            return TerrainType::Marsh;
-        }
-
-        if latitude > 30. {
-            if elevation > 0.6 {
-                if moisture < 0.33 {
-                    return TerrainType::TemperateDesert;
-                }
-                if moisture < 0.66 {
-                    return TerrainType::Shrubland;
-                }
-                return TerrainType::Grassland;
-            }
-
-            if moisture < 0.16 {
-                return TerrainType::TemperateDesert;
-            }
-            if moisture < 0.50 {
-                return TerrainType::Grassland;
-            }
-            if moisture < 0.83 {
-                return TerrainType::TemperateDeciduousForest;
-            }
-            return TerrainType::TemperateRainForest;
-        }
-
-        if moisture < 0.16 {
-            return TerrainType::SubtropicalDesert;
-        }
-        if moisture < 0.33 {
-            return TerrainType::Grassland;
-        }
-        if moisture < 0.66 {
-            return TerrainType::TropicalSeasonalForest;
-        }
-        return TerrainType::TropicalRainForest;
-    }
-}
-
-#[derive(Default)]
-pub struct TerrainTile {
-    elevation: f64,
-    moisture: f64,
-    terrain_type: TerrainType,
-}
-
-impl TerrainTile {
-    pub fn new(elevation: f64, moisture: f64, terrain_type: TerrainType) -> Self {
-        TerrainTile {
-            elevation,
-            moisture,
-            terrain_type,
-        }
-    }
-
-    pub fn is_none(&self) -> bool {
-        return self.terrain_type == TerrainType::None;
-    }
-
-    pub fn terrain_type(&self) -> TerrainType {
-        self.terrain_type
-    }
-
-    pub fn elevation(&self) -> f64 {
-        self.elevation
-    }
-
-    pub fn moisture(&self) -> f64 {
-        self.moisture
-    }
-}
+pub use terrain_tile::TerrainTile;
+pub use terrain_type::TerrainType;
+pub use terrain_yields::{TerrainYields, Yield};
 
 pub struct Terrain {
     width: f64,
@@ -204,17 +57,36 @@ impl Terrain {
         let x = offset.column() as f64 + self.width / 2.;
         let y = offset.row() as f64 + self.height / 2.;
         let nx = 2.0 * ((x / self.width) - 0.5);
-        let hard_ny = 2.0 * ((y / self.height) - 0.5);
-        let ny = self.smudge_latitude(nx, hard_ny);
-        let elevation: f64 = (self.random_elevation(nx, ny)
-            + self.random_elevation(self.island_noise * nx, self.island_noise * ny))
+        let true_ny = 2.0 * ((y / self.height) - 0.5);
+        let smudged_ny = self.smudge_latitude(nx, true_ny);
+        let mut elevation: f64 = (self.random_elevation(nx, smudged_ny)
+            + self.random_elevation(self.island_noise * nx, self.island_noise * smudged_ny))
         .mul(0.5)
         .powf(3.);
-        let moisture: f64 =
-            self.random_moisture(self.island_noise * 4. * nx, self.island_noise * 4. * ny);
-        let latitude: f64 = ((ny * std::f64::consts::FRAC_PI_2).sin() * 90.).abs();
-        let terrain_type = TerrainType::new(latitude, elevation, moisture);
-        TerrainTile::new(elevation, moisture, terrain_type)
+        if elevation > 0.12 {
+            elevation = self
+                .random_elevation(
+                    nx * self.island_noise.powf(2.),
+                    smudged_ny * self.island_noise.powf(2.),
+                )
+                .powf(3.)
+                .max(0.12);
+        }
+        let smudged_latitude: f64 = (smudged_ny * std::f64::consts::FRAC_PI_2).sin() * 90.;
+        let moisture: f64 = self
+            .random_moisture(
+                self.island_noise * 4. * nx,
+                self.island_noise * 4. * smudged_ny,
+            )
+            .mul(1.1)
+            // tropics no desert
+            .max(if smudged_latitude.abs() < 7.5 {
+                0.1
+            } else {
+                0.
+            });
+        let true_longitude: f64 = nx * 180.;
+        TerrainTile::new(smudged_latitude, true_longitude, elevation, moisture)
     }
 
     pub fn range(&self, range: &Range) -> Vec<TerrainTile> {
@@ -235,7 +107,7 @@ impl Terrain {
                 let idx = row_id + (x + width_half) as usize;
                 let column = (x as f64 * scale_x) as i32;
                 let coordinate: Coordinate = Offset::new(column, row).into();
-                minimap.insert(idx as usize, self.get(&coordinate).terrain_type);
+                minimap.insert(idx as usize, self.get(&coordinate).terrain_type());
             }
         }
         minimap

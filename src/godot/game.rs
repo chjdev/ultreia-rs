@@ -5,18 +5,21 @@ use crate::game;
 use crate::game::Configuration;
 use crate::godot::events::clock_events::ClockEvents;
 use crate::map::terrain::{TerrainTile, TerrainType};
-use std::sync::{Arc, Mutex};
 
 #[derive(NativeClass)]
 #[inherit(Node)]
 #[register_with(Self::register_signals)]
 pub struct Game {
     game: Option<game::Game>,
+    clock_events: Option<ClockEvents>,
 }
 
 impl Game {
-    fn new(_owner: &Node) -> Self {
-        Game { game: None }
+    fn new(_onwer: &Node) -> Self {
+        Game {
+            game: None,
+            clock_events: None,
+        }
     }
 }
 
@@ -57,9 +60,18 @@ impl Game {
     fn start_game(&mut self, owner: &Node, configuration: Configuration) {
         godot_print!("starting game now");
         let game = game::Game::new(configuration);
-        let clock_events = ClockEvents::new(game.clock(), &Arc::new(Mutex::new()));
+        let my_ref = owner
+            .get_node("/root/Game")
+            .expect("no main node at: /root/Game");
+        let clock_events = ClockEvents::new(game.clock(), my_ref);
         self.game = Some(game);
+        self.clock_events = Some(clock_events);
         owner.emit_signal(GodotString::from_str("start_game"), &[]);
+    }
+
+    #[export]
+    fn tick(&self, _owner: &Node) {
+        self.game.iter().for_each(|game| game.clock().tick());
     }
 
     #[export]
@@ -76,7 +88,6 @@ impl Game {
 
     #[export]
     fn terrain_at(&self, _owner: &Node, coordinate: Coordinate) -> Option<TerrainTile> {
-        godot_print!("blupp {} {}", coordinate.x(), coordinate.y());
         self.game
             .as_ref()
             .map(|game| game.map().terrain().get(&coordinate))
