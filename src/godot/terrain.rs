@@ -50,14 +50,17 @@ impl Terrain {
 
     #[export]
     fn at(&self, _owner: &Node, coordinate: Coordinate) -> Option<TerrainTile> {
+        Some(GameController.game()?.map().terrain().get(&coordinate))
+    }
+
+    #[export]
+    fn minimap(&self, _owner: &Node, width: u16, height: u16) -> Option<Vec<TerrainType>> {
         Some(
             GameController
-                .game()
-                .ok()?
-                .as_ref()?
+                .game()?
                 .map()
                 .terrain()
-                .get(&coordinate),
+                .minimap(width, height),
         )
     }
 }

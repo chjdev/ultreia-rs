@@ -1,25 +1,21 @@
 use gdnative::prelude::*;
 
 use crate::coordinate::Coordinate;
-use crate::game;
 use crate::game::Configuration;
 use crate::godot::events::clock_events::ClockEvents;
+use crate::godot::game_instance::GameController;
 use crate::map::terrain::{TerrainTile, TerrainType};
 
 #[derive(NativeClass)]
 #[inherit(Node)]
 #[register_with(Self::register_signals)]
 pub struct Game {
-    game: Option<game::Game>,
     clock_events: Option<ClockEvents>,
 }
 
 impl Game {
     fn new(_onwer: &Node) -> Self {
-        Game {
-            game: None,
-            clock_events: None,
-        }
+        Game { clock_events: None }
     }
 }
 
@@ -59,44 +55,28 @@ impl Game {
     #[export]
     fn start_game(&mut self, owner: &Node, configuration: Configuration) {
         godot_print!("starting game now");
-        let game = game::Game::new(configuration);
         let my_ref = owner
             .get_node("/root/Game")
             .expect("no main node at: /root/Game");
+        GameController
+            .start(configuration)
+            .expect("should be possible to start the game");
+        let game = GameController.game().expect("game should be here");
         let clock_events = ClockEvents::new(game.clock(), my_ref);
-        self.game = Some(game);
         self.clock_events = Some(clock_events);
         owner.emit_signal(GodotString::from_str("start_game"), &[]);
     }
 
     #[export]
     fn tick(&self, _owner: &Node) {
-        self.game.iter().for_each(|game| game.clock().tick());
+        GameController
+            .game()
+            .iter()
+            .for_each(|game| game.clock().tick());
     }
 
     #[export]
     fn configuration(&self, _owner: &Node) -> Option<Configuration> {
-        self.game.as_ref().map(|game| *game.configuration())
-    }
-
-    #[export]
-    fn terrain_type_at(&self, _owner: &Node, coordinate: Coordinate) -> Option<TerrainType> {
-        self.game
-            .as_ref()
-            .map(|game| game.map().terrain().get(&coordinate).terrain_type())
-    }
-
-    #[export]
-    fn terrain_at(&self, _owner: &Node, coordinate: Coordinate) -> Option<TerrainTile> {
-        self.game
-            .as_ref()
-            .map(|game| game.map().terrain().get(&coordinate))
-    }
-
-    #[export]
-    fn minimap(&self, _owner: &Node, width: u16, height: u16) -> Option<Vec<TerrainType>> {
-        self.game
-            .as_ref()
-            .map(|game| game.map().terrain().minimap(width, height))
+        Some(*GameController.game()?.configuration())
     }
 }
