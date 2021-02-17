@@ -1,6 +1,6 @@
 use crate::good::{Good, Inventory, InventoryAmount};
 use crate::tile::{SomeTileInstance, State, Tile, TileInstance, Tiles};
-use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
+use std::sync::{LockResult, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 pub struct DefaultInstance {
     tile: Tiles,
@@ -28,20 +28,12 @@ impl TileInstance for DefaultInstance {
         &self.tile
     }
 
-    fn state(&self) -> Option<RwLockReadGuard<State>> {
-        if let Some(s) = &self.state {
-            Some(s.read().expect("could not lock state for reading"))
-        } else {
-            None
-        }
+    fn state(&self) -> Option<LockResult<RwLockReadGuard<'_, State>>> {
+        self.state.as_ref().map(|rw_lock| rw_lock.read())
     }
 
-    fn state_mut(&self) -> Option<RwLockWriteGuard<State>> {
-        if let Some(s) = &self.state {
-            Some(s.write().expect("could not lock state for reading"))
-        } else {
-            None
-        }
+    fn state_mut(&self) -> Option<LockResult<RwLockWriteGuard<'_, State>>> {
+        self.state.as_ref().map(|rw_lock| rw_lock.write())
     }
 
     fn update(&self) {

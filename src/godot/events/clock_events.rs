@@ -1,7 +1,7 @@
 use crate::clock::{Clock, Tick, Tock};
 use crate::observable::Observer;
 use gdnative::prelude::*;
-use std::rc::Rc;
+use std::sync::Arc;
 
 struct ClockObserver {
     owner: Ref<Node, Shared>,
@@ -30,12 +30,12 @@ impl Observer<Tock> for ClockObserver {
 }
 
 pub struct ClockEvents {
-    observer: Rc<ClockObserver>,
+    observer: Arc<ClockObserver>,
 }
 
 impl ClockEvents {
     pub fn new(clock: &Clock, owner: Ref<Node, Shared>) -> Self {
-        let observer = Rc::new(ClockObserver { owner });
+        let observer = Arc::new(ClockObserver { owner });
         clock.tickers().register(&observer);
         clock.tockers().register(&observer);
         ClockEvents { observer }

@@ -1,13 +1,12 @@
-use std::cell::RefCell;
 use std::collections::HashSet;
 use std::hash::{Hash, Hasher};
-use std::rc::{Rc, Weak};
+use std::sync::{Arc, RwLock, Weak};
 
 pub trait Observer<E> {
     fn notify(&self, event: &E);
 }
 
-type SomeObserver<E> = dyn Observer<E>;
+type SomeObserver<E> = dyn Observer<E> + Send + Sync;
 
 /// weak pointer so it will deregister itself automatically when dropped
 type WeakObserver<E> = Weak<SomeObserver<E>>;
@@ -44,7 +43,7 @@ impl<E> PartialEq for ObserverRegistration<E> {
 type ObserversStore<E> = HashSet<ObserverRegistration<E>>;
 
 pub struct Observers<E> {
-    observers: RefCell<ObserversStore<E>>,
+    observers: RwLock<ObserversStore<E>>,
 }
 
 impl<E> Observers<E> {
@@ -54,21 +53,21 @@ impl<E> Observers<E> {
         }
     }
 
-    pub fn register<SO>(&self, observer: &Rc<SO>) -> ObserverRegistration<E>
+    pub fn register<SO>(&self, observer: &Arc<SO>) -> ObserverRegistration<E>
     where
-        SO: 'static + Observer<E>,
+        SO: 'static + Observer<E> + Send + Sync,
     {
-        let mut observers = self.observers.borrow_mut();
+        let mut observers = self.observers.write().unwrap();
         let next_observer = ObserverRegistration {
-            weak: Rc::downgrade(observer) as WeakObserver<E>,
-            ptr: Rc::as_ptr(observer) as usize,
+            weak: Arc::downgrade(observer) as WeakObserver<E>,
+            ptr: Arc::as_ptr(observer) as usize,
         };
         observers.insert(next_observer.clone());
         next_observer
     }
 
     pub fn deregister(&self, registration: &ObserverRegistration<E>) -> bool {
-        self.observers.borrow_mut().remove(registration)
+        self.observers.write().unwrap().remove(registration)
     }
 }
 
@@ -76,7 +75,7 @@ pub trait Observable<E> {
     fn observers(&self) -> &Observers<E>;
 
     fn notify_all(&self, event: &E) {
-        for registration in self.observers().observers.borrow().iter() {
+        for registration in self.observers().observers.read().unwrap().iter() {
             if let Some(observer) = registration.weak.upgrade() {
                 observer.notify(event);
             } else {

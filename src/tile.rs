@@ -10,7 +10,7 @@ use crate::tile::produces::Produces;
 use crate::tile::state::State;
 use crate::tile::warehouse::Warehouse;
 use std::collections::HashMap;
-use std::sync::{RwLockReadGuard, RwLockWriteGuard};
+use std::sync::{LockResult, RwLockReadGuard, RwLockWriteGuard};
 
 pub mod consumes;
 pub mod costs;
@@ -60,13 +60,10 @@ pub trait TileInstance:
     std::ops::AddAssign<Inventory> + std::ops::AddAssign<(Good, InventoryAmount)>
 {
     fn tile(&self) -> &Tiles;
-    fn state(&self) -> Option<RwLockReadGuard<State>> {
+    fn state(&self) -> Option<LockResult<RwLockReadGuard<'_, State>>> {
         None
     }
-    fn state_mut(&self) -> Option<RwLockWriteGuard<State>> {
-        if self.state().is_some() {
-            panic!("implementation error: tiles with state need to provide a mutable version")
-        }
+    fn state_mut(&self) -> Option<LockResult<RwLockWriteGuard<'_, State>>> {
         None
     }
     fn update(&self);

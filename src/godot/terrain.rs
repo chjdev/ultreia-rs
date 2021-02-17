@@ -1,7 +1,6 @@
 use gdnative::prelude::*;
 
 use crate::coordinate::Coordinate;
-use crate::godot::game::Game;
 use crate::godot::game_instance::GameController;
 use crate::map::terrain::{TerrainTile, TerrainType};
 use strum::{IntoEnumIterator, VariantNames};
@@ -50,9 +49,15 @@ impl Terrain {
     }
 
     #[export]
-    fn at(&self, owner: &Node, coordinate: Coordinate) -> Option<TerrainTile> {
-        GameController
-            .game()
-            .map(|game| game.map().terrain().get(&coordinate))
+    fn at(&self, _owner: &Node, coordinate: Coordinate) -> Option<TerrainTile> {
+        Some(
+            GameController
+                .game()
+                .ok()?
+                .as_ref()?
+                .map()
+                .terrain()
+                .get(&coordinate),
+        )
     }
 }

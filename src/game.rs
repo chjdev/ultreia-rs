@@ -3,7 +3,7 @@ mod tile_updater;
 use crate::clock::Clock;
 use crate::game::tile_updater::TileUpdater;
 use crate::map::Map;
-use std::rc::Rc;
+use std::sync::Arc;
 
 #[derive(Copy, Clone)]
 pub struct Configuration {
@@ -37,14 +37,14 @@ impl Configuration {
 pub struct Game {
     configuration: Configuration,
     clock: Clock,
-    map: Rc<Map>,
+    map: Arc<Map>,
     tile_updater: TileUpdater,
 }
 
 impl Game {
     pub fn new(configuration: Configuration) -> Self {
         let clock = Clock::new();
-        let map = Rc::new(Map::new(
+        let map = Arc::new(Map::new(
             configuration.rows,
             configuration.columns,
             configuration.island_noise,

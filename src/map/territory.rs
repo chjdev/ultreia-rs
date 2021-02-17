@@ -5,7 +5,7 @@ use crate::good::Good;
 use crate::map::terrain::Terrain;
 use crate::tile::state::State;
 use crate::tile::{SomeTileInstance, TileFactory, Tiles};
-use std::sync::Weak;
+use std::sync::{RwLockReadGuard, Weak};
 
 pub type TerritoryMap = Indexed<SomeTileInstance>;
 
@@ -74,10 +74,12 @@ impl Territory {
         let mut execution_plan = vec![];
         let mut states = vec![];
         for warehouse_coordinate in &self.warehouses {
-            let warehouse = self.get(&warehouse_coordinate).unwrap();
+            let warehouse = self.get(&warehouse_coordinate).ok_or("should be there")?;
             let warehouse_state = warehouse
                 .state_mut()
-                .expect("a warehouse always has a state!");
+                .ok_or("a warehouse always has a state!")?
+                .ok()
+                .ok_or("couldn't lock warehouse state")?;
             states.push(warehouse_state);
         }
 
@@ -122,11 +124,9 @@ impl Territory {
             .filter(Option::is_some)
             .map(|option| option.unwrap())
             .filter(|maybe_warehouse| maybe_warehouse.tile() == &Tiles::Warehouse)
-            .map(|warehouse| {
-                warehouse
-                    .state()
-                    .expect("warehouses are supposed to have states")
-            })
+            .map(|warehouse| -> Option<RwLockReadGuard<State>> { warehouse.state()?.ok() })
+            .filter(|maybe_warehouse_state| maybe_warehouse_state.is_some())
+            .map(|warehouse_state| warehouse_state.unwrap())
             .fold(State::new(), |mut acc, warehouse_state| {
                 acc += &*warehouse_state;
                 acc

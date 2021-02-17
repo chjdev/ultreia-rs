@@ -1,21 +1,22 @@
 use crate::game::{Configuration, Game};
-use std::sync::RwLock;
+use std::sync::{LockResult, PoisonError, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 lazy_static! {
-    static ref INSTANCE: RwLock<Option<Game>> = None;
+    static ref INSTANCE: RwLock<Option<Game>> = RwLock::new(None);
 }
 
 pub struct GameController;
 
 impl GameController {
-    pub fn start(&mut self, configuration: Configuration) {
-        INSTANCE
-            .write()
-            .expect("couldn't lock for write")
-            .replace(Game::new(configuration));
+    pub fn start(
+        &mut self,
+        configuration: Configuration,
+    ) -> Result<(), PoisonError<RwLockWriteGuard<Option<Game>>>> {
+        INSTANCE.write()?.replace(Game::new(configuration));
+        Ok(())
     }
 
-    pub fn game(&self) -> Option<&Game> {
-        INSTANCE.read().expect("").as_ref()
+    pub fn game(&self) -> LockResult<RwLockReadGuard<Option<Game>>> {
+        INSTANCE.read()
     }
 }
