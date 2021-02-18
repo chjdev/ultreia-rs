@@ -9,16 +9,15 @@ pub struct GameController;
 
 impl GameController {
     pub fn start(
-        &mut self,
         configuration: Configuration,
-    ) -> Result<(), PoisonError<RwLockWriteGuard<Option<Arc<Game>>>>> {
+    ) -> Result<(), PoisonError<RwLockWriteGuard<'static, Option<Arc<Game>>>>> {
         INSTANCE
             .write()?
             .replace(Arc::new(Game::new(configuration)));
         Ok(())
     }
 
-    pub fn game(&self) -> Option<Arc<Game>> {
+    pub fn game() -> Option<Arc<Game>> {
         INSTANCE.read().ok()?.as_ref().map(Arc::clone)
     }
 }

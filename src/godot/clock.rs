@@ -62,14 +62,14 @@ impl Clock {
     #[export]
     fn _attach_game(&mut self, owner: TRef<Node>) {
         godot_print!("attaching clock to game now");
-        let game = GameController.game().expect("game should be here");
+        let game = GameController::game().expect("game should be here");
         let clock_events = ClockEvents::new(game.clock(), owner.claim());
         self.clock_events = Some(clock_events);
     }
 
     #[export]
     fn tick(&self, _owner: &Node) {
-        if let Some(game) = GameController.game() {
+        if let Some(game) = GameController::game() {
             game.clock().tick();
         }
     }

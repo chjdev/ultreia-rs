@@ -39,14 +39,12 @@ impl Game {
     #[export]
     fn start_game(&mut self, owner: &Node, configuration: Configuration) {
         godot_print!("starting game now");
-        GameController
-            .start(configuration)
-            .expect("should be possible to start the game");
+        GameController::start(configuration).expect("should be possible to start the game");
         owner.emit_signal(GameSignal::GameStart, &[]);
     }
 
     #[export]
     fn configuration(&self, _owner: &Node) -> Option<Configuration> {
-        Some(*GameController.game()?.configuration())
+        Some(*GameController::game()?.configuration())
     }
 }
