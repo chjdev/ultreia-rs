@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/Mountain.png-34e5c918a29fe9e8a8b2deaf1e377a1d.stex"
+path="res://.import/icons-16.png-5ae148a31a4ba1ff2a6815fa25566ab3.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://sprites/terrain/Mountain.png"
-dest_files=[ "res://.import/Mountain.png-34e5c918a29fe9e8a8b2deaf1e377a1d.stex" ]
+source_file="res://sprites/icons-16.png"
+dest_files=[ "res://.import/icons-16.png-5ae148a31a4ba1ff2a6815fa25566ab3.stex" ]
 
 [params]
 
@@ -24,8 +24,8 @@ flags/filter=false
 flags/mipmaps=false
 flags/anisotropic=false
 flags/srgb=2
-process/fix_alpha_border=true
-process/premult_alpha=false
+process/fix_alpha_border=false
+process/premult_alpha=true
 process/HDR_as_SRGB=false
 process/invert_color=false
 stream=false

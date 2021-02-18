@@ -11,7 +11,7 @@ pub struct TerrainTile {
 impl TerrainTile {
     pub fn new(latitude: f64, longitude: f64, elevation: f64, moisture: f64) -> Self {
         let terrain_type = TerrainType::new(latitude, elevation, moisture);
-        let yields = TerrainYields::new(latitude, longitude, &terrain_type);
+        let yields = TerrainYields::new(latitude, longitude, elevation, moisture, &terrain_type);
         TerrainTile {
             elevation,
             moisture,

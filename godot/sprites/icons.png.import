@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/TemperateDeciduousForest.png-594a23a1730850429f424c7dd518d108.stex"
+path="res://.import/icons.png-559b25eaddffa571b999644fc7a08564.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://sprites/terrain/TemperateDeciduousForest.png"
-dest_files=[ "res://.import/TemperateDeciduousForest.png-594a23a1730850429f424c7dd518d108.stex" ]
+source_file="res://sprites/icons.png"
+dest_files=[ "res://.import/icons.png-559b25eaddffa571b999644fc7a08564.stex" ]
 
 [params]
 
@@ -24,8 +24,8 @@ flags/filter=false
 flags/mipmaps=false
 flags/anisotropic=false
 flags/srgb=2
-process/fix_alpha_border=true
-process/premult_alpha=false
+process/fix_alpha_border=false
+process/premult_alpha=true
 process/HDR_as_SRGB=false
 process/invert_color=false
 stream=false

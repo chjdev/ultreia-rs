@@ -29,6 +29,11 @@ pub enum TerrainType {
     FreshWater,
 }
 
+pub const FRESHWATER_MOISTURE_THRESHOLD: f64 = 0.87;
+pub const HILL_ELEVATION_THRESHOLD: f64 = 0.55;
+pub const MOUNTAIN_ELEVATION_THRESHOLD: f64 = 0.75;
+pub const OCEAN_ELEVATION_THRESHOLD: f64 = 0.1;
+
 impl Default for TerrainType {
     fn default() -> Self {
         Self::Bare
@@ -37,14 +42,14 @@ impl Default for TerrainType {
 
 impl TerrainType {
     pub fn new(latitude: f64, elevation: f64, moisture: f64) -> Self {
-        if elevation > 0.75 {
+        if elevation > MOUNTAIN_ELEVATION_THRESHOLD {
             if moisture < 0.1 {
                 return TerrainType::DesertMountain;
             }
             return TerrainType::Mountain;
         }
         let base_terrain_type = Self::base_terrain_type(latitude, elevation, moisture);
-        if elevation > 0.55 {
+        if elevation > HILL_ELEVATION_THRESHOLD {
             if moisture < 0.1 {
                 return TerrainType::DesertHills;
             }
@@ -69,12 +74,12 @@ impl TerrainType {
             }
             return TerrainType::Snow;
         }
-        if elevation > 0.2 && moisture > 0.87 {
+        if elevation > 0.2 && moisture > FRESHWATER_MOISTURE_THRESHOLD {
             return TerrainType::FreshWater;
         }
         // arctic starts at 66.5
         if abs_latitude > 83. {
-            if elevation < 0.1 {
+            if elevation < OCEAN_ELEVATION_THRESHOLD {
                 if moisture > 0.5 {
                     return TerrainType::Ocean;
                 }
@@ -95,7 +100,7 @@ impl TerrainType {
             return TerrainType::Snow;
         }
 
-        if elevation < 0.1 {
+        if elevation < OCEAN_ELEVATION_THRESHOLD {
             return TerrainType::Ocean;
         }
         if elevation > 0.8 {

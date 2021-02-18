@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=2]
+[gd_scene load_steps=14 format=2]
 
 [ext_resource path="res://scripts/Main.gd" type="Script" id=1]
 [ext_resource path="res://scripts/cursor/Cursor.gd" type="Script" id=2]
@@ -10,6 +10,7 @@
 [ext_resource path="res://scripts/hud/ClockControl.gd" type="Script" id=8]
 [ext_resource path="res://scripts/hud/HexContextMenu.gd" type="Script" id=9]
 [ext_resource path="res://scripts/hud/Minimap.gd" type="Script" id=10]
+[ext_resource path="res://sprites/icons-16.png" type="Texture" id=11]
 
 [sub_resource type="TileSet" id=1]
 0/name = "TundraMarsh"
@@ -377,6 +378,22 @@
 25/shapes = [  ]
 25/z_index = 0
 
+[sub_resource type="TileSet" id=2]
+0/name = "Game"
+0/texture = ExtResource( 11 )
+0/tex_offset = Vector2( 0, 0 )
+0/modulate = Color( 1, 1, 1, 1 )
+0/region = Rect2( 496, 16, 16, 16 )
+0/tile_mode = 0
+0/occluder_offset = Vector2( 0, 0 )
+0/navigation_offset = Vector2( 0, 0 )
+0/shape_offset = Vector2( 0, 0 )
+0/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+0/shape_one_way = false
+0/shape_one_way_margin = 0.0
+0/shapes = [  ]
+0/z_index = 0
+
 [node name="Main" type="Node"]
 script = ExtResource( 1 )
 
@@ -401,6 +418,19 @@ cell_y_sort = true
 centered_textures = true
 format = 1
 script = ExtResource( 3 )
+
+[node name="Yield" type="TileMap" parent="."]
+position = Vector2( -12, -14 )
+mode = 2
+tile_set = SubResource( 2 )
+cell_size = Vector2( 24, 28 )
+cell_quadrant_size = 32
+cell_custom_transform = Transform2D( 24, 0, 0, 28, 0, 0 )
+cell_half_offset = 4
+cell_tile_origin = 1
+cell_y_sort = true
+centered_textures = true
+format = 1
 
 [node name="Cursor" type="Node2D" parent="."]
 script = ExtResource( 2 )
