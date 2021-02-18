@@ -1,6 +1,6 @@
 mod clock;
 mod game;
-mod game_instance;
+mod game_controller;
 mod terrain;
 mod variant;
 

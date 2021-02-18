@@ -1,7 +1,7 @@
 use gdnative::prelude::*;
 
 use crate::coordinate::Coordinate;
-use crate::godot::game_instance::GameController;
+use crate::godot::game_controller::GameController;
 use crate::map::terrain::{TerrainTile, TerrainType};
 use strum::{IntoEnumIterator, VariantNames};
 

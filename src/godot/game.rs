@@ -1,7 +1,7 @@
 use gdnative::prelude::*;
 
 use crate::game::Configuration;
-use crate::godot::game_instance::GameController;
+use crate::godot::game_controller::GameController;
 
 use strum_macros::AsRefStr;
 
