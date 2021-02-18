@@ -20,9 +20,9 @@ run/main_scene="res://Main.tscn"
 
 [autoload]
 
-Game="*res://game.gdns"
-Terrain="*res://terrain.gdns"
-Clock="*res://clock.gdns"
+Game="*res://lib/game.gdns"
+Terrain="*res://lib/terrain.gdns"
+Clock="*res://lib/clock.gdns"
 
 [debug]
 
