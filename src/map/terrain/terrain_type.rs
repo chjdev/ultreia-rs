@@ -26,6 +26,7 @@ pub enum TerrainType {
     SnowHills,
     DesertHills,
     Hills,
+    FreshWater,
 }
 
 impl Default for TerrainType {
@@ -67,6 +68,9 @@ impl TerrainType {
                 return TerrainType::Ice;
             }
             return TerrainType::Snow;
+        }
+        if elevation > 0.2 && moisture > 0.87 {
+            return TerrainType::FreshWater;
         }
         // arctic starts at 66.5
         if abs_latitude > 83. {
