@@ -26,7 +26,7 @@ impl Game {
     fn register_signals(builder: &ClassBuilder<Self>) {
         // see https://github.com/godot-rust/godot-rust/blob/master/examples/signals/src/lib.rs
         builder.add_signal(Signal {
-            name: "start_game",
+            name: GameSignal::GameStart.as_ref(),
             args: &[],
         });
     }

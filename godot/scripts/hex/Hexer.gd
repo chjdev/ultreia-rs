@@ -60,7 +60,7 @@ func _ready():
 		get_tileset().create_tile(red_tile_id)
 		self._copy_tile_to(tile_id, red_tile_id)
 		get_tileset().tile_set_modulate(red_tile_id, Color.red)
-	Game.connect("start_game", self, "_on_game_start")
+	Game.connect("GameStart", self, "_on_game_start")
 
 var last_start_coords = Vector2.ZERO
 var last_stop_coords = Vector2.ZERO

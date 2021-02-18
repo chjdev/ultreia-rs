@@ -4,6 +4,7 @@ use gdnative::prelude::*;
 
 use crate::godot::clock::clock_signal::ClockEvents;
 pub use crate::godot::clock::clock_signal::ClockSignal;
+use crate::godot::game::GameSignal;
 use crate::godot::game_instance::GameController;
 
 #[derive(NativeClass)]
@@ -49,7 +50,7 @@ impl Clock {
         let emitter = unsafe { emitter.assume_safe() };
         emitter
             .connect(
-                "start_game",
+                GameSignal::GameStart.as_ref(),
                 owner,
                 "_attach_game",
                 VariantArray::new_shared(),
