@@ -1,3 +1,4 @@
+use crate::map::terrain::latlon::Latitude;
 use strum_macros::{EnumIter, EnumVariantNames, IntoStaticStr};
 
 #[derive(PartialEq, Eq, Copy, Clone, EnumIter, IntoStaticStr, EnumVariantNames)]
@@ -40,8 +41,14 @@ impl Default for TerrainType {
     }
 }
 
-impl TerrainType {
-    pub fn new(latitude: f64, elevation: f64, moisture: f64) -> Self {
+pub struct TerrainTypeFactory;
+
+impl TerrainTypeFactory {
+    pub fn new() -> Self {
+        TerrainTypeFactory {}
+    }
+
+    pub fn create(&self, latitude: Latitude, elevation: f64, moisture: f64) -> TerrainType {
         if elevation > MOUNTAIN_ELEVATION_THRESHOLD {
             if moisture < 0.1 {
                 return TerrainType::DesertMountain;
@@ -66,8 +73,8 @@ impl TerrainType {
         return base_terrain_type;
     }
 
-    fn base_terrain_type(latitude: f64, elevation: f64, moisture: f64) -> Self {
-        let abs_latitude = latitude.abs();
+    fn base_terrain_type(latitude: Latitude, elevation: f64, moisture: f64) -> TerrainType {
+        let abs_latitude: f64 = Into::<f64>::into(latitude).abs();
         if abs_latitude > 89.25 {
             if elevation < 0.1 {
                 return TerrainType::Ice;

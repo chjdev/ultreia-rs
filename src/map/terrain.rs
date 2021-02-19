@@ -1,49 +1,33 @@
-mod terrain_tile;
-mod terrain_type;
-mod terrain_yields;
+mod latlon;
+mod terrain_factory;
 
 use crate::coordinate::range::Range;
 use crate::coordinate::{Coordinate, Offset};
+pub use latlon::{Latitude, Longitude};
 use noise::{NoiseFn, Perlin, Seedable};
-use std::ops::Mul;
-pub use terrain_tile::TerrainTile;
-pub use terrain_type::TerrainType;
-pub use terrain_yields::{TerrainYields, Yield};
+use terrain_factory::TerrainFactory;
+pub use terrain_factory::{TerrainMeta, TerrainType, TerrainYields, Yield};
 
 pub struct Terrain {
     width: f64,
     height: f64,
-    island_noise: f64,
+    tile_factory: TerrainFactory,
     random_latitude: Perlin,
-    random_elevation: Perlin,
-    random_moisture: Perlin,
 }
 
 impl Terrain {
-    pub fn new_seeded(rows: usize, columns: usize, island_noise: f64, seed: u32) -> Self {
-        let random_elevation = Perlin::new().set_seed(seed);
-        let random_moisture = Perlin::new().set_seed(3 * seed);
+    pub fn new_seeded(seed: u32, rows: usize, columns: usize, island_noise: f64) -> Self {
         let random_latitude = Perlin::new().set_seed(7 * seed);
         Terrain {
             width: columns as f64,
             height: rows as f64,
-            island_noise,
             random_latitude,
-            random_elevation,
-            random_moisture,
+            tile_factory: TerrainFactory::new(seed, island_noise),
         }
     }
 
     pub fn new(rows: usize, columns: usize, island_noise: f64) -> Self {
-        Terrain::new_seeded(rows, columns, island_noise, 1234)
-    }
-
-    fn random_elevation(&self, x: f64, y: f64) -> f64 {
-        (self.random_elevation.get([x, y]) + 1.) / 2.
-    }
-
-    fn random_moisture(&self, x: f64, y: f64) -> f64 {
-        (self.random_moisture.get([x, y]) + 1.) / 2.
+        Terrain::new_seeded(1234, rows, columns, island_noise)
     }
 
     fn smudge_latitude(&self, x: f64, y: f64) -> f64 {
@@ -51,7 +35,7 @@ impl Terrain {
     }
 
     // https://www.redblobgames.com/maps/terrain-from-noise/#islands
-    pub fn get(&self, coordinate: &Coordinate) -> TerrainTile {
+    pub fn get(&self, coordinate: &Coordinate) -> TerrainMeta {
         let offset: Offset = coordinate.into();
         // offset 0,0 to middle of width/height
         let x = offset.column() as f64 + self.width / 2.;
@@ -59,37 +43,10 @@ impl Terrain {
         let nx = 2.0 * ((x / self.width) - 0.5);
         let true_ny = 2.0 * ((y / self.height) - 0.5);
         let smudged_ny = self.smudge_latitude(nx, true_ny);
-        let mut elevation: f64 = (self.random_elevation(nx, smudged_ny)
-            + self.random_elevation(self.island_noise * nx, self.island_noise * smudged_ny))
-        .mul(0.5)
-        .powf(3.);
-        if elevation > 0.12 {
-            elevation = self
-                .random_elevation(
-                    nx * self.island_noise.powf(2.),
-                    smudged_ny * self.island_noise.powf(2.),
-                )
-                .powf(3.)
-                .max(0.12);
-        }
-        let smudged_latitude: f64 = (smudged_ny * std::f64::consts::FRAC_PI_2).sin() * 90.;
-        let moisture: f64 = self
-            .random_moisture(
-                self.island_noise * 4. * nx,
-                self.island_noise * 4. * smudged_ny,
-            )
-            .mul(1.1)
-            // tropics no desert
-            .max(if smudged_latitude.abs() < 7.5 {
-                0.1
-            } else {
-                0.
-            });
-        let true_longitude: f64 = nx * 180.;
-        TerrainTile::new(smudged_latitude, true_longitude, elevation, moisture)
+        self.tile_factory.create(nx, smudged_ny)
     }
 
-    pub fn range(&self, range: &Range) -> Vec<TerrainTile> {
+    pub fn range(&self, range: &Range) -> Vec<TerrainMeta> {
         range.into_iter().map(|c| self.get(c)).collect()
     }
 

@@ -2,7 +2,7 @@ use gdnative::prelude::*;
 
 use crate::coordinate::Coordinate;
 use crate::godot::game_controller::GameController;
-use crate::map::terrain::{TerrainTile, TerrainType};
+use crate::map::terrain::{TerrainMeta, TerrainType};
 use strum::{IntoEnumIterator, VariantNames};
 
 lazy_static! {
@@ -49,7 +49,7 @@ impl Terrain {
     }
 
     #[export]
-    fn at(&self, _owner: &Node, coordinate: Coordinate) -> Option<TerrainTile> {
+    fn at(&self, _owner: &Node, coordinate: Coordinate) -> Option<TerrainMeta> {
         Some(GameController::game()?.map().terrain().get(&coordinate))
     }
 

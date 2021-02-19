@@ -1,7 +1,7 @@
-use crate::map::terrain::TerrainTile;
+use crate::map::terrain::TerrainMeta;
 use gdnative::core_types::{Dictionary, ToVariant, Variant};
 
-impl ToVariant for TerrainTile {
+impl ToVariant for TerrainMeta {
     fn to_variant(&self) -> Variant {
         let dict = Dictionary::new();
         dict.insert("elevation", self.elevation());

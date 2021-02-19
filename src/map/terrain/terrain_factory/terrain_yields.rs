@@ -1,9 +1,9 @@
 use crate::good::{Good, HarvestableGood, Inventory, NaturalGood};
-use crate::map::terrain::terrain_type::{
+use crate::map::terrain::terrain_factory::terrain_type::{
     FRESHWATER_MOISTURE_THRESHOLD, HILL_ELEVATION_THRESHOLD, MOUNTAIN_ELEVATION_THRESHOLD,
     OCEAN_ELEVATION_THRESHOLD,
 };
-use crate::map::terrain::TerrainType;
+use crate::map::terrain::{Latitude, Longitude, TerrainType};
 use std::convert::TryFrom;
 use strum::IntoEnumIterator;
 
@@ -45,15 +45,37 @@ impl TryFrom<f64> for Yield {
 pub struct TerrainYields(Inventory<Yield>);
 
 impl TerrainYields {
-    pub fn new(
-        _latitude: f64,
-        _longitude: f64,
+    pub fn yields(&self) -> &Inventory<Yield> {
+        &self.0
+    }
+}
+
+impl PartialEq for TerrainYields {
+    fn eq(&self, other: &Self) -> bool {
+        other.yields().len() == self.yields().len()
+            && other
+                .yields()
+                .keys()
+                .all(|k| other.yields().get(k) == (self.yields().get(k)))
+    }
+}
+
+pub struct TerrainYieldsFactory {}
+
+impl TerrainYieldsFactory {
+    pub fn new() -> Self {
+        TerrainYieldsFactory {}
+    }
+
+    pub fn create(
+        &self,
+        _latitude: Latitude,
+        _longitude: Longitude,
         elevation: f64,
         moisture: f64,
         terrain_type: &TerrainType,
-    ) -> Self {
+    ) -> TerrainYields {
         let mut yields = Inventory::<Yield>::new();
-
         // using match so we can't forget goods
         for good in NaturalGood::iter() {
             let mut yield_f64 = 0.;
@@ -80,6 +102,7 @@ impl TerrainYields {
                         // todo clay noise
                     }
                 }
+                NaturalGood::CoalRepo => {}
                 //todo remove
                 _ => (),
             };
@@ -124,20 +147,6 @@ impl TerrainYields {
             }
         }
 
-        Self(yields)
-    }
-
-    pub fn yields(&self) -> &Inventory<Yield> {
-        &self.0
-    }
-}
-
-impl PartialEq for TerrainYields {
-    fn eq(&self, other: &Self) -> bool {
-        other.yields().len() == self.yields().len()
-            && other
-                .yields()
-                .keys()
-                .all(|k| other.yields().get(k) == (self.yields().get(k)))
+        TerrainYields(yields)
     }
 }
