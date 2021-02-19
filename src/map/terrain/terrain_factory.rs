@@ -4,6 +4,7 @@ mod terrain_type;
 mod terrain_yields;
 
 use crate::map::terrain::{Latitude, Longitude};
+use crate::saturating_from::SaturatingInto;
 pub use terrain_elevation::Elevation;
 use terrain_elevation::TerrainElevationFactory;
 pub use terrain_moisture::Moisture;
@@ -59,8 +60,8 @@ impl TerrainFactory {
     pub fn create(&self, nx: f64, ny: f64) -> TerrainMeta {
         let elevation = self.elevation_factory.create(nx, ny);
         let moisture = self.moisture_factory.create(nx, ny);
-        let longitude: Longitude = Longitude::saturating_from(nx);
-        let latitude: Latitude = Latitude::saturating_from(ny);
+        let latitude: Latitude = ny.saturating_into();
+        let longitude: Longitude = nx.saturating_into();
         let terrain_type = self.type_factory.create(latitude, elevation, moisture);
         let yields =
             self.yields_factory

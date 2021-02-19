@@ -1,8 +1,5 @@
+use super::terrain_type::TERRAIN_CONSTANTS;
 use crate::good::{Good, HarvestableGood, Inventory, NaturalGood};
-use crate::map::terrain::terrain_factory::terrain_type::{
-    FRESHWATER_MOISTURE_THRESHOLD, HILL_ELEVATION_THRESHOLD, MOUNTAIN_ELEVATION_THRESHOLD,
-    OCEAN_ELEVATION_THRESHOLD,
-};
 use crate::map::terrain::{Elevation, Latitude, Longitude, Moisture, TerrainType};
 use std::convert::TryFrom;
 use strum::IntoEnumIterator;
@@ -84,20 +81,23 @@ impl TerrainYieldsFactory {
                     if terrain_type == &TerrainType::FreshWater {
                         yield_f64 = 1.
                             - ((1. - Into::<f64>::into(moisture))
-                                / (1. - Into::<f64>::into(FRESHWATER_MOISTURE_THRESHOLD)))
+                                / (1.
+                                    - Into::<f64>::into(
+                                        TERRAIN_CONSTANTS.freshwater_moisture_threshold,
+                                    )))
                             // bias towards 100%
                             .powf(5.);
                     }
                 }
                 NaturalGood::ClayRepo => {
-                    if elevation > OCEAN_ELEVATION_THRESHOLD
-                        && elevation < MOUNTAIN_ELEVATION_THRESHOLD
+                    if elevation > TERRAIN_CONSTANTS.ocean_elevation_threshold
+                        && elevation < TERRAIN_CONSTANTS.mountain_elevation_threshold
                         && terrain_type != &TerrainType::FreshWater
                         && terrain_type != &TerrainType::Snow
                         && terrain_type != &TerrainType::Marsh
                     {
                         yield_f64 = moisture.into();
-                        if elevation > HILL_ELEVATION_THRESHOLD {
+                        if elevation > TERRAIN_CONSTANTS.hill_elevation_threshold {
                             yield_f64 *= 0.8;
                         }
                         // todo clay noise

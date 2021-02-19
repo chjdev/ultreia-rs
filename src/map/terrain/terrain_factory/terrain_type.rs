@@ -1,5 +1,5 @@
-use crate::map::terrain::terrain_factory::terrain_moisture::SaturatingInto;
 use crate::map::terrain::{Elevation, Latitude, Moisture};
+use crate::saturating_from::SaturatingInto;
 use strum_macros::{EnumIter, EnumVariantNames, IntoStaticStr};
 
 #[derive(PartialEq, Eq, Copy, Clone, EnumIter, IntoStaticStr, EnumVariantNames)]
@@ -31,12 +31,21 @@ pub enum TerrainType {
     FreshWater,
 }
 
-// no const float yet
+pub struct TerrainConstants {
+    pub freshwater_moisture_threshold: Moisture,
+    pub hill_elevation_threshold: Elevation,
+    pub mountain_elevation_threshold: Elevation,
+    pub ocean_elevation_threshold: Elevation,
+}
+
+// not individual constants since const_fn is unstable for initialization
 lazy_static! {
-    pub static ref FRESHWATER_MOISTURE_THRESHOLD: Moisture = SaturatingInto::saturating_from(0.87);
-    pub static ref HILL_ELEVATION_THRESHOLD: Elevation = Elevation::saturating_from(0.55);
-    pub static ref MOUNTAIN_ELEVATION_THRESHOLD: Elevation = Elevation::saturating_from(0.75);
-    pub static ref OCEAN_ELEVATION_THRESHOLD: Elevation = Elevation::saturating_from(0.1);
+    pub static ref TERRAIN_CONSTANTS: TerrainConstants = TerrainConstants {
+        freshwater_moisture_threshold: SaturatingInto::saturating_from(0.87),
+        hill_elevation_threshold: SaturatingInto::saturating_from(0.55),
+        mountain_elevation_threshold: SaturatingInto::saturating_from(0.75),
+        ocean_elevation_threshold: SaturatingInto::saturating_from(0.1),
+    };
 }
 
 impl Default for TerrainType {
@@ -58,14 +67,14 @@ impl TerrainTypeFactory {
         elevation: Elevation,
         moisture: Moisture,
     ) -> TerrainType {
-        if elevation > MOUNTAIN_ELEVATION_THRESHOLD {
+        if elevation > TERRAIN_CONSTANTS.mountain_elevation_threshold {
             if moisture < 0.1 {
                 return TerrainType::DesertMountain;
             }
             return TerrainType::Mountain;
         }
         let base_terrain_type = Self::base_terrain_type(latitude, elevation, moisture);
-        if elevation > HILL_ELEVATION_THRESHOLD {
+        if elevation > TERRAIN_CONSTANTS.hill_elevation_threshold {
             if moisture < 0.1 {
                 return TerrainType::DesertHills;
             }
@@ -94,12 +103,12 @@ impl TerrainTypeFactory {
             }
             return TerrainType::Snow;
         }
-        if elevation > 0.2 && moisture > FRESHWATER_MOISTURE_THRESHOLD {
+        if elevation > 0.2 && moisture > TERRAIN_CONSTANTS.freshwater_moisture_threshold {
             return TerrainType::FreshWater;
         }
         // arctic starts at 66.5
         if abs_latitude > 83. {
-            if elevation < OCEAN_ELEVATION_THRESHOLD {
+            if elevation < TERRAIN_CONSTANTS.ocean_elevation_threshold {
                 if moisture > 0.5 {
                     return TerrainType::Ocean;
                 }
@@ -120,7 +129,7 @@ impl TerrainTypeFactory {
             return TerrainType::Snow;
         }
 
-        if elevation < OCEAN_ELEVATION_THRESHOLD {
+        if elevation < TERRAIN_CONSTANTS.ocean_elevation_threshold {
             return TerrainType::Ocean;
         }
         if elevation > 0.8 {

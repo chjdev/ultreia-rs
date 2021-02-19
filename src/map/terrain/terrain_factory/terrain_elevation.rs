@@ -1,3 +1,4 @@
+use crate::saturating_from::SaturatingInto;
 use derive_more::Into;
 use noise::{NoiseFn, Perlin, Seedable};
 use std::cmp::Ordering;
@@ -5,16 +6,6 @@ use std::ops::Mul;
 
 #[derive(PartialEq, PartialOrd, Copy, Clone, Default, Into)]
 pub struct Elevation(f64);
-
-impl Elevation {
-    const fn new(elevation: f64) -> Self {
-        Elevation(elevation)
-    }
-
-    pub const fn saturating_from(elevation: f64) -> Self {
-        Elevation::new(if elevation as i32 <= 0 { 0. } else { elevation })
-    }
-}
 
 impl PartialEq<f64> for Elevation {
     fn eq(&self, other: &f64) -> bool {
@@ -25,6 +16,16 @@ impl PartialEq<f64> for Elevation {
 impl PartialOrd<f64> for Elevation {
     fn partial_cmp(&self, other: &f64) -> Option<Ordering> {
         Into::<f64>::into(*self).partial_cmp(other)
+    }
+}
+
+impl SaturatingInto<Elevation> for f64 {
+    fn saturating_from(elevation: f64) -> Elevation {
+        Elevation(elevation.max(0.))
+    }
+
+    fn saturating_into(&self) -> Elevation {
+        Self::saturating_from(*self)
     }
 }
 
@@ -60,6 +61,6 @@ impl TerrainElevationFactory {
                 .powf(3.)
                 .max(0.12);
         }
-        Elevation::saturating_from(elevation)
+        elevation.saturating_into()
     }
 }

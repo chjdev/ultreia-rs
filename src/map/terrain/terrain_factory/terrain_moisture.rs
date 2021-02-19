@@ -1,3 +1,4 @@
+use crate::saturating_from::SaturatingInto;
 use derive_more::Into;
 use noise::{NoiseFn, Perlin, Seedable};
 use std::cmp::Ordering;
@@ -10,10 +11,6 @@ impl Moisture {
     const fn new(moisture: f64) -> Self {
         Moisture(moisture)
     }
-
-    // pub const fn saturating_from(moisture: f64) -> Self {
-    //     Moisture::new(moisture.max(0.))
-    // }
 }
 
 impl PartialEq<f64> for Moisture {
@@ -28,15 +25,9 @@ impl PartialOrd<f64> for Moisture {
     }
 }
 
-pub trait SaturatingInto<T> {
-    fn saturating_from(value: Self) -> T;
-    fn saturating_into(&self) -> T;
-}
-
 impl SaturatingInto<Moisture> for f64 {
-    fn saturating_from(value: f64) -> Moisture {
-        // Moisture::saturating_from(value)
-        Moisture::new(value.max(0.))
+    fn saturating_from(moisture: f64) -> Moisture {
+        Moisture::new(moisture.max(0.))
     }
     fn saturating_into(&self) -> Moisture {
         Self::saturating_from(*self)
