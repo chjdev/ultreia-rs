@@ -1,8 +1,8 @@
 use crate::saturating_from::SaturatingInto;
-use derive_more::{Display, Into};
+use derive_more::Into;
 use std::cmp::Ordering;
 
-#[derive(Display, PartialEq, PartialOrd, Copy, Clone, Default, Into)]
+#[derive(PartialEq, PartialOrd, Copy, Clone, Default, Into)]
 pub struct Latitude(f64);
 
 impl PartialEq<f64> for Latitude {
@@ -18,13 +18,9 @@ impl PartialOrd<f64> for Latitude {
 }
 
 impl SaturatingInto<Latitude> for f64 {
-    fn saturating_from(ny: f64) -> Latitude {
+    fn saturating_from(ny: &f64) -> Latitude {
         let latitude = (ny * std::f64::consts::FRAC_PI_2).sin() * 90.;
         Latitude(latitude.clamp(-90., 90.))
-    }
-
-    fn saturating_into(&self) -> Latitude {
-        Self::saturating_from(*self)
     }
 }
 
@@ -44,12 +40,8 @@ impl PartialOrd<f64> for Longitude {
 }
 
 impl SaturatingInto<Longitude> for f64 {
-    fn saturating_from(nx: f64) -> Longitude {
+    fn saturating_from(nx: &f64) -> Longitude {
         let longitude: f64 = nx * 180.;
         Longitude(longitude.clamp(-180., 180.))
-    }
-
-    fn saturating_into(&self) -> Longitude {
-        Self::saturating_from(*self)
     }
 }

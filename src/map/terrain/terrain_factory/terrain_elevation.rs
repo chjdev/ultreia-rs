@@ -20,12 +20,8 @@ impl PartialOrd<f64> for Elevation {
 }
 
 impl SaturatingInto<Elevation> for f64 {
-    fn saturating_from(elevation: f64) -> Elevation {
+    fn saturating_from(elevation: &f64) -> Elevation {
         Elevation(elevation.max(0.))
-    }
-
-    fn saturating_into(&self) -> Elevation {
-        Self::saturating_from(*self)
     }
 }
 

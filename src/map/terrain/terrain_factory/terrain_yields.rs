@@ -1,7 +1,8 @@
 use super::terrain_type::TERRAIN_CONSTANTS;
 use crate::good::{Good, HarvestableGood, Inventory, NaturalGood};
 use crate::map::terrain::{Elevation, Latitude, Longitude, Moisture, TerrainType};
-use std::convert::TryFrom;
+use crate::saturating_from::SaturatingInto;
+use std::cmp::Ordering;
 use strum::IntoEnumIterator;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -14,10 +15,6 @@ impl Yield {
     pub fn percent(&self) -> f64 {
         (self.0 as f64) / PERCENT100_YIELD
     }
-
-    pub fn saturating_from(value: f64) -> Self {
-        Yield((value.clamp(0., 2.) * PERCENT100_YIELD) as u8)
-    }
 }
 
 impl Into<f64> for Yield {
@@ -26,15 +23,21 @@ impl Into<f64> for Yield {
     }
 }
 
-impl TryFrom<f64> for Yield {
-    type Error = &'static str;
+impl PartialEq<f64> for Yield {
+    fn eq(&self, other: &f64) -> bool {
+        Into::<f64>::into(*self).eq(other)
+    }
+}
 
-    fn try_from(value: f64) -> Result<Self, Self::Error> {
-        if value < 0. || value > 2. {
-            Err("value outside of yield range")
-        } else {
-            Ok(Yield((value * PERCENT100_YIELD) as u8))
-        }
+impl PartialOrd<f64> for Yield {
+    fn partial_cmp(&self, other: &f64) -> Option<Ordering> {
+        Into::<f64>::into(*self).partial_cmp(other)
+    }
+}
+
+impl SaturatingInto<Yield> for f64 {
+    fn saturating_from(value: &f64) -> Yield {
+        Yield((value.clamp(0., 2.) * PERCENT100_YIELD) as u8)
     }
 }
 
@@ -108,7 +111,7 @@ impl TerrainYieldsFactory {
                 _ => (),
             };
             if yield_f64 > 0. {
-                yields.insert(Good::NaturalGood(good), Yield::saturating_from(yield_f64));
+                yields.insert(Good::NaturalGood(good), yield_f64.saturating_into());
             }
         }
 
@@ -141,10 +144,7 @@ impl TerrainYieldsFactory {
                 _ => (),
             }
             if yield_f64 > 0. {
-                yields.insert(
-                    Good::HarvestableGood(good),
-                    Yield::saturating_from(yield_f64),
-                );
+                yields.insert(Good::HarvestableGood(good), yield_f64.saturating_into());
             }
         }
 

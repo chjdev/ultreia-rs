@@ -41,10 +41,10 @@ pub struct TerrainConstants {
 // not individual constants since const_fn is unstable for initialization
 lazy_static! {
     pub static ref TERRAIN_CONSTANTS: TerrainConstants = TerrainConstants {
-        freshwater_moisture_threshold: SaturatingInto::saturating_from(0.87),
-        hill_elevation_threshold: SaturatingInto::saturating_from(0.55),
-        mountain_elevation_threshold: SaturatingInto::saturating_from(0.75),
-        ocean_elevation_threshold: SaturatingInto::saturating_from(0.1),
+        freshwater_moisture_threshold: SaturatingInto::saturating_from(&0.87),
+        hill_elevation_threshold: SaturatingInto::saturating_from(&0.55),
+        mountain_elevation_threshold: SaturatingInto::saturating_from(&0.75),
+        ocean_elevation_threshold: SaturatingInto::saturating_from(&0.1),
     };
 }
 

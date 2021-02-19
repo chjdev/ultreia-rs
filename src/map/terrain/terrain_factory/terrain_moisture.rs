@@ -26,11 +26,8 @@ impl PartialOrd<f64> for Moisture {
 }
 
 impl SaturatingInto<Moisture> for f64 {
-    fn saturating_from(moisture: f64) -> Moisture {
+    fn saturating_from(moisture: &f64) -> Moisture {
         Moisture::new(moisture.max(0.))
-    }
-    fn saturating_into(&self) -> Moisture {
-        Self::saturating_from(*self)
     }
 }
 
