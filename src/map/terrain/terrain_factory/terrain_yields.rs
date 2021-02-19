@@ -3,7 +3,7 @@ use crate::map::terrain::terrain_factory::terrain_type::{
     FRESHWATER_MOISTURE_THRESHOLD, HILL_ELEVATION_THRESHOLD, MOUNTAIN_ELEVATION_THRESHOLD,
     OCEAN_ELEVATION_THRESHOLD,
 };
-use crate::map::terrain::{Latitude, Longitude, TerrainType};
+use crate::map::terrain::{Elevation, Latitude, Longitude, Moisture, TerrainType};
 use std::convert::TryFrom;
 use strum::IntoEnumIterator;
 
@@ -71,8 +71,8 @@ impl TerrainYieldsFactory {
         &self,
         _latitude: Latitude,
         _longitude: Longitude,
-        elevation: f64,
-        moisture: f64,
+        elevation: Elevation,
+        moisture: Moisture,
         terrain_type: &TerrainType,
     ) -> TerrainYields {
         let mut yields = Inventory::<Yield>::new();
@@ -83,9 +83,10 @@ impl TerrainYieldsFactory {
                 NaturalGood::FreshWater => {
                     if terrain_type == &TerrainType::FreshWater {
                         yield_f64 = 1.
-                            - ((1. - moisture) / (1. - FRESHWATER_MOISTURE_THRESHOLD))
-                                // bias towards 100%
-                                .powf(5.);
+                            - ((1. - Into::<f64>::into(moisture))
+                                / (1. - Into::<f64>::into(FRESHWATER_MOISTURE_THRESHOLD)))
+                            // bias towards 100%
+                            .powf(5.);
                     }
                 }
                 NaturalGood::ClayRepo => {
@@ -95,7 +96,7 @@ impl TerrainYieldsFactory {
                         && terrain_type != &TerrainType::Snow
                         && terrain_type != &TerrainType::Marsh
                     {
-                        yield_f64 = moisture;
+                        yield_f64 = moisture.into();
                         if elevation > HILL_ELEVATION_THRESHOLD {
                             yield_f64 *= 0.8;
                         }

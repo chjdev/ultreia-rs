@@ -4,7 +4,9 @@ mod terrain_type;
 mod terrain_yields;
 
 use crate::map::terrain::{Latitude, Longitude};
+pub use terrain_elevation::Elevation;
 use terrain_elevation::TerrainElevationFactory;
+pub use terrain_moisture::Moisture;
 use terrain_moisture::TerrainMoistureFactory;
 pub use terrain_type::TerrainType;
 use terrain_type::TerrainTypeFactory;
@@ -13,8 +15,8 @@ pub use terrain_yields::{TerrainYields, Yield};
 
 #[derive(Default)]
 pub struct TerrainMeta {
-    elevation: f64,
-    moisture: f64,
+    elevation: Elevation,
+    moisture: Moisture,
     terrain_type: TerrainType,
     yields: TerrainYields,
 }
@@ -28,11 +30,11 @@ impl TerrainMeta {
         &self.yields
     }
 
-    pub fn elevation(&self) -> f64 {
+    pub fn elevation(&self) -> Elevation {
         self.elevation
     }
 
-    pub fn moisture(&self) -> f64 {
+    pub fn moisture(&self) -> Moisture {
         self.moisture
     }
 }

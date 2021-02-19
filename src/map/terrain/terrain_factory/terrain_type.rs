@@ -1,4 +1,5 @@
-use crate::map::terrain::latlon::Latitude;
+use crate::map::terrain::terrain_factory::terrain_moisture::SaturatingInto;
+use crate::map::terrain::{Elevation, Latitude, Moisture};
 use strum_macros::{EnumIter, EnumVariantNames, IntoStaticStr};
 
 #[derive(PartialEq, Eq, Copy, Clone, EnumIter, IntoStaticStr, EnumVariantNames)]
@@ -30,10 +31,13 @@ pub enum TerrainType {
     FreshWater,
 }
 
-pub const FRESHWATER_MOISTURE_THRESHOLD: f64 = 0.87;
-pub const HILL_ELEVATION_THRESHOLD: f64 = 0.55;
-pub const MOUNTAIN_ELEVATION_THRESHOLD: f64 = 0.75;
-pub const OCEAN_ELEVATION_THRESHOLD: f64 = 0.1;
+// no const float yet
+lazy_static! {
+    pub static ref FRESHWATER_MOISTURE_THRESHOLD: Moisture = SaturatingInto::saturating_from(0.87);
+    pub static ref HILL_ELEVATION_THRESHOLD: Elevation = Elevation::saturating_from(0.55);
+    pub static ref MOUNTAIN_ELEVATION_THRESHOLD: Elevation = Elevation::saturating_from(0.75);
+    pub static ref OCEAN_ELEVATION_THRESHOLD: Elevation = Elevation::saturating_from(0.1);
+}
 
 impl Default for TerrainType {
     fn default() -> Self {
@@ -48,7 +52,12 @@ impl TerrainTypeFactory {
         TerrainTypeFactory {}
     }
 
-    pub fn create(&self, latitude: Latitude, elevation: f64, moisture: f64) -> TerrainType {
+    pub fn create(
+        &self,
+        latitude: Latitude,
+        elevation: Elevation,
+        moisture: Moisture,
+    ) -> TerrainType {
         if elevation > MOUNTAIN_ELEVATION_THRESHOLD {
             if moisture < 0.1 {
                 return TerrainType::DesertMountain;
@@ -73,7 +82,11 @@ impl TerrainTypeFactory {
         return base_terrain_type;
     }
 
-    fn base_terrain_type(latitude: Latitude, elevation: f64, moisture: f64) -> TerrainType {
+    fn base_terrain_type(
+        latitude: Latitude,
+        elevation: Elevation,
+        moisture: Moisture,
+    ) -> TerrainType {
         let abs_latitude: f64 = Into::<f64>::into(latitude).abs();
         if abs_latitude > 89.25 {
             if elevation < 0.1 {

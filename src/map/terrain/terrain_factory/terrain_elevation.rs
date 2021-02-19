@@ -1,5 +1,32 @@
+use derive_more::Into;
 use noise::{NoiseFn, Perlin, Seedable};
+use std::cmp::Ordering;
 use std::ops::Mul;
+
+#[derive(PartialEq, PartialOrd, Copy, Clone, Default, Into)]
+pub struct Elevation(f64);
+
+impl Elevation {
+    const fn new(elevation: f64) -> Self {
+        Elevation(elevation)
+    }
+
+    pub const fn saturating_from(elevation: f64) -> Self {
+        Elevation::new(if elevation as i32 <= 0 { 0. } else { elevation })
+    }
+}
+
+impl PartialEq<f64> for Elevation {
+    fn eq(&self, other: &f64) -> bool {
+        Into::<f64>::into(*self).eq(other)
+    }
+}
+
+impl PartialOrd<f64> for Elevation {
+    fn partial_cmp(&self, other: &f64) -> Option<Ordering> {
+        Into::<f64>::into(*self).partial_cmp(other)
+    }
+}
 
 pub struct TerrainElevationFactory {
     random_elevation: Perlin,
@@ -19,7 +46,7 @@ impl TerrainElevationFactory {
         (self.random_elevation.get([x, y]) + 1.) / 2.
     }
 
-    pub fn create(&self, nx: f64, ny: f64) -> f64 {
+    pub fn create(&self, nx: f64, ny: f64) -> Elevation {
         let mut elevation: f64 = (self.random_elevation(nx, ny)
             + self.random_elevation(self.island_noise * nx, self.island_noise * ny))
         .mul(0.5)
@@ -33,6 +60,6 @@ impl TerrainElevationFactory {
                 .powf(3.)
                 .max(0.12);
         }
-        elevation
+        Elevation::saturating_from(elevation)
     }
 }

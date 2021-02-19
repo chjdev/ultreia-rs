@@ -12,9 +12,12 @@ lazy_static = "^1.4"
 # for enums
 strum = "^0.20"
 strum_macros = "^0.20"
+# random number / perlin noise
 noise = { version = "^0.6", default-features = false }
 # godot
 gdnative = "^0.9"
+# auto impls for new types
+derive_more = "^0.99"
 
 [lib]
 name = "ultreia"

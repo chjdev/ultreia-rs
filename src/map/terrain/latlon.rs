@@ -1,6 +1,7 @@
+use derive_more::Into;
 use std::convert::TryFrom;
 
-#[derive(PartialEq, PartialOrd, Copy, Clone, Default)]
+#[derive(PartialEq, PartialOrd, Copy, Clone, Default, Into)]
 pub struct Latitude(f64);
 
 impl Latitude {
@@ -26,19 +27,7 @@ impl TryFrom<f64> for Latitude {
     }
 }
 
-impl Into<f64> for &Latitude {
-    fn into(self) -> f64 {
-        self.0
-    }
-}
-
-impl Into<f64> for Latitude {
-    fn into(self) -> f64 {
-        (&self).into()
-    }
-}
-
-#[derive(PartialEq, PartialOrd, Copy, Clone, Default)]
+#[derive(PartialEq, PartialOrd, Copy, Clone, Default, Into)]
 pub struct Longitude(f64);
 
 impl Longitude {
@@ -61,17 +50,5 @@ impl TryFrom<f64> for Longitude {
         } else {
             Ok(Longitude::new(longitude))
         }
-    }
-}
-
-impl Into<f64> for &Longitude {
-    fn into(self) -> f64 {
-        self.0
-    }
-}
-
-impl Into<f64> for Longitude {
-    fn into(self) -> f64 {
-        (&self).into()
     }
 }

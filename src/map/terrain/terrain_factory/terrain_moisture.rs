@@ -1,5 +1,47 @@
+use derive_more::Into;
 use noise::{NoiseFn, Perlin, Seedable};
+use std::cmp::Ordering;
 use std::ops::Mul;
+
+#[derive(PartialEq, PartialOrd, Copy, Clone, Default, Into)]
+pub struct Moisture(f64);
+
+impl Moisture {
+    const fn new(moisture: f64) -> Self {
+        Moisture(moisture)
+    }
+
+    // pub const fn saturating_from(moisture: f64) -> Self {
+    //     Moisture::new(moisture.max(0.))
+    // }
+}
+
+impl PartialEq<f64> for Moisture {
+    fn eq(&self, other: &f64) -> bool {
+        Into::<f64>::into(*self).eq(other)
+    }
+}
+
+impl PartialOrd<f64> for Moisture {
+    fn partial_cmp(&self, other: &f64) -> Option<Ordering> {
+        Into::<f64>::into(*self).partial_cmp(other)
+    }
+}
+
+pub trait SaturatingInto<T> {
+    fn saturating_from(value: Self) -> T;
+    fn saturating_into(&self) -> T;
+}
+
+impl SaturatingInto<Moisture> for f64 {
+    fn saturating_from(value: f64) -> Moisture {
+        // Moisture::saturating_from(value)
+        Moisture::new(value.max(0.))
+    }
+    fn saturating_into(&self) -> Moisture {
+        Self::saturating_from(*self)
+    }
+}
 
 pub struct TerrainMoistureFactory {
     random_moisture: Perlin,
@@ -19,10 +61,11 @@ impl TerrainMoistureFactory {
         (self.random_moisture.get([x, y]) + 1.) / 2.
     }
 
-    pub fn create(&self, nx: f64, ny: f64) -> f64 {
+    pub fn create(&self, nx: f64, ny: f64) -> Moisture {
         self.random_moisture(self.moisture_noise * nx, self.moisture_noise * ny)
             .mul(1.1)
             // tropics no desert
             .max(if ny.abs() < 0.083 { 0.1 } else { 0. })
+            .saturating_into()
     }
 }
