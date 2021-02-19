@@ -107,7 +107,7 @@ impl TerrainTypeFactory {
             return TerrainType::FreshWater;
         }
         // arctic starts at 66.5
-        if abs_latitude > 83. {
+        if abs_latitude > 87. {
             if elevation < TERRAIN_CONSTANTS.ocean_elevation_threshold {
                 if moisture > 0.5 {
                     return TerrainType::Ocean;
@@ -142,14 +142,14 @@ impl TerrainTypeFactory {
             return TerrainType::Snow;
         }
 
-        if abs_latitude > 67. {
+        if abs_latitude > 80. {
             if moisture < 0.1 {
                 return TerrainType::Scorched;
             }
             if moisture < 0.2 {
                 return TerrainType::Bare;
             }
-            if moisture < 0.7 {
+            if moisture < 0.85 {
                 return TerrainType::Taiga;
             }
             return TerrainType::Marsh;
