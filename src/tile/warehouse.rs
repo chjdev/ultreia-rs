@@ -2,6 +2,7 @@ use crate::coordinate::range::Range;
 use crate::coordinate::range::RangeFactory;
 use crate::coordinate::Coordinate;
 use crate::good::{BuildingMaterial, Good, InventoryAmount, ProductionGood, Weapon};
+use crate::map::minimap::GetByCoordinate;
 use crate::map::terrain::{Terrain, TerrainType};
 use crate::map::territory::Territory;
 use crate::tile::instance::DefaultInstance;
@@ -53,7 +54,7 @@ impl Tile for Warehouse {
     }
 
     fn allowed(&self, at: &Coordinate, terrain: &Terrain, _territory: Option<&Territory>) -> bool {
-        let terrain_tile = terrain.get(at);
-        terrain_tile.terrain_type() == TerrainType::Grassland
+        let terrain_tile: TerrainType = terrain.get(at);
+        terrain_tile == TerrainType::Grassland
     }
 }

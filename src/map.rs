@@ -1,10 +1,13 @@
 use crate::coordinate::range::Range;
 use crate::coordinate::Coordinate;
+use crate::map::fow::FOW;
 use crate::map::road::RoadNetwork;
 use crate::map::terrain::Terrain;
 use crate::map::territory::Territory;
 use crate::tile::{TileFactory, Tiles};
 
+pub mod fow;
+pub mod minimap;
 pub mod road;
 pub mod terrain;
 pub mod territory;
@@ -16,6 +19,7 @@ pub struct Map {
     terrain: Terrain,
     territories: Vec<Territory>,
     roads: RoadNetwork,
+    fow: FOW,
 }
 
 impl Map {
@@ -26,7 +30,12 @@ impl Map {
             terrain: Terrain::new(rows, columns, island_noise),
             territories: Default::default(),
             roads: Default::default(),
+            fow: Default::default(),
         }
+    }
+
+    pub fn fow(&self) -> &FOW {
+        &self.fow
     }
 
     pub fn terrain(&self) -> &Terrain {

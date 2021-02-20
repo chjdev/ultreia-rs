@@ -2,6 +2,7 @@ use gdnative::prelude::*;
 
 use crate::coordinate::Coordinate;
 use crate::godot::game_controller::GameController;
+use crate::map::minimap::{GetByCoordinate, Minimap};
 use crate::map::terrain::{TerrainMeta, TerrainType};
 use strum::{IntoEnumIterator, VariantNames};
 
