@@ -1,5 +1,5 @@
 use crate::coordinate::Coordinate;
-use crate::map::minimap::{GetByCoordinate, Minimap, WithSize};
+use crate::map::minimap::{GetByCoordinate, Minimap, WithGrid};
 use std::collections::HashSet;
 
 type FOWStorage = HashSet<Coordinate>;
@@ -21,7 +21,7 @@ impl FOW {
     }
 }
 
-impl WithSize for FOW {
+impl WithGrid for FOW {
     fn rows(&self) -> usize {
         self.rows
     }

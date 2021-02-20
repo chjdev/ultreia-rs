@@ -8,12 +8,12 @@ pub trait GetByCoordinate<T> {
     }
 }
 
-pub trait WithSize {
+pub trait WithGrid {
     fn rows(&self) -> usize;
     fn columns(&self) -> usize;
 }
 
-pub trait Minimap<T>: GetByCoordinate<T> + WithSize {
+pub trait Minimap<T>: GetByCoordinate<T> + WithGrid {
     fn minimap(&self, width: u16, height: u16) -> Vec<T> {
         // with_capacity does not work in godot context for some reason
         let mut minimap: Vec<T> = Vec::new();

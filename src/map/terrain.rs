@@ -2,7 +2,7 @@ pub mod latlon;
 mod terrain_factory;
 
 use crate::coordinate::{Coordinate, Offset};
-use crate::map::minimap::{GetByCoordinate, Minimap, WithSize};
+use crate::map::minimap::{GetByCoordinate, Minimap, WithGrid};
 pub use latlon::{Latitude, Longitude};
 use noise::{NoiseFn, Perlin, Seedable};
 use terrain_factory::TerrainFactory;
@@ -33,9 +33,21 @@ impl Terrain {
     fn smudge_latitude(&self, x: f64, y: f64) -> f64 {
         y + (self.random_latitude.get([x * 4., y * 4.]) * y.abs().max(0.1)) / 10.
     }
+
+    // https://www.redblobgames.com/maps/terrain-from-noise/#islands
+    fn normalized_coords(&self, coordinate: &Coordinate) -> (f64, f64) {
+        let offset: Offset = coordinate.into();
+        // offset 0,0 to middle of width/height
+        let x = offset.column() as f64 + self.columns() as f64 / 2.;
+        let y = offset.row() as f64 + self.rows() as f64 / 2.;
+        let nx = 2.0 * ((x / self.columns() as f64) - 0.5);
+        let true_ny = 2.0 * ((y / self.rows() as f64) - 0.5);
+        let smudged_ny = self.smudge_latitude(nx, true_ny);
+        (nx, smudged_ny)
+    }
 }
 
-impl WithSize for Terrain {
+impl WithGrid for Terrain {
     fn rows(&self) -> usize {
         self.rows
     }
@@ -46,24 +58,16 @@ impl WithSize for Terrain {
 }
 
 impl GetByCoordinate<TerrainMeta> for Terrain {
-    // https://www.redblobgames.com/maps/terrain-from-noise/#islands
     fn get(&self, coordinate: &Coordinate) -> TerrainMeta {
-        let offset: Offset = coordinate.into();
-        // offset 0,0 to middle of width/height
-        let x = offset.column() as f64 + self.columns() as f64 / 2.;
-        let y = offset.row() as f64 + self.rows() as f64 / 2.;
-        let nx = 2.0 * ((x / self.columns() as f64) - 0.5);
-        let true_ny = 2.0 * ((y / self.rows() as f64) - 0.5);
-        let smudged_ny = self.smudge_latitude(nx, true_ny);
-        self.tile_factory.create(nx, smudged_ny)
+        let (nx, ny) = self.normalized_coords(coordinate);
+        self.tile_factory.create(nx, ny)
     }
 }
 
 impl GetByCoordinate<TerrainType> for Terrain {
-    // https://www.redblobgames.com/maps/terrain-from-noise/#islands
     fn get(&self, coordinate: &Coordinate) -> TerrainType {
-        let terrain_meta: TerrainMeta = self.get(coordinate);
-        terrain_meta.terrain_type()
+        let (nx, ny) = self.normalized_coords(coordinate);
+        self.tile_factory.create_terrain_type(nx, ny)
     }
 }
 

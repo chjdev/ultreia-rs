@@ -57,6 +57,14 @@ impl TerrainFactory {
         }
     }
 
+    // a quicker version for minimap and such
+    pub fn create_terrain_type(&self, nx: f64, ny: f64) -> TerrainType {
+        let elevation = self.elevation_factory.create(nx, ny);
+        let moisture = self.moisture_factory.create(nx, ny);
+        let latitude: Latitude = ny.saturating_into();
+        self.type_factory.create(latitude, elevation, moisture)
+    }
+
     pub fn create(&self, nx: f64, ny: f64) -> TerrainMeta {
         let elevation = self.elevation_factory.create(nx, ny);
         let moisture = self.moisture_factory.create(nx, ny);
