@@ -29,6 +29,62 @@ pub enum TerrainType {
     DesertHills,
     Hills,
     FreshWater,
+    SaltFlat,
+}
+
+impl TerrainType {
+    pub fn is_ocean(&self) -> bool {
+        self == &Self::Ocean
+    }
+    pub fn is_water(&self) -> bool {
+        self.is_ocean() || self == &Self::FreshWater
+    }
+    pub fn is_hill_with_snow(&self) -> bool {
+        match self {
+            Self::TaigaHills | Self::SnowHills => true,
+            _ => false,
+        }
+    }
+    pub fn is_hill(&self) -> bool {
+        match self {
+            Self::Hills
+            | Self::WoodedHills
+            | Self::TaigaHills
+            | Self::SnowHills
+            | Self::DesertHills => true,
+            _ => false,
+        }
+    }
+    pub fn is_mountain(&self) -> bool {
+        match self {
+            Self::Mountain | Self::DesertMountain => true,
+            _ => false,
+        }
+    }
+    pub fn is_rainforest(&self) -> bool {
+        match self {
+            Self::TropicalRainForest | Self::TemperateRainForest => true,
+            _ => false,
+        }
+    }
+    pub fn is_wooded(&self) -> bool {
+        match self {
+            Self::TropicalRainForest
+            | Self::TemperateRainForest
+            | Self::TemperateDeciduousForest
+            | Self::TropicalSeasonalForest => true,
+            _ => false,
+        }
+    }
+    pub fn is_ground(&self) -> bool {
+        match self {
+            Self::Ocean | Self::FreshWater | Self::Marsh | Self::Ice | Self::TundraMarsh => false,
+            _ => self.is_mountain(),
+        }
+    }
+    pub fn is_flat_ground(&self) -> bool {
+        !self.is_hill() && self.is_ground()
+    }
 }
 
 pub struct TerrainConstants {
@@ -36,6 +92,7 @@ pub struct TerrainConstants {
     pub hill_elevation_threshold: Elevation,
     pub mountain_elevation_threshold: Elevation,
     pub ocean_elevation_threshold: Elevation,
+    pub saltflat_elevation_threshold: Elevation,
 }
 
 // not individual constants since const_fn is unstable for initialization
@@ -45,6 +102,7 @@ lazy_static! {
         hill_elevation_threshold: SaturatingInto::saturating_from(&0.55),
         mountain_elevation_threshold: SaturatingInto::saturating_from(&0.75),
         ocean_elevation_threshold: SaturatingInto::saturating_from(&0.1),
+        saltflat_elevation_threshold: SaturatingInto::saturating_from(&0.12),
     };
 }
 
@@ -140,6 +198,10 @@ impl TerrainTypeFactory {
                 return TerrainType::Bare;
             }
             return TerrainType::Snow;
+        }
+
+        if elevation < TERRAIN_CONSTANTS.saltflat_elevation_threshold && moisture < 0.2 {
+            return TerrainType::SaltFlat;
         }
 
         if abs_latitude > 80. {

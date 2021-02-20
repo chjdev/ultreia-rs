@@ -6,7 +6,7 @@ use crate::coordinate::{Coordinate, Offset};
 pub use latlon::{Latitude, Longitude};
 use noise::{NoiseFn, Perlin, Seedable};
 use terrain_factory::TerrainFactory;
-pub use terrain_factory::{Elevation, Moisture, TerrainMeta, TerrainType, TerrainYields, Yield};
+pub use terrain_factory::{Elevation, Moisture, TerrainMeta, TerrainType, TerrainYields};
 
 pub struct Terrain {
     width: f64,

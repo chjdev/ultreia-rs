@@ -122,7 +122,6 @@ func _on_game_start():
 	call_deferred("update_hexes", get_parent().get_node("WorldCamera").get_rect())
 
 func _on_Cursor_hex_enter(hex):
-	print(Terrain.at(hex.cube_coords))
 	var hex_coords = hex.offset_coords
 	self.set_cell(hex_coords.x, hex_coords.y, self._highlighted_tile_id(self.get_cell(hex_coords.x, hex_coords.y)))
 

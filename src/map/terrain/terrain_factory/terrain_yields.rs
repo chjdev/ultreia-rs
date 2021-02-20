@@ -1,64 +1,11 @@
-use super::terrain_type::TERRAIN_CONSTANTS;
 use crate::good::{Good, HarvestableGood, Inventory, NaturalGood};
+use crate::map::terrain::terrain_factory::terrain_type::TERRAIN_CONSTANTS;
 use crate::map::terrain::{Elevation, Latitude, Longitude, Moisture, TerrainType};
 use crate::saturating_from::SaturatingInto;
-use std::cmp::Ordering;
+use crate::yields::Yield;
 use strum::IntoEnumIterator;
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub struct Yield(u8);
-
-const PERCENT100_YIELD: f64 = (u8::max_value() / 2) as f64;
-const PERCENT200_YIELD: f64 = u8::max_value() as f64;
-
-impl Yield {
-    pub fn percent(&self) -> f64 {
-        (self.0 as f64) / PERCENT100_YIELD
-    }
-}
-
-impl Into<f64> for Yield {
-    fn into(self) -> f64 {
-        self.percent()
-    }
-}
-
-impl PartialEq<f64> for Yield {
-    fn eq(&self, other: &f64) -> bool {
-        Into::<f64>::into(*self).eq(other)
-    }
-}
-
-impl PartialOrd<f64> for Yield {
-    fn partial_cmp(&self, other: &f64) -> Option<Ordering> {
-        Into::<f64>::into(*self).partial_cmp(other)
-    }
-}
-
-impl SaturatingInto<Yield> for f64 {
-    fn saturating_from(value: &f64) -> Yield {
-        Yield((value.clamp(0., 2.) * PERCENT100_YIELD) as u8)
-    }
-}
-
-#[derive(Default, Eq)]
-pub struct TerrainYields(Inventory<Yield>);
-
-impl TerrainYields {
-    pub fn yields(&self) -> &Inventory<Yield> {
-        &self.0
-    }
-}
-
-impl PartialEq for TerrainYields {
-    fn eq(&self, other: &Self) -> bool {
-        other.yields().len() == self.yields().len()
-            && other
-                .yields()
-                .keys()
-                .all(|k| other.yields().get(k) == (self.yields().get(k)))
-    }
-}
+pub type TerrainYields = Inventory<Yield>;
 
 pub struct TerrainYieldsFactory {}
 
@@ -69,46 +16,80 @@ impl TerrainYieldsFactory {
 
     pub fn create(
         &self,
-        _latitude: Latitude,
+        latitude: Latitude,
         _longitude: Longitude,
-        elevation: Elevation,
+        _elevation: Elevation,
         moisture: Moisture,
         terrain_type: &TerrainType,
     ) -> TerrainYields {
-        let mut yields = Inventory::<Yield>::new();
-        // using match so we can't forget goods
+        let mut yields = TerrainYields::new();
         for good in NaturalGood::iter() {
-            let mut yield_f64 = 0.;
-            match good {
-                NaturalGood::FreshWater => {
-                    if terrain_type == &TerrainType::FreshWater {
-                        yield_f64 = 1.
-                            - ((1. - Into::<f64>::into(moisture))
-                                / (1.
-                                    - Into::<f64>::into(
-                                        TERRAIN_CONSTANTS.freshwater_moisture_threshold,
-                                    )))
-                            // bias towards 100%
-                            .powf(5.);
-                    }
+            let yield_f64 = match good {
+                NaturalGood::FreshWater if terrain_type == &TerrainType::FreshWater => {
+                    1. - ((1. - Into::<f64>::into(moisture))
+                        / (1. - Into::<f64>::into(TERRAIN_CONSTANTS.freshwater_moisture_threshold)))
+                    // bias towards 100%
+                    .powf(5.)
                 }
-                NaturalGood::ClayRepo => {
-                    if elevation > TERRAIN_CONSTANTS.ocean_elevation_threshold
-                        && elevation < TERRAIN_CONSTANTS.mountain_elevation_threshold
-                        && terrain_type != &TerrainType::FreshWater
-                        && terrain_type != &TerrainType::Snow
-                        && terrain_type != &TerrainType::Marsh
-                    {
-                        yield_f64 = moisture.into();
-                        if elevation > TERRAIN_CONSTANTS.hill_elevation_threshold {
-                            yield_f64 *= 0.8;
+                NaturalGood::ClayRepo if terrain_type.is_ground() => {
+                    let mut mut_yield_f64: f64 = moisture.into();
+                    if terrain_type.is_hill() {
+                        mut_yield_f64 *= 0.8;
+                    }
+                    mut_yield_f64
+                }
+                NaturalGood::CoalRepo => {
+                    let modifier = {
+                        if terrain_type.is_hill_with_snow() {
+                            0.75
+                        } else if terrain_type.is_hill() {
+                            1.
+                        } else if terrain_type.is_mountain() {
+                            0.75
+                        } else {
+                            0.
                         }
-                        // todo clay noise
+                    };
+                    modifier
+                }
+                NaturalGood::CopperOreRepo if terrain_type.is_mountain() => 1.,
+                NaturalGood::GemStoneRepo if terrain_type.is_mountain() => 1.,
+                NaturalGood::IronOreRepo if terrain_type.is_mountain() => 1.,
+                NaturalGood::MarbleRepo => {
+                    if terrain_type.is_mountain() {
+                        1.
+                    } else if terrain_type.is_hill_with_snow() {
+                        0.5
+                    } else if terrain_type.is_hill() {
+                        0.75
+                    } else {
+                        0.
                     }
                 }
-                NaturalGood::CoalRepo => {}
-                //todo remove
-                _ => (),
+                NaturalGood::SaltRepo => {
+                    if terrain_type.is_mountain() {
+                        1.
+                    } else if terrain_type == &TerrainType::SaltFlat {
+                        1.
+                    } else {
+                        0.
+                    }
+                }
+                NaturalGood::SilverOreRepo if terrain_type.is_mountain() => 1.,
+                NaturalGood::StoneRepo => {
+                    if terrain_type.is_mountain() {
+                        1.
+                    } else if terrain_type.is_hill_with_snow() {
+                        0.5
+                    } else if terrain_type.is_hill() {
+                        0.75
+                    } else {
+                        0.
+                    }
+                }
+                NaturalGood::Whale if terrain_type.is_ocean() && latitude.abs() > 70. => 1.,
+                NaturalGood::WildFish if terrain_type.is_water() => 1.,
+                _ => 0.,
             };
             if yield_f64 > 0. {
                 yields.insert(Good::NaturalGood(good), yield_f64.saturating_into());
@@ -116,38 +97,51 @@ impl TerrainYieldsFactory {
         }
 
         for good in HarvestableGood::iter() {
-            let mut yield_f64 = 0.;
-            match good {
-                HarvestableGood::Game => {
-                    yield_f64 = match terrain_type {
-                        TerrainType::TropicalSeasonalForest
-                        | TerrainType::TemperateDeciduousForest => 1.,
-                        TerrainType::TropicalRainForest | TerrainType::TemperateRainForest => 0.85,
-                        TerrainType::WoodedHills => 0.75,
-                        TerrainType::Taiga => 0.65,
-                        TerrainType::TaigaHills => 0.45,
-                        _ => 0.,
-                    }
-                }
-                HarvestableGood::Tree => {
-                    yield_f64 = match terrain_type {
-                        TerrainType::TropicalRainForest | TerrainType::TemperateRainForest => 1.,
-                        TerrainType::TropicalSeasonalForest
-                        | TerrainType::TemperateDeciduousForest => 0.9,
-                        TerrainType::WoodedHills => 0.75,
-                        TerrainType::Taiga => 0.65,
-                        TerrainType::TaigaHills => 0.45,
-                        _ => 0.,
-                    }
-                }
-                //todo remove
-                _ => (),
-            }
+            let yield_f64 = match good {
+                HarvestableGood::Game => match terrain_type {
+                    TerrainType::WoodedHills => 0.75,
+                    TerrainType::Taiga => 0.65,
+                    TerrainType::TaigaHills => 0.45,
+                    _ if terrain_type.is_rainforest() => 0.85,
+                    _ if terrain_type.is_wooded() => 1.,
+                    _ => 0.,
+                },
+                HarvestableGood::Tree => match terrain_type {
+                    TerrainType::WoodedHills => 0.75,
+                    TerrainType::Taiga => 0.65,
+                    TerrainType::TaigaHills => 0.45,
+                    _ if terrain_type.is_rainforest() => 1.,
+                    _ if terrain_type.is_wooded() => 0.9,
+                    _ => 0.,
+                },
+                HarvestableGood::Cattle => match terrain_type {
+                    TerrainType::Grassland => 1.,
+                    TerrainType::Hills => 0.75,
+                    TerrainType::Tundra => 0.3,
+                    _ => 0.,
+                },
+                HarvestableGood::CocoaPlant if latitude.abs() < 30. => 1.,
+                HarvestableGood::CottonPlant => 1.,
+                HarvestableGood::Ears => 1.,
+                HarvestableGood::FlowerPlant => 1.,
+                HarvestableGood::Grape => 1.,
+                HarvestableGood::HempPlant => 1.,
+                HarvestableGood::HopsPlant => 1.,
+                HarvestableGood::IndigoPlant => 1.,
+                HarvestableGood::PeltAnimal => 1.,
+                HarvestableGood::PotatoPlant => 1.,
+                HarvestableGood::Sheep => 1.,
+                HarvestableGood::SilkWorm => 1.,
+                HarvestableGood::SpicePlant => 1.,
+                HarvestableGood::SugarCanePlant => 1.,
+                HarvestableGood::TobaccoPlant => 1.,
+                HarvestableGood::UntamedHorse => 1.,
+                _ => 0.,
+            };
             if yield_f64 > 0. {
                 yields.insert(Good::HarvestableGood(good), yield_f64.saturating_into());
             }
         }
-
-        TerrainYields(yields)
+        yields
     }
 }

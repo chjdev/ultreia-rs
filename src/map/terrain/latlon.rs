@@ -5,6 +5,12 @@ use std::cmp::Ordering;
 #[derive(PartialEq, PartialOrd, Copy, Clone, Default, Into)]
 pub struct Latitude(f64);
 
+impl Latitude {
+    pub fn abs(&self) -> Self {
+        Latitude(self.0.abs())
+    }
+}
+
 impl PartialEq<f64> for Latitude {
     fn eq(&self, other: &f64) -> bool {
         Into::<f64>::into(*self).eq(other)
@@ -43,5 +49,11 @@ impl SaturatingInto<Longitude> for f64 {
     fn saturating_from(nx: &f64) -> Longitude {
         let longitude: f64 = nx * 180.;
         Longitude(longitude.clamp(-180., 180.))
+    }
+}
+
+impl Longitude {
+    pub fn abs(&self) -> Self {
+        Longitude(self.0.abs())
     }
 }

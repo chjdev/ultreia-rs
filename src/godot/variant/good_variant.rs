@@ -85,7 +85,7 @@ impl From<&Good> for usize {
     }
 }
 
-impl ToVariantEq for &Good {}
+impl ToVariantEq for Good {}
 
 impl ToVariant for Good {
     fn to_variant(&self) -> Variant {

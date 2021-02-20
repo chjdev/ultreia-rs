@@ -11,8 +11,8 @@ pub use terrain_moisture::Moisture;
 use terrain_moisture::TerrainMoistureFactory;
 pub use terrain_type::TerrainType;
 use terrain_type::TerrainTypeFactory;
+pub use terrain_yields::TerrainYields;
 use terrain_yields::TerrainYieldsFactory;
-pub use terrain_yields::{TerrainYields, Yield};
 
 #[derive(Default)]
 pub struct TerrainMeta {
