@@ -28,9 +28,11 @@ func update_hexes(rect: Rect2, force: bool = false):
 				# nothing to do, still visible
 				continue
 			$Terrain.set_cell(i, j, -1)
+			$Yield.set_cell(i, j, -1)
 			i += 1
 	if force:
 		$Terrain.clear()
+		$Yield.clear()
 	# fill in new rect where necessary
 	for j in range(floor(start_coords.y), ceil(stop_coords.y)):
 		var i = floor(start_coords.x)
@@ -43,6 +45,7 @@ func update_hexes(rect: Rect2, force: bool = false):
 			coord.offset_coords = Vector2(i, j)
 			var terrain = Terrain.at(coord.cube_coords)
 			$Terrain.set_terrain_cell(i, j, terrain)
+			$Yield.show_majority_yield(i, j, terrain)
 			i += 1
 	last_start_coords = start_coords
 	last_stop_coords = stop_coords

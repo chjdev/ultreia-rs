@@ -88,7 +88,7 @@ impl TerrainYieldsFactory {
                     }
                 }
                 NaturalGood::Whale if terrain_type.is_ocean() && latitude.abs() > 70. => 1.,
-                NaturalGood::WildFish if terrain_type.is_water() => 1.,
+                NaturalGood::WildFish if terrain_type.is_water() => 0.6,
                 _ => 0.,
             };
             if yield_f64 > 0. {

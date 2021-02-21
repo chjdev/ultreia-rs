@@ -23,6 +23,7 @@ run/main_scene="res://Main.tscn"
 Game="*res://lib/game.gdns"
 Terrain="*res://lib/terrain.gdns"
 Clock="*res://lib/clock.gdns"
+Good="*res://lib/good.gdns"
 
 [debug]
 

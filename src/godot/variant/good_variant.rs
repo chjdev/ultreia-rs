@@ -1,5 +1,6 @@
 use crate::good::*;
-use gdnative::core_types::{ToVariant, ToVariantEq, Variant};
+use gdnative::core_types::{Dictionary, ToVariant, ToVariantEq, Variant};
+use gdnative::prelude::Shared;
 use std::collections::HashMap;
 use std::iter::FromIterator;
 use std::ops::Add;
@@ -49,7 +50,7 @@ impl From<Good> for &'static str {
 }
 
 lazy_static! {
-    static ref ALL_GOODS: Vec<Good> = Good::iter()
+    pub static ref ALL_GOODS: Vec<Good> = Good::iter()
         .flat_map(|good| -> Vec<Good> {
             match good {
                 Good::BuildingMaterial(_) => BuildingMaterial::iter()
@@ -69,8 +70,22 @@ lazy_static! {
             }
         })
         .collect();
-    static ref REVERSE_ALL_GOODS: HashMap<&'static Good, usize> =
+    pub static ref REVERSE_ALL_GOODS: HashMap<&'static Good, usize> =
         HashMap::from_iter(ALL_GOODS.iter().enumerate().map(|(idx, good)| (good, idx)));
+    pub static ref GOOD_ENUM: Dictionary<Shared> = {
+        let dictionary = Dictionary::new();
+        for good in ALL_GOODS.iter() {
+            dictionary.insert(
+                String::from(Into::<&str>::into(good)),
+                Into::<usize>::into(good),
+            );
+            dictionary.insert(
+                Into::<usize>::into(good),
+                String::from(Into::<&str>::into(good)),
+            );
+        }
+        dictionary.into_shared()
+    };
 }
 
 impl From<usize> for &Good {

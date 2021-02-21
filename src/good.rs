@@ -11,6 +11,7 @@ pub enum NaturalGood {
     MarbleRepo,
     SaltRepo,
     SilverOreRepo,
+    GoldOreRepo,
     StoneRepo,
     ClayRepo,
     Whale,

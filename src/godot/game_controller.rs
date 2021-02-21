@@ -32,12 +32,12 @@ mod tests {
 
     #[test]
     fn test_smoke() {
-        GameController::start(Configuration::new(100, 100, 4.));
+        GameController::start(Configuration::new(100, 100, 4.)).unwrap();
         let game = GameController::game().unwrap();
         let coordinate = Coordinate::default();
         let terrain_type: TerrainType = game.map().terrain().get(&coordinate);
         assert!((terrain_type as usize) < TerrainType::COUNT);
-        let terrain_meta: Arc<TerrainMeta> = game.map().terrain().get(&coordinate);
+        let terrain_meta: TerrainMeta = game.map().terrain().get(&coordinate);
         assert!(terrain_meta.moisture() >= 0.);
     }
 }
