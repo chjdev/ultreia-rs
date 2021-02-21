@@ -93,7 +93,7 @@ impl TerrainYieldsFactory {
                 }
                 _ => 0.,
             };
-            if yield_f64 > 0. {
+            if yield_f64 > 0.1 {
                 yields.insert(Good::NaturalGood(good), yield_f64.saturating_into());
             }
         }
@@ -232,7 +232,7 @@ impl TerrainYieldsFactory {
                 }
                 _ => 0.,
             };
-            if yield_f64 > 0. {
+            if yield_f64 > 0.1 {
                 yields.insert(Good::HarvestableGood(good), yield_f64.saturating_into());
             }
         }
