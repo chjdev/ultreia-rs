@@ -79,7 +79,7 @@ impl TerrainType {
     pub fn is_ground(&self) -> bool {
         match self {
             Self::Ocean | Self::FreshWater | Self::Marsh | Self::Ice | Self::TundraMarsh => false,
-            _ => self.is_mountain(),
+            _ => !self.is_mountain(),
         }
     }
     pub fn is_flat_ground(&self) -> bool {

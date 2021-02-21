@@ -17,7 +17,7 @@ impl TerrainYieldsFactory {
     pub fn create(
         &self,
         latitude: Latitude,
-        _longitude: Longitude,
+        longitude: Longitude,
         _elevation: Elevation,
         moisture: Moisture,
         terrain_type: &TerrainType,
@@ -88,7 +88,9 @@ impl TerrainYieldsFactory {
                     }
                 }
                 NaturalGood::Whale if terrain_type.is_ocean() && latitude.abs() > 70. => 1.,
-                NaturalGood::WildFish if terrain_type.is_water() => 0.6,
+                NaturalGood::WildFish if terrain_type.is_water() => {
+                    Into::<f64>::into(moisture).powf(2.)
+                }
                 _ => 0.,
             };
             if yield_f64 > 0. {
@@ -120,22 +122,114 @@ impl TerrainYieldsFactory {
                     TerrainType::Tundra => 0.3,
                     _ => 0.,
                 },
-                HarvestableGood::CocoaPlant if latitude.abs() < 30. => 1.,
-                HarvestableGood::CottonPlant => 1.,
-                HarvestableGood::Ears => 1.,
-                HarvestableGood::FlowerPlant => 1.,
-                HarvestableGood::Grape => 1.,
-                HarvestableGood::HempPlant => 1.,
-                HarvestableGood::HopsPlant => 1.,
-                HarvestableGood::IndigoPlant => 1.,
-                HarvestableGood::PeltAnimal => 1.,
-                HarvestableGood::PotatoPlant => 1.,
-                HarvestableGood::Sheep => 1.,
-                HarvestableGood::SilkWorm => 1.,
-                HarvestableGood::SpicePlant => 1.,
-                HarvestableGood::SugarCanePlant => 1.,
-                HarvestableGood::TobaccoPlant => 1.,
-                HarvestableGood::UntamedHorse => 1.,
+                HarvestableGood::CocoaPlant
+                    if latitude.abs() < 30. && terrain_type.is_flat_ground() =>
+                {
+                    1.
+                }
+                HarvestableGood::CottonPlant
+                    if latitude.abs() < 30. && terrain_type.is_flat_ground() =>
+                {
+                    1.
+                }
+                HarvestableGood::Ears
+                    if latitude.abs() > 30.
+                        && latitude.abs() < 65.
+                        && terrain_type.is_flat_ground() =>
+                {
+                    1.
+                }
+                HarvestableGood::FlowerPlant
+                    if latitude.abs() < 80. && terrain_type.is_ground() =>
+                {
+                    if terrain_type.is_hill() {
+                        0.75 * Into::<f64>::into(moisture)
+                    } else {
+                        moisture.into()
+                    }
+                }
+                HarvestableGood::Grape
+                    if latitude.abs() > 35. && latitude.abs() < 60. && terrain_type.is_ground() =>
+                {
+                    if !terrain_type.is_hill() {
+                        0.75 * Into::<f64>::into(moisture)
+                    } else {
+                        moisture.into()
+                    }
+                }
+                HarvestableGood::HempPlant if terrain_type.is_ground() && latitude.abs() < 70. => {
+                    if terrain_type.is_hill() {
+                        0.75 * Into::<f64>::into(moisture)
+                    } else {
+                        moisture.into()
+                    }
+                }
+                HarvestableGood::HopsPlant
+                    if latitude.abs() > 35. && latitude.abs() < 60. && terrain_type.is_ground() =>
+                {
+                    if !terrain_type.is_hill() {
+                        0.75 * Into::<f64>::into(moisture)
+                    } else {
+                        moisture.into()
+                    }
+                }
+                HarvestableGood::IndigoPlant
+                    if latitude.abs() < 30. && terrain_type.is_flat_ground() =>
+                {
+                    moisture.into()
+                }
+                HarvestableGood::PeltAnimal
+                    if terrain_type.is_ground()
+                        && (latitude.abs() < 10.
+                            || (latitude.abs() > 70. && latitude.abs() < 85.)) =>
+                {
+                    if terrain_type.is_hill() {
+                        0.75
+                    } else {
+                        1.
+                    }
+                }
+                HarvestableGood::PotatoPlant if terrain_type.is_flat_ground() => moisture.into(),
+                HarvestableGood::Sheep
+                    if latitude.abs() > 15. && latitude.abs() < 70. && terrain_type.is_ground() =>
+                {
+                    if terrain_type.is_hill() {
+                        0.75
+                    } else {
+                        1.
+                    }
+                }
+                HarvestableGood::SilkWorm
+                    if latitude.abs() > 10.
+                        && latitude.abs() < 35.
+                        && longitude.abs() > 100.
+                        && terrain_type.is_flat_ground() =>
+                {
+                    1.
+                }
+                HarvestableGood::SpicePlant
+                    if latitude.abs() < 35. && terrain_type.is_flat_ground() =>
+                {
+                    1. / Into::<f64>::into(moisture)
+                }
+                HarvestableGood::SugarCanePlant
+                    if latitude.abs() > 10. && latitude.abs() < 35. && terrain_type.is_ground() =>
+                {
+                    moisture.into()
+                }
+                HarvestableGood::TobaccoPlant
+                    if latitude.abs() < 47. && terrain_type.is_flat_ground() =>
+                {
+                    moisture.into()
+                }
+                HarvestableGood::UntamedHorse
+                    if latitude.abs() > 30.
+                        && latitude.abs() < 70.
+                        && longitude.abs() > 100.
+                        && terrain_type.is_flat_ground() =>
+                {
+                    1.
+                }
                 _ => 0.,
             };
             if yield_f64 > 0. {
