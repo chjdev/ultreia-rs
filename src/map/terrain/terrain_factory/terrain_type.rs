@@ -1,8 +1,8 @@
 use crate::map::terrain::{Elevation, Latitude, Moisture};
 use crate::saturating_from::SaturatingInto;
-use strum_macros::{EnumIter, EnumVariantNames, IntoStaticStr};
+use strum_macros::{EnumCount, EnumIter, EnumVariantNames, IntoStaticStr};
 
-#[derive(PartialEq, Eq, Copy, Clone, EnumIter, IntoStaticStr, EnumVariantNames)]
+#[derive(PartialEq, Eq, Copy, Clone, EnumIter, EnumCount, IntoStaticStr, EnumVariantNames)]
 pub enum TerrainType {
     Bare,
     Grassland,

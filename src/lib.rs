@@ -4,6 +4,10 @@
 #[macro_use]
 extern crate lazy_static;
 
+#[cfg(test)]
+#[macro_use]
+extern crate pretty_assertions;
+
 mod clock;
 mod coordinate;
 mod game;
@@ -13,5 +17,6 @@ mod map;
 mod observable;
 mod player;
 mod saturating_from;
+mod stacked_lru;
 mod tile;
 mod yields;

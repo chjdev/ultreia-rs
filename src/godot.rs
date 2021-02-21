@@ -1,3 +1,4 @@
+mod arcer;
 mod clock;
 mod game;
 mod game_controller;

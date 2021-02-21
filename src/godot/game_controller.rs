@@ -21,3 +21,23 @@ impl GameController {
         INSTANCE.read().ok()?.as_ref().map(Arc::clone)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::coordinate::Coordinate;
+    use crate::map::minimap::GetByCoordinate;
+    use crate::map::terrain::{TerrainMeta, TerrainType};
+    use strum::EnumCount;
+
+    #[test]
+    fn test_smoke() {
+        GameController::start(Configuration::new(100, 100, 4.));
+        let game = GameController::game().unwrap();
+        let coordinate = Coordinate::default();
+        let terrain_type: TerrainType = game.map().terrain().get(&coordinate);
+        assert!((terrain_type as usize) < TerrainType::COUNT);
+        let terrain_meta: Arc<TerrainMeta> = game.map().terrain().get(&coordinate);
+        assert!(terrain_meta.moisture() >= 0.);
+    }
+}

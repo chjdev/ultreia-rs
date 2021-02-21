@@ -19,6 +19,9 @@ gdnative = "^0.9"
 # auto impls for new types
 derive_more = "^0.99"
 
+[dev-dependencies]
+pretty_assertions = "^0.6"
+
 [lib]
 name = "ultreia"
 crate-type = ["cdylib"]

@@ -14,7 +14,7 @@ use terrain_type::TerrainTypeFactory;
 pub use terrain_yields::TerrainYields;
 use terrain_yields::TerrainYieldsFactory;
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct TerrainMeta {
     elevation: Elevation,
     moisture: Moisture,

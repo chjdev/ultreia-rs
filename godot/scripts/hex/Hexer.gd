@@ -67,7 +67,7 @@ var last_stop_coords = Vector2.ZERO
 
 func update_hexes(rect: Rect2, force: bool = false):
 	self.current_rect = rect
-	var view_size = rect.size * Vector2(1.2, 1.2)
+	var view_size = rect.size * Vector2(1.05, 1.05)
 	var current_center = rect.position
 	var start = current_center - (view_size / 2)
 	var stop = start + view_size
