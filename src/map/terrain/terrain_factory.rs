@@ -52,7 +52,7 @@ impl TerrainFactory {
         TerrainFactory {
             elevation_factory: TerrainElevationFactory::new(seed, island_noise),
             moisture_factory: TerrainMoistureFactory::new(seed * 3, island_noise * 4.),
-            yields_factory: TerrainYieldsFactory::new(),
+            yields_factory: TerrainYieldsFactory::new(seed * 4),
             type_factory: TerrainTypeFactory::new(),
         }
     }

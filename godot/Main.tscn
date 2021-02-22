@@ -1068,8 +1068,8 @@ margin_right = 46.0
 margin_bottom = 1340.0
 text = "Clock"
 script = ExtResource( 8 )
-[connection signal="change" from="WorldCamera" to="HUD/Minimap" method="_on_WorldCamera_change"]
 [connection signal="change" from="WorldCamera" to="Hexer" method="_on_WorldCamera_change" flags=3]
+[connection signal="change" from="WorldCamera" to="HUD/Minimap" method="_on_WorldCamera_change"]
 [connection signal="hex_enter" from="Cursor" to="Hexer" method="_on_Cursor_hex_enter"]
 [connection signal="hex_exit" from="Cursor" to="Hexer" method="_on_Cursor_hex_exit"]
 [connection signal="hex_pressed" from="Cursor" to="ContextMenus/HexContextMenu" method="_on_Cursor_hex_pressed"]

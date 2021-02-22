@@ -1,13 +1,38 @@
 use crate::saturating_from::SaturatingInto;
-use derive_more::Into;
 use std::cmp::Ordering;
 
-#[derive(PartialEq, PartialOrd, Copy, Clone, Default, Into)]
-pub struct Latitude(f64);
+pub trait LatLon {
+    fn normalized(&self) -> f64;
+    fn abs(&self) -> Self;
+}
+
+#[derive(PartialEq, PartialOrd, Copy, Clone, Default)]
+pub struct Latitude {
+    normalized: f64,
+    value: f64,
+}
 
 impl Latitude {
-    pub fn abs(&self) -> Self {
-        Latitude(self.0.abs())
+    fn new(normalized: f64) -> Self {
+        Self {
+            value: (normalized * std::f64::consts::FRAC_PI_2).sin() * 90.,
+            normalized,
+        }
+    }
+}
+
+impl Into<f64> for Latitude {
+    fn into(self) -> f64 {
+        self.value
+    }
+}
+
+impl LatLon for Latitude {
+    fn normalized(&self) -> f64 {
+        self.normalized
+    }
+    fn abs(&self) -> Self {
+        Latitude::new(self.normalized().abs())
     }
 }
 
@@ -25,13 +50,40 @@ impl PartialOrd<f64> for Latitude {
 
 impl SaturatingInto<Latitude> for f64 {
     fn saturating_from(ny: &f64) -> Latitude {
-        let latitude = (ny * std::f64::consts::FRAC_PI_2).sin() * 90.;
-        Latitude(latitude.clamp(-90., 90.))
+        Latitude::new(ny.clamp(-1., 1.))
     }
 }
 
-#[derive(PartialEq, PartialOrd, Copy, Clone, Default, Into)]
-pub struct Longitude(f64);
+#[derive(PartialEq, PartialOrd, Copy, Clone, Default)]
+pub struct Longitude {
+    normalized: f64,
+    value: f64,
+}
+
+impl Longitude {
+    fn new(normalized: f64) -> Self {
+        Self {
+            value: normalized * 180.,
+            normalized,
+        }
+    }
+}
+
+impl Into<f64> for Longitude {
+    fn into(self) -> f64 {
+        self.value
+    }
+}
+
+impl LatLon for Longitude {
+    fn normalized(&self) -> f64 {
+        self.normalized
+    }
+
+    fn abs(&self) -> Self {
+        Self::new(self.normalized().abs())
+    }
+}
 
 impl PartialEq<f64> for Longitude {
     fn eq(&self, other: &f64) -> bool {
@@ -47,13 +99,6 @@ impl PartialOrd<f64> for Longitude {
 
 impl SaturatingInto<Longitude> for f64 {
     fn saturating_from(nx: &f64) -> Longitude {
-        let longitude: f64 = nx * 180.;
-        Longitude(longitude.clamp(-180., 180.))
-    }
-}
-
-impl Longitude {
-    pub fn abs(&self) -> Self {
-        Longitude(self.0.abs())
+        Longitude::new(nx.clamp(-1., 1.))
     }
 }
