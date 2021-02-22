@@ -1,5 +1,6 @@
 extends Node2D
 
+export var oversample = Vector2(1.2, 1.2)
 var current_rect: Rect2 = Rect2(0, 0, 0, 0)
 
 var HexGrid = preload("../hex/HexGrid.gd").new()
@@ -12,7 +13,7 @@ var last_stop_coords = Vector2.ZERO
 
 func update_hexes(rect: Rect2, force: bool = false):
 	self.current_rect = rect
-	var view_size = rect.size * Vector2(1.05, 1.05)
+	var view_size = rect.size * oversample
 	var current_center = rect.position
 	var start = current_center - (view_size / 2)
 	var stop = start + view_size
