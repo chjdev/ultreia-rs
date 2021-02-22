@@ -1,0 +1,16 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=2]
+
+[sub_resource type="Shader" id=1]
+code = "shader_type canvas_item;
+
+uniform vec3 mode = vec3(1., 1., 1.);
+
+void fragment() {
+    COLOR = texture(TEXTURE, UV);
+    float avg = (COLOR.r + COLOR.g + COLOR.b) / 3.0;
+	COLOR.rgb = mode * avg;   
+}"
+
+[resource]
+shader = SubResource( 1 )
+shader_param/mode = Vector3( 1, 1, 1 )
