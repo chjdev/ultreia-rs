@@ -24,6 +24,7 @@ Game="*res://lib/game.gdns"
 Terrain="*res://lib/terrain.gdns"
 Clock="*res://lib/clock.gdns"
 Good="*res://lib/good.gdns"
+FOW="*res://lib/fow.gdns"
 
 [debug]
 

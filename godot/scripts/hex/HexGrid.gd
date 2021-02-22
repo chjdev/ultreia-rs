@@ -68,6 +68,9 @@ func set_hex_scale(scale):
 func get_zero_hex():
 	return HexCell.new(Vector3(0, 0, 0))
 
+func from_cube_coords(coords: Vector3):
+	return HexCell.new(coords)
+
 """
 	Converting between hex-grid and 2D spatial coordinates
 """

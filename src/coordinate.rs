@@ -55,7 +55,7 @@ impl Coordinate {
         return self.x;
     }
     pub fn y(&self) -> i32 {
-        return self.x;
+        return self.y;
     }
     pub fn z(&self) -> i32 {
         return -self.x - self.y;

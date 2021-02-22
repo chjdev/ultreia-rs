@@ -3,11 +3,7 @@ use gdnative::core_types::{FromVariant, FromVariantError, ToVariant, Variant, Ve
 
 impl ToVariant for Coordinate {
     fn to_variant(&self) -> Variant {
-        Variant::from_vector3(&Vector3::new(
-            self.x() as f32,
-            self.y() as f32,
-            self.z() as f32,
-        ))
+        Vector3::new(self.x() as f32, self.y() as f32, self.z() as f32).to_variant()
     }
 }
 

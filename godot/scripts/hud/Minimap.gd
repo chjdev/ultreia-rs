@@ -3,14 +3,14 @@ extends Sprite
 var HexGrid = preload("../../scripts/hex/HexGrid.gd").new()
 
 export var margin = Vector2(10, 10)
-export var minimap_scale = Vector2(0.33, 0.33)
+export var minimap_scale = Vector2(0.75, 0.75)
 onready var minimap_size = Vector2(get_node("/root/Main").configuration.columns, get_node("/root/Main").configuration.rows)
 onready var minimap_display_size = self.minimap_scale * self.minimap_size
 
 var terrain_enum = Terrain.terrain_enum()
 
 func _ready():
-	call_deferred("update_minimap")
+	call_deferred("_init_minimap")
 
 func _input(event):
 	if event is InputEventMouseButton and event.position.x < self.minimap_display_size.x and event.position.y < self.minimap_display_size.y:
@@ -21,7 +21,7 @@ func _input(event):
 		var pos = HexGrid.get_hex_center(hex)
 		get_node("/root/Main/WorldCamera").move_to(pos)
 
-func update_minimap():
+func _init_minimap():
 	var img = Image.new()
 	img.create(self.minimap_size.x, self.minimap_size.y, false, Image.FORMAT_RGBA8)
 	img.lock()
@@ -30,11 +30,12 @@ func update_minimap():
 		for x in range(0, minimap_size.x):
 			img.set_pixel(x, y, self._find_tile_id(minimap[y * minimap_size.x + x]))
 	img.unlock()
-	img.resize(self.minimap_display_size.x, self.minimap_display_size.y, Image.INTERPOLATE_NEAREST)
 	var tex = ImageTexture.new()
 	tex.create_from_image(img)
 	self.texture = tex
+	self.scale = self.minimap_scale
 	self.position += self.margin + self.minimap_display_size / 2
+	$FOW.update_fow()
 
 func _find_tile_id(type):
 	match type:
@@ -81,8 +82,8 @@ func _on_WorldCamera_change_debounced(rect: Rect2):
 	var max_size = HexGrid.get_hex_at(Vector3(0, 0, 0))
 	max_size.offset_coords = self.minimap_size/2
 	var max_pixel = 2 * HexGrid.get_hex_center(max_size)
-	var cursor_size = (rect.size / max_pixel) * self.minimap_display_size
-	var cursor_pos = (rect.position / max_pixel) * self.minimap_display_size
+	var cursor_size = (rect.size / max_pixel) * self.minimap_size
+	var cursor_pos = (rect.position / max_pixel) * self.minimap_size
 	cursor_pos -= cursor_size / 2
 	$Cursor.rect_position = cursor_pos
 	$Cursor.rect_size = cursor_size

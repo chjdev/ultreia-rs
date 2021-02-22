@@ -8,6 +8,31 @@ pub trait GetByCoordinate<T> {
     }
 }
 
+pub trait SetByCoordinate<T> {
+    fn set(&self, coordinate: Coordinate, value: T);
+    fn range(&self, range: &Range, gen_value: &dyn Fn(&Coordinate) -> T) {
+        range.into_iter().for_each(|c| {
+            self.set(*c, gen_value(c));
+        });
+    }
+}
+
+pub trait FillByCoordinate<T: Copy>: SetByCoordinate<T> {
+    fn fill(&self, range: &Range, value: T) {
+        range.into_iter().for_each(|c| {
+            self.set(*c, value);
+        });
+    }
+}
+
+pub trait FillClonedByCoordinate<T: Clone>: SetByCoordinate<T> {
+    fn fill_cloned(&self, range: &Range, value: T) {
+        range.into_iter().for_each(|c| {
+            self.set(*c, value.clone());
+        });
+    }
+}
+
 pub trait WithGrid {
     fn rows(&self) -> usize;
     fn columns(&self) -> usize;

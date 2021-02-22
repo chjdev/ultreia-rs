@@ -42,6 +42,7 @@ impl<E> PartialEq for ObserverRegistration<E> {
 
 type ObserversStore<E> = HashSet<ObserverRegistration<E>>;
 
+#[derive(Default)]
 pub struct Observers<E> {
     observers: RwLock<ObserversStore<E>>,
 }
