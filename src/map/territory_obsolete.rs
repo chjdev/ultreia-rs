@@ -1,4 +1,4 @@
-use crate::coordinate::indexed::Indexed;
+use crate::coordinate::indexed::CoordinateIndexed;
 use crate::coordinate::range::Range;
 use crate::coordinate::Coordinate;
 use crate::good::Good;
@@ -7,7 +7,7 @@ use crate::tile::state::State;
 use crate::tile::{SomeTileInstance, TileFactory, Tiles};
 use std::sync::{RwLockReadGuard, Weak};
 
-pub type TerritoryMap = Indexed<SomeTileInstance>;
+pub type TerritoryMap = CoordinateIndexed<SomeTileInstance>;
 
 pub struct Territory {
     range: Range,

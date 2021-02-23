@@ -9,13 +9,13 @@ struct TileUpdateObserver {
 
 impl Observer<Tick> for TileUpdateObserver {
     fn notify(&self, _: &Tick) {
-        if let Some(map) = self.map.upgrade() {
-            if let Some(territory) = map.territories().get(0) {
-                for (_, instance) in territory {
-                    instance.update()
-                }
-            }
-        }
+        // if let Some(map) = self.map.upgrade() {
+        //     if let Some(territory) = map.territories().get(0) {
+        //         for (_, instance) in territory {
+        //             instance.update()
+        //         }
+        //     }
+        // }
     }
 }
 

@@ -1,14 +1,14 @@
 use crate::good::{Good, Inventory, InventoryAmount};
-use crate::tile::{SomeTileInstance, State, Tile, TileInstance, Tiles};
+use crate::tile::{SomeTileInstance, State, Tile, TileInstance, TileName};
 use std::sync::{LockResult, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 pub struct DefaultInstance {
-    tile: Tiles,
+    tile: TileName,
     state: Option<RwLock<State>>,
 }
 
 impl DefaultInstance {
-    pub fn new(tile: Tiles, state: Option<State>) -> Self {
+    pub fn new(tile: TileName, state: Option<State>) -> Self {
         DefaultInstance {
             tile,
             state: state.map(|s| RwLock::new(s)),
@@ -24,7 +24,7 @@ impl DefaultInstance {
 }
 
 impl TileInstance for DefaultInstance {
-    fn tile(&self) -> &Tiles {
+    fn tile(&self) -> &TileName {
         &self.tile
     }
 

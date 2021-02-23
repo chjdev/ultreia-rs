@@ -1,8 +1,7 @@
 use crate::coordinate::range::Range;
 use crate::coordinate::Coordinate;
 use crate::good::{Good, Inventory, InventoryAmount};
-use crate::map::terrain::Terrain;
-use crate::map::territory::Territory;
+use crate::map::Map;
 use crate::tile::consumes::Consumes;
 use crate::tile::costs::Costs;
 use crate::tile::pioneer::Pioneer;
@@ -11,6 +10,8 @@ use crate::tile::state::State;
 use crate::tile::warehouse::Warehouse;
 use std::collections::HashMap;
 use std::sync::{LockResult, RwLockReadGuard, RwLockWriteGuard};
+use strum::IntoEnumIterator;
+use strum_macros::EnumIter;
 
 pub mod consumes;
 pub mod costs;
@@ -21,9 +22,8 @@ pub mod produces;
 pub mod state;
 mod warehouse;
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash)]
-#[repr(u8)]
-pub enum Tiles {
+#[derive(Copy, Clone, PartialEq, Eq, Hash, EnumIter)]
+pub enum TileName {
     Pioneer,
     Warehouse,
 }
@@ -31,7 +31,7 @@ pub enum Tiles {
 pub type SomeTileInstance = Box<dyn TileInstance + Send + Sync>;
 
 pub trait Tile {
-    fn tile(&self) -> &Tiles;
+    fn tile(&self) -> &TileName;
     fn costs(&self) -> Option<&Costs> {
         None
     }
@@ -46,12 +46,7 @@ pub trait Tile {
         self.influence_at(&Default::default())
     }
     fn create(&self) -> SomeTileInstance;
-    fn allowed(
-        &self,
-        _at: &Coordinate,
-        _terrain: &Terrain,
-        _territory: Option<&Territory>,
-    ) -> bool {
+    fn allowed(&self, _at: &Coordinate, _map: &Map) -> bool {
         false
     }
 }
@@ -59,7 +54,7 @@ pub trait Tile {
 pub trait TileInstance:
     std::ops::AddAssign<Inventory> + std::ops::AddAssign<(Good, InventoryAmount)>
 {
-    fn tile(&self) -> &Tiles;
+    fn tile(&self) -> &TileName;
     fn state(&self) -> Option<LockResult<RwLockReadGuard<'_, State>>> {
         None
     }
@@ -72,30 +67,28 @@ pub trait TileInstance:
 pub type SomeTile = Box<dyn Tile + Send + Sync>;
 
 pub struct TileFactory {
-    tiles: HashMap<Tiles, SomeTile>,
-}
-
-lazy_static! {
-    static ref TILE_FACTORY_INSTANCE: TileFactory = TileFactory::new();
+    tiles: HashMap<TileName, SomeTile>,
 }
 
 impl TileFactory {
     fn new() -> Self {
-        let mut tiles: HashMap<Tiles, SomeTile> = HashMap::new();
-        tiles.insert(Tiles::Pioneer, Box::new(Pioneer::new()));
-        tiles.insert(Tiles::Warehouse, Box::new(Warehouse::new()));
+        let mut tiles: HashMap<TileName, SomeTile> = HashMap::new();
+        // so we don't forget one, match has to be exhaustive
+        for tile_name in TileName::iter() {
+            let tile: SomeTile = match tile_name {
+                TileName::Pioneer => Box::new(Pioneer::new()),
+                TileName::Warehouse => Box::new(Warehouse::new()),
+            };
+            tiles.insert(tile_name, tile);
+        }
         TileFactory { tiles }
     }
 
-    pub fn instance() -> &'static Self {
-        &TILE_FACTORY_INSTANCE
-    }
-
-    pub fn create(&self, tile: Tiles) -> SomeTileInstance {
+    pub fn create(&self, tile: TileName) -> SomeTileInstance {
         self.tiles.get(&tile).unwrap().create()
     }
 
-    pub fn tile(&self, tile: Tiles) -> &dyn Tile {
+    pub fn tile(&self, tile: TileName) -> &dyn Tile {
         self.tiles.get(&tile).unwrap().as_ref()
     }
 }

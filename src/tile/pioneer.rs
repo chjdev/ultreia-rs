@@ -3,24 +3,24 @@ use crate::coordinate::Coordinate;
 use crate::good::Good::ProductionGood;
 use crate::good::ProductionGood::Fish;
 use crate::tile::instance::DefaultInstance;
-use crate::tile::{Consumes, SomeTileInstance, Tile, Tiles};
+use crate::tile::{Consumes, SomeTileInstance, Tile, TileName};
 
 pub struct Pioneer {
-    tile: Tiles,
+    tile: TileName,
     consumes: Consumes,
 }
 
 impl Pioneer {
     pub fn new() -> Self {
         Pioneer {
-            tile: Tiles::Pioneer,
+            tile: TileName::Pioneer,
             consumes: Consumes::from(&[(ProductionGood(Fish), 3)]),
         }
     }
 }
 
 impl Tile for Pioneer {
-    fn tile(&self) -> &Tiles {
+    fn tile(&self) -> &TileName {
         &self.tile
     }
 

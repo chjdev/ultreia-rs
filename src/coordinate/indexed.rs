@@ -2,4 +2,4 @@ use std::collections::HashMap;
 
 use crate::coordinate::Coordinate;
 
-pub type Indexed<T> = HashMap<Coordinate, T>;
+pub type CoordinateIndexed<T> = HashMap<Coordinate, T>;

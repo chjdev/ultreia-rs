@@ -3,15 +3,15 @@ use crate::coordinate::range::RangeFactory;
 use crate::coordinate::Coordinate;
 use crate::good::{BuildingMaterial, Good, InventoryAmount, ProductionGood, Weapon};
 use crate::map::minimap::GetByCoordinate;
-use crate::map::terrain::{Terrain, TerrainType};
-use crate::map::territory::Territory;
+use crate::map::terrain::TerrainType;
+use crate::map::Map;
 use crate::tile::instance::DefaultInstance;
-use crate::tile::{Consumes, SomeTileInstance, Tile, Tiles};
+use crate::tile::{Consumes, SomeTileInstance, Tile, TileName};
 use std::iter::FromIterator;
 use strum::IntoEnumIterator;
 
 pub struct Warehouse {
-    tile: Tiles,
+    tile: TileName,
     consumes: Consumes,
 }
 
@@ -30,14 +30,14 @@ impl Warehouse {
             .collect();
         pairs.extend(building_materials);
         Warehouse {
-            tile: Tiles::Warehouse,
+            tile: TileName::Warehouse,
             consumes: Consumes::from_iter(pairs),
         }
     }
 }
 
 impl Tile for Warehouse {
-    fn tile(&self) -> &Tiles {
+    fn tile(&self) -> &TileName {
         &self.tile
     }
 
@@ -53,8 +53,8 @@ impl Tile for Warehouse {
         DefaultInstance::from(self)
     }
 
-    fn allowed(&self, at: &Coordinate, terrain: &Terrain, _territory: Option<&Territory>) -> bool {
-        let terrain_tile: TerrainType = terrain.get(at);
+    fn allowed(&self, at: &Coordinate, map: &Map) -> bool {
+        let terrain_tile: TerrainType = map.terrain().get(at);
         terrain_tile == TerrainType::Grassland
     }
 }

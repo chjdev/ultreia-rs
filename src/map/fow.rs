@@ -3,14 +3,11 @@ use crate::coordinate::Coordinate;
 use crate::map::minimap::{FillByCoordinate, GetByCoordinate, Minimap, SetByCoordinate, WithGrid};
 use crate::observable::{Observable, Observers};
 use derive_more::{Constructor, From, Into};
-use std::collections::HashSet;
 use std::sync::RwLock;
-
-type FOWStorage = HashSet<Coordinate>;
 
 #[derive(Default)]
 pub struct FOW {
-    fow: RwLock<FOWStorage>,
+    fow: RwLock<Range>,
     rows: usize,
     columns: usize,
     observers: Observers<Uncover>,
