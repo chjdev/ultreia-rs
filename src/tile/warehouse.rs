@@ -1,12 +1,10 @@
-use crate::coordinate::range::Range;
-use crate::coordinate::range::RangeFactory;
+use crate::coordinate::range::{Range, RangeFrom};
 use crate::coordinate::Coordinate;
 use crate::good::{BuildingMaterial, Good, InventoryAmount, ProductionGood, Weapon};
 use crate::map::minimap::GetByCoordinate;
 use crate::map::terrain::TerrainType;
 use crate::map::Map;
-use crate::tile::instance::DefaultInstance;
-use crate::tile::{Consumes, SomeTileInstance, Tile, TileName};
+use crate::tile::{Consumes, Tile, TileName};
 use std::iter::FromIterator;
 use strum::IntoEnumIterator;
 
@@ -46,11 +44,7 @@ impl Tile for Warehouse {
     }
 
     fn influence_at(&self, at: &Coordinate) -> Range {
-        Range::circle(at, 6)
-    }
-
-    fn create(&self) -> SomeTileInstance {
-        DefaultInstance::from(self)
+        at.circle(6)
     }
 
     fn allowed(&self, at: &Coordinate, map: &Map) -> bool {

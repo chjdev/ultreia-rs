@@ -1,9 +1,8 @@
-use crate::coordinate::range::{Range, RangeFactory};
+use crate::coordinate::range::{Range, RangeFrom};
 use crate::coordinate::Coordinate;
 use crate::good::Good::ProductionGood;
 use crate::good::ProductionGood::Fish;
-use crate::tile::instance::DefaultInstance;
-use crate::tile::{Consumes, SomeTileInstance, Tile, TileName};
+use crate::tile::{Consumes, Tile, TileName};
 
 pub struct Pioneer {
     tile: TileName,
@@ -25,10 +24,6 @@ impl Tile for Pioneer {
     }
 
     fn influence_at(&self, at: &Coordinate) -> Range {
-        Range::circle(at, 2)
-    }
-
-    fn create(&self) -> SomeTileInstance {
-        DefaultInstance::from(self)
+        at.circle(2)
     }
 }

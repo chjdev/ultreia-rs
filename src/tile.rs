@@ -4,6 +4,7 @@ use crate::good::{Good, Inventory, InventoryAmount};
 use crate::map::Map;
 use crate::tile::consumes::Consumes;
 use crate::tile::costs::Costs;
+use crate::tile::instance::DefaultInstance;
 use crate::tile::pioneer::Pioneer;
 use crate::tile::produces::Produces;
 use crate::tile::state::State;
@@ -28,7 +29,7 @@ pub enum TileName {
     Warehouse,
 }
 
-pub type SomeTileInstance = Box<dyn TileInstance + Send + Sync>;
+pub type SomeTile = Box<dyn Tile + Send + Sync>;
 
 pub trait Tile {
     fn tile(&self) -> &TileName;
@@ -45,11 +46,15 @@ pub trait Tile {
     fn influence(&self) -> Range {
         self.influence_at(&Default::default())
     }
-    fn create(&self) -> SomeTileInstance;
+    fn create(&self) -> SomeTileInstance {
+        DefaultInstance::from(self)
+    }
     fn allowed(&self, _at: &Coordinate, _map: &Map) -> bool {
         false
     }
 }
+
+pub type SomeTileInstance = Box<dyn TileInstance + Send + Sync>;
 
 pub trait TileInstance:
     std::ops::AddAssign<Inventory> + std::ops::AddAssign<(Good, InventoryAmount)>
@@ -63,8 +68,6 @@ pub trait TileInstance:
     }
     fn update(&self);
 }
-
-pub type SomeTile = Box<dyn Tile + Send + Sync>;
 
 pub struct TileFactory {
     tiles: HashMap<TileName, SomeTile>,

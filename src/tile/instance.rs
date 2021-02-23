@@ -15,7 +15,7 @@ impl DefaultInstance {
         }
     }
 
-    pub fn from(tile: &impl Tile) -> SomeTileInstance {
+    pub fn from(tile: &(impl Tile + ?Sized)) -> SomeTileInstance {
         Box::new(DefaultInstance::new(
             *tile.tile(),
             State::from(tile.consumes(), tile.produces()),
