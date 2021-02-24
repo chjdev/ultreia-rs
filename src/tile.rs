@@ -1,6 +1,5 @@
 use crate::coordinate::range::Range;
 use crate::coordinate::Coordinate;
-use crate::good::{Good, Inventory, InventoryAmount};
 use crate::map::Map;
 use crate::tile::consumes::Consumes;
 use crate::tile::costs::Costs;
@@ -29,9 +28,9 @@ pub enum TileName {
     Warehouse,
 }
 
-pub type SomeTile = Box<dyn Tile + Send + Sync>;
+pub type SomeTile = Box<dyn Tile>;
 
-pub trait Tile {
+pub trait Tile: Send + Sync {
     fn tile(&self) -> &TileName;
     fn costs(&self) -> Option<&Costs> {
         None
@@ -54,11 +53,9 @@ pub trait Tile {
     }
 }
 
-pub type SomeTileInstance = Box<dyn TileInstance + Send + Sync>;
+pub type SomeTileInstance = Box<dyn TileInstance>;
 
-pub trait TileInstance:
-    std::ops::AddAssign<Inventory> + std::ops::AddAssign<(Good, InventoryAmount)>
-{
+pub trait TileInstance: Send + Sync {
     fn tile(&self) -> &TileName;
     fn state(&self) -> Option<LockResult<RwLockReadGuard<'_, State>>> {
         None

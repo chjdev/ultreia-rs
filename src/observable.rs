@@ -2,14 +2,12 @@ use std::collections::HashSet;
 use std::hash::{Hash, Hasher};
 use std::sync::{Arc, RwLock, Weak};
 
-pub trait Observer<E> {
+pub trait Observer<E>: Send + Sync {
     fn notify(&self, event: &E);
 }
 
-type SomeObserver<E> = dyn Observer<E> + Send + Sync;
-
 /// weak pointer so it will deregister itself automatically when dropped
-type WeakObserver<E> = Weak<SomeObserver<E>>;
+type WeakObserver<E> = Weak<dyn Observer<E>>;
 
 pub struct ObserverRegistration<E> {
     weak: WeakObserver<E>,
@@ -56,7 +54,7 @@ impl<E> Observers<E> {
 
     pub fn register<SO>(&self, observer: &Arc<SO>) -> ObserverRegistration<E>
     where
-        SO: 'static + Observer<E> + Send + Sync,
+        SO: 'static + Observer<E>,
     {
         let mut observers = self.observers.write().unwrap();
         let next_observer = ObserverRegistration {
@@ -80,6 +78,7 @@ pub trait Observable<E> {
             if let Some(observer) = registration.weak.upgrade() {
                 observer.notify(event);
             } else {
+                // the observer has since freed
                 self.observers().deregister(registration);
             }
         }

@@ -1,24 +1,10 @@
 use crate::good::{Good, Inventory, InventoryAmount};
 use crate::tile::helpers::{add_assign, sub_assign};
+use derive_more::{Deref, DerefMut, From, Index, IndexMut, Into};
 use std::iter::FromIterator;
-use std::ops::{Deref, DerefMut};
 
-#[derive(Default, Clone, PartialEq, Eq)]
+#[derive(Default, Clone, PartialEq, Eq, From, Into, Deref, DerefMut, Index, IndexMut)]
 pub struct Consumes(Inventory);
-
-impl Deref for Consumes {
-    type Target = Inventory;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl DerefMut for Consumes {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
 
 impl Consumes {
     pub fn new() -> Self {

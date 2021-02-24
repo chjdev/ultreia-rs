@@ -1,4 +1,3 @@
-use crate::good::{Good, Inventory, InventoryAmount};
 use crate::tile::{SomeTileInstance, State, Tile, TileInstance, TileName};
 use std::sync::{LockResult, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
@@ -40,29 +39,3 @@ impl TileInstance for DefaultInstance {
         unimplemented!()
     }
 }
-
-impl std::ops::AddAssign<Inventory> for DefaultInstance {
-    fn add_assign(&mut self, rhs: Inventory) {
-        if let Some(s) = &self.state {
-            let mut state = s.write().expect("could not lock state for reading");
-            *state += &rhs;
-        }
-    }
-}
-
-impl std::ops::AddAssign<(Good, InventoryAmount)> for DefaultInstance {
-    fn add_assign(&mut self, rhs: (Good, InventoryAmount)) {
-        if let Some(s) = &self.state {
-            let mut state = s.write().expect("could not lock state for reading");
-            *state += (&rhs.0, &rhs.1);
-        }
-    }
-}
-
-// impl std::ops::AddAssign<&Inventory> for &DefaultInstance {
-//     fn add_assign(&mut self, rhs: &Inventory) {
-//         for tuple in rhs {
-//             *self += tuple;
-//         }
-//     }
-// }
