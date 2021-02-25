@@ -2,6 +2,7 @@ mod buildings_signal;
 
 use gdnative::prelude::*;
 
+use crate::coordinate::Coordinate;
 use crate::godot::buildings::buildings_signal::{BuildingsObserver, BuildingsSignal};
 use crate::godot::game::GameSignal;
 use crate::godot::game_controller::GameController;
@@ -30,17 +31,26 @@ impl Buildings {
             args: &[
                 SignalArgument {
                     name: "coordinate",
-                    default: Variant::from_i64(0),
+                    default: Coordinate::default().to_variant(),
                     export_info: ExportInfo::new(VariantType::Vector3),
                     usage: PropertyUsage::DEFAULT,
                 },
                 SignalArgument {
                     name: "tile_name",
-                    default: Variant::from_i64(0),
+                    default: GodotString::from_str("").to_variant(),
                     export_info: ExportInfo::new(VariantType::GodotString),
                     usage: PropertyUsage::DEFAULT,
                 },
             ],
+        });
+        builder.add_signal(Signal {
+            name: BuildingsSignal::Destroyed.as_ref(),
+            args: &[SignalArgument {
+                name: "coordinate",
+                default: Coordinate::default().to_variant(),
+                export_info: ExportInfo::new(VariantType::Vector3),
+                usage: PropertyUsage::DEFAULT,
+            }],
         });
     }
 

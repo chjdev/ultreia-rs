@@ -9,6 +9,7 @@ mod terrain;
 mod territory;
 mod variant;
 
+use crate::godot::buildings::Buildings;
 use crate::godot::clock::Clock;
 use crate::godot::fow::FOW;
 use crate::godot::game::Game;
@@ -25,6 +26,7 @@ fn init(handle: InitHandle) {
     handle.add_class::<Good>();
     handle.add_class::<FOW>();
     handle.add_class::<Territory>();
+    handle.add_class::<Buildings>();
 }
 
 // create entry points for library

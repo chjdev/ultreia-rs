@@ -50,6 +50,7 @@ func _ready():
 		self.get_tileset().create_tile(red_tile_id)
 		self._copy_tile_to(tile_id, red_tile_id)
 		self.get_tileset().tile_set_modulate(red_tile_id, Color.red)
+	Buildings.connect("Created", self, "_on_building_created")
 
 func set_terrain_cell(i, j, terrain):
 	var tile_id = self._find_tile_id(terrain)
@@ -66,3 +67,7 @@ func focus(hex):
 func blur(hex):
 	var hex_coords = hex.offset_coords
 	self.set_cell(hex_coords.x, hex_coords.y, self._base_tile_id(self.get_cell(hex_coords.x, hex_coords.y)))
+
+func _on_building_created(coordinate, tile_name):
+	self.set_cell(hex_coords.x, hex_coords.y, self._base_tile_id(self.get_cell(hex_coords.x, hex_coords.y)))
+	print("wtf", coordinate, tile_name)

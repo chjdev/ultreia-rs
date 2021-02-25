@@ -25,6 +25,7 @@ Terrain="*res://lib/terrain.gdns"
 Clock="*res://lib/clock.gdns"
 Good="*res://lib/good.gdns"
 FOW="*res://lib/fow.gdns"
+Buildings="*res://lib/buildings.gdns"
 
 [debug]
 
