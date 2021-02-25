@@ -1,5 +1,5 @@
 use crate::tile::{SomeTileInstance, State, Tile, TileInstance, TileName};
-use std::sync::{LockResult, RwLock, RwLockReadGuard, RwLockWriteGuard};
+use std::sync::{Arc, LockResult, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 pub struct DefaultInstance {
     tile: TileName,
@@ -15,7 +15,7 @@ impl DefaultInstance {
     }
 
     pub fn from(tile: &(impl Tile + ?Sized)) -> SomeTileInstance {
-        Box::new(DefaultInstance::new(
+        Arc::new(DefaultInstance::new(
             *tile.tile(),
             State::from(tile.consumes(), tile.produces()),
         ))

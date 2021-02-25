@@ -1,9 +1,23 @@
-use crate::good::{Good, Inventory, InventoryAmount};
-use crate::tile::helpers::{add_assign, sub_assign};
-use derive_more::{Deref, DerefMut, From, Index, IndexMut, Into};
+use crate::good::{Inventory, InventoryAmount};
+use derive_more::{Add, AddAssign, Deref, DerefMut, From, Index, IndexMut, Into, Sub, SubAssign};
 use std::iter::FromIterator;
 
-#[derive(Default, Clone, PartialEq, Eq, From, Into, Deref, DerefMut, Index, IndexMut)]
+#[derive(
+    Default,
+    Clone,
+    PartialEq,
+    Eq,
+    From,
+    Into,
+    Deref,
+    DerefMut,
+    Index,
+    IndexMut,
+    Add,
+    AddAssign,
+    Sub,
+    SubAssign,
+)]
 pub struct Produces(Inventory);
 
 impl Produces {
@@ -11,43 +25,7 @@ impl Produces {
         Default::default()
     }
 
-    pub fn from(pairs: &[(Good, InventoryAmount)]) -> Self {
+    pub fn from(pairs: &[<Inventory as InventoryAmount>::Entry]) -> Self {
         Self(Inventory::from_iter(pairs.into_iter().cloned()))
-    }
-}
-
-impl FromIterator<(Good, InventoryAmount)> for Produces {
-    fn from_iter<T: IntoIterator<Item = (Good, InventoryAmount)>>(iter: T) -> Self {
-        Self(iter.into_iter().collect::<Inventory>())
-    }
-}
-
-impl<'a> FromIterator<&'a (Good, InventoryAmount)> for Produces {
-    fn from_iter<T: IntoIterator<Item = &'a (Good, InventoryAmount)>>(iter: T) -> Self {
-        Self(iter.into_iter().cloned().collect::<Inventory>())
-    }
-}
-
-impl std::ops::AddAssign<(&Good, &InventoryAmount)> for Produces {
-    fn add_assign(&mut self, rhs: (&Good, &InventoryAmount)) {
-        add_assign(self, rhs)
-    }
-}
-
-impl std::ops::AddAssign<(&Good, &InventoryAmount)> for &mut Produces {
-    fn add_assign(&mut self, rhs: (&Good, &InventoryAmount)) {
-        add_assign(*self, rhs)
-    }
-}
-
-impl std::ops::SubAssign<(&Good, &InventoryAmount)> for Produces {
-    fn sub_assign(&mut self, rhs: (&Good, &InventoryAmount)) {
-        sub_assign(self, rhs)
-    }
-}
-
-impl std::ops::SubAssign<(&Good, &InventoryAmount)> for &mut Produces {
-    fn sub_assign(&mut self, rhs: (&Good, &InventoryAmount)) {
-        sub_assign(*self, rhs)
     }
 }

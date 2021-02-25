@@ -1,4 +1,6 @@
-use std::collections::HashMap;
+mod inventory;
+
+pub use self::inventory::{Inventory, InventoryAmount};
 use strum_macros::{AsRefStr, EnumCount, EnumIter, IntoStaticStr};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, AsRefStr, IntoStaticStr, EnumIter, EnumCount)]
@@ -190,6 +192,3 @@ impl Default for Good {
         Self::ImmaterialGood(ImmaterialGood::Money)
     }
 }
-
-pub type InventoryAmount = u32;
-pub type Inventory<T = InventoryAmount> = HashMap<Good, T>;

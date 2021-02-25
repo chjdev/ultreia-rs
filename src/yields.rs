@@ -1,7 +1,7 @@
 use crate::saturating_from::SaturatingInto;
 use std::cmp::Ordering;
 
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Default, Copy, Clone, PartialEq, Eq)]
 pub struct Yield(u8);
 
 const PERCENT100_YIELD: f64 = (u8::max_value() / 2) as f64;

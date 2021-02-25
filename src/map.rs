@@ -10,10 +10,10 @@ pub mod terrain;
 pub mod territories;
 
 pub struct Map {
-    terrain: Terrain,
-    territories: Territories,
-    fow: FOW,
-    buildings: Buildings,
+    pub terrain: Terrain,
+    pub territories: Territories,
+    pub fow: FOW,
+    pub buildings: Buildings,
 }
 
 impl Map {
@@ -24,17 +24,5 @@ impl Map {
             fow: Default::default(),
             buildings: Default::default(),
         }
-    }
-
-    pub fn fow(&self) -> &FOW {
-        &self.fow
-    }
-
-    pub fn terrain(&self) -> &Terrain {
-        &self.terrain
-    }
-
-    pub fn territories(&self) -> &Territories {
-        &self.territories
     }
 }

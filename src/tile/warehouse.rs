@@ -1,11 +1,10 @@
 use crate::coordinate::range::{Range, RangeFrom};
 use crate::coordinate::Coordinate;
-use crate::good::{BuildingMaterial, Good, InventoryAmount, ProductionGood, Weapon};
+use crate::good::{BuildingMaterial, Good, Inventory, InventoryAmount, ProductionGood, Weapon};
 use crate::map::minimap::GetByCoordinate;
 use crate::map::terrain::TerrainType;
 use crate::map::Map;
 use crate::tile::{Consumes, Tile, TileName};
-use std::iter::FromIterator;
 use strum::IntoEnumIterator;
 
 pub struct Warehouse {
@@ -15,21 +14,14 @@ pub struct Warehouse {
 
 impl Warehouse {
     pub fn new() -> Self {
-        let mut pairs = vec![];
-        let production_goods: Vec<(Good, InventoryAmount)> = ProductionGood::iter()
-            .map(|g| (Good::ProductionGood(g), 100))
-            .collect();
-        pairs.extend(production_goods);
-        let weapons: Vec<(Good, InventoryAmount)> =
-            Weapon::iter().map(|g| (Good::Weapon(g), 100)).collect();
-        pairs.extend(weapons);
-        let building_materials: Vec<(Good, InventoryAmount)> = BuildingMaterial::iter()
-            .map(|g| (Good::BuildingMaterial(g), 100))
-            .collect();
-        pairs.extend(building_materials);
+        let mut pairs: Vec<<Inventory as InventoryAmount>::Entry> = vec![];
+        pairs.extend(ProductionGood::iter().map(|g| (Good::ProductionGood(g), 100)));
+        pairs.extend(Weapon::iter().map(|g| (Good::Weapon(g), 100)));
+        pairs.extend(BuildingMaterial::iter().map(|g| (Good::BuildingMaterial(g), 100)));
+        let inventory: Inventory = pairs.into_iter().collect();
         Warehouse {
             tile: TileName::Warehouse,
-            consumes: Consumes::from_iter(pairs),
+            consumes: inventory.into(),
         }
     }
 }
@@ -48,7 +40,7 @@ impl Tile for Warehouse {
     }
 
     fn allowed(&self, at: &Coordinate, map: &Map) -> bool {
-        let terrain_tile: TerrainType = map.terrain().get(at);
+        let terrain_tile: TerrainType = map.terrain.get(at);
         terrain_tile == TerrainType::Grassland
     }
 }

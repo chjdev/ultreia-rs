@@ -1,10 +1,10 @@
 use crate::clock::{Clock, Tick};
 use crate::map::Map;
 use crate::observable::Observer;
-use std::sync::{Arc, Weak};
+use std::sync::{Arc, RwLock, Weak};
 
 struct TileUpdateObserver {
-    map: Weak<Map>,
+    map: Weak<RwLock<Map>>,
 }
 
 impl Observer<Tick> for TileUpdateObserver {
@@ -24,7 +24,7 @@ pub struct TileUpdater {
 }
 
 impl TileUpdater {
-    pub fn new(clock: &Clock, map: &Arc<Map>) -> Self {
+    pub fn new(clock: &Clock, map: &Arc<RwLock<Map>>) -> Self {
         let observer = Arc::new(TileUpdateObserver {
             map: Arc::downgrade(map),
         });

@@ -3,11 +3,10 @@ use crate::coordinate::Coordinate;
 use crate::map::minimap::{FillByCoordinate, GetByCoordinate, Minimap, SetByCoordinate, WithGrid};
 use crate::observable::{Observable, Observers};
 use derive_more::{Constructor, From, Into};
-use std::sync::RwLock;
 
 #[derive(Default)]
 pub struct FOW {
-    fow: RwLock<Range>,
+    fow: Range,
     rows: usize,
     columns: usize,
     observers: Observers<Uncover>,
@@ -23,12 +22,11 @@ impl FOW {
         }
     }
 
-    fn set_silent(&self, coordinate: Coordinate, value: bool) {
-        let mut fow = self.fow.write().unwrap();
+    fn set_silent(&mut self, coordinate: Coordinate, value: bool) {
         if value {
-            fow.insert(coordinate);
+            self.fow.insert(coordinate);
         } else {
-            fow.remove(&coordinate);
+            self.fow.remove(&coordinate);
         }
     }
 }
@@ -45,12 +43,12 @@ impl WithGrid for FOW {
 
 impl GetByCoordinate<bool> for FOW {
     fn get(&self, coordinate: &Coordinate) -> bool {
-        self.fow.read().unwrap().contains(coordinate)
+        self.fow.contains(coordinate)
     }
 }
 
 impl SetByCoordinate<bool> for FOW {
-    fn set(&self, coordinate: Coordinate, value: bool) {
+    fn set(&mut self, coordinate: Coordinate, value: bool) {
         self.set_silent(coordinate, value);
         let uncover = Uncover::new(vec![coordinate]);
         self.notify_all(&uncover)
@@ -58,7 +56,7 @@ impl SetByCoordinate<bool> for FOW {
 }
 
 impl FillByCoordinate<bool> for FOW {
-    fn fill(&self, range: &Range, value: bool) {
+    fn fill(&mut self, range: &Range, value: bool) {
         range.into_iter().for_each(|c| {
             self.set_silent(*c, value);
         });

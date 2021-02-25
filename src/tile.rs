@@ -9,13 +9,12 @@ use crate::tile::produces::Produces;
 use crate::tile::state::State;
 use crate::tile::warehouse::Warehouse;
 use std::collections::HashMap;
-use std::sync::{LockResult, RwLockReadGuard, RwLockWriteGuard};
+use std::sync::{Arc, LockResult, RwLockReadGuard, RwLockWriteGuard};
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
 pub mod consumes;
 pub mod costs;
-mod helpers;
 mod instance;
 mod pioneer;
 pub mod produces;
@@ -53,7 +52,7 @@ pub trait Tile: Send + Sync {
     }
 }
 
-pub type SomeTileInstance = Box<dyn TileInstance>;
+pub type SomeTileInstance = Arc<dyn TileInstance>;
 
 pub trait TileInstance: Send + Sync {
     fn tile(&self) -> &TileName;
@@ -71,7 +70,7 @@ pub struct TileFactory {
 }
 
 impl TileFactory {
-    fn new() -> Self {
+    pub fn new() -> Self {
         let mut tiles: HashMap<TileName, SomeTile> = HashMap::new();
         // so we don't forget one, match has to be exhaustive
         for tile_name in TileName::iter() {
@@ -84,11 +83,11 @@ impl TileFactory {
         TileFactory { tiles }
     }
 
-    pub fn create(&self, tile: TileName) -> SomeTileInstance {
+    pub fn create(&self, tile: &TileName) -> SomeTileInstance {
         self.tiles.get(&tile).unwrap().create()
     }
 
-    pub fn tile(&self, tile: TileName) -> &dyn Tile {
-        self.tiles.get(&tile).unwrap().as_ref()
+    pub fn tile(&self, tile: &TileName) -> &dyn Tile {
+        self.tiles.get(tile).unwrap().as_ref()
     }
 }

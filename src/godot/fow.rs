@@ -2,12 +2,10 @@ mod fow_signal;
 
 use gdnative::prelude::*;
 
-use crate::coordinate::range::RangeFrom;
 use crate::coordinate::Coordinate;
 use crate::godot::fow::fow_signal::{FOWEvents, FOWSignal};
 use crate::godot::game::GameSignal;
 use crate::godot::game_controller::GameController;
-use crate::map::minimap::{FillByCoordinate, SetByCoordinate};
 use crate::map::minimap::{GetByCoordinate, Minimap};
 
 #[derive(NativeClass)]
@@ -57,37 +55,38 @@ impl FOW {
     fn _attach_game(&mut self, owner: TRef<Node>) {
         godot_print!("attaching clock to game now");
         let game = GameController::game().expect("game should be here");
-        let fow_events = FOWEvents::new(game.map().fow(), owner.claim());
+        let fow_events = FOWEvents::new(&game.map().fow, owner.claim());
         self.fow_events = Some(fow_events);
     }
 
     #[export]
     fn at(&self, _owner: &Node, coordinate: Coordinate) -> Option<bool> {
-        Some(GameController::game()?.map().fow().get(&coordinate))
+        Some(GameController::game()?.map().fow.get(&coordinate))
     }
 
     #[export]
     fn uncover(
         &self,
         _owner: &Node,
-        coordinate: Coordinate,
-        maybe_radius: Option<u16>,
+        _coordinate: Coordinate,
+        _maybe_radius: Option<u16>,
     ) -> Option<()> {
-        let radius = maybe_radius.unwrap_or(1);
-        match radius {
-            0 => None,
-            1 => Some(GameController::game()?.map().fow().set(coordinate, true)),
-            some_radius => Some(
-                GameController::game()?
-                    .map()
-                    .fow()
-                    .fill(&coordinate.circle(some_radius), true),
-            ),
-        }
+        // let radius = maybe_radius.unwrap_or(1);
+        // match radius {
+        //     0 => None,
+        //     1 => Some(GameController::game()?.map().fow().set(coordinate, true)),
+        //     some_radius => Some(
+        //         GameController::game()?
+        //             .map()
+        //             .fow()
+        //             .fill(&coordinate.circle(some_radius), true),
+        //     ),
+        // }
+        None
     }
 
     #[export]
     fn minimap(&self, _owner: &Node, width: u16, height: u16) -> Option<Vec<bool>> {
-        Some(GameController::game()?.map().fow().minimap(width, height))
+        Some(GameController::game()?.map().fow.minimap(width, height))
     }
 }
