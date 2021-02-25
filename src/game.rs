@@ -40,7 +40,7 @@ pub struct Game {
     clock: Clock,
     map: Arc<RwLock<Map>>,
     buildings_controller: BuildingsController,
-    tile_updater: TileUpdater,
+    tile_updater: Arc<TileUpdater>,
 }
 
 impl Game {

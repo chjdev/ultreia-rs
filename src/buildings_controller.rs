@@ -75,9 +75,8 @@ impl BuildingsController {
         let influence = tile.influence_at(&coordinate);
         let mut mut_map = self.map.write().unwrap();
         mut_map.fow.fill(&influence, true);
-
         mut_map.buildings.set(coordinate, Some(tile.create()));
-
+        // todo update territories
         Ok(())
     }
 }

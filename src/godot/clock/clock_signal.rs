@@ -22,7 +22,7 @@ impl From<&Tock> for ClockSignal {
     }
 }
 
-struct ClockObserver {
+pub struct ClockObserver {
     owner: Ref<Node, Shared>,
 }
 
@@ -48,15 +48,11 @@ impl Observer<Tock> for ClockObserver {
     }
 }
 
-pub struct ClockEvents {
-    observer: Arc<ClockObserver>,
-}
-
-impl ClockEvents {
-    pub fn new(clock: &Clock, owner: Ref<Node, Shared>) -> Self {
+impl ClockObserver {
+    pub fn new(clock: &Clock, owner: Ref<Node, Shared>) -> Arc<Self> {
         let observer = Arc::new(ClockObserver { owner });
         clock.tickers().register(&observer);
         clock.tockers().register(&observer);
-        ClockEvents { observer }
+        observer
     }
 }

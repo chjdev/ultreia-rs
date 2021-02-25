@@ -3,21 +3,23 @@ mod fow_signal;
 use gdnative::prelude::*;
 
 use crate::coordinate::Coordinate;
-use crate::godot::fow::fow_signal::{FOWEvents, FOWSignal};
+use crate::godot::fow::fow_signal::{FOWObserver, FOWSignal};
 use crate::godot::game::GameSignal;
 use crate::godot::game_controller::GameController;
 use crate::map::minimap::{GetByCoordinate, Minimap};
+use crate::tile::TileName;
+use std::sync::Arc;
 
 #[derive(NativeClass)]
 #[inherit(Node)]
 #[register_with(Self::register_signals)]
 pub struct FOW {
-    fow_events: Option<FOWEvents>,
+    fow_observer: Option<Arc<FOWObserver>>,
 }
 
 impl FOW {
     fn new(_owner: &Node) -> Self {
-        FOW { fow_events: None }
+        FOW { fow_observer: None }
     }
 }
 
@@ -55,8 +57,8 @@ impl FOW {
     fn _attach_game(&mut self, owner: TRef<Node>) {
         godot_print!("attaching clock to game now");
         let game = GameController::game().expect("game should be here");
-        let fow_events = FOWEvents::new(&game.map().fow, owner.claim());
-        self.fow_events = Some(fow_events);
+        let fow_observer = FOWObserver::new(&game.map().fow, owner.claim());
+        self.fow_observer.replace(fow_observer);
     }
 
     #[export]
@@ -82,6 +84,9 @@ impl FOW {
         //             .fill(&coordinate.circle(some_radius), true),
         //     ),
         // }
+        GameController::game()?
+            .buildings_controller()
+            .try_construct(_coordinate, &TileName::Warehouse);
         None
     }
 

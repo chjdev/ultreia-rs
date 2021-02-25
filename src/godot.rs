@@ -1,4 +1,5 @@
 mod arcer;
+mod buildings;
 mod clock;
 mod fow;
 mod game;

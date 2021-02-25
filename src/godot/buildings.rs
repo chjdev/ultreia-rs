@@ -1,9 +1,8 @@
-mod clock_signal;
+mod buildings_signal;
 
 use gdnative::prelude::*;
 
-use crate::godot::clock::clock_signal::ClockObserver;
-pub use crate::godot::clock::clock_signal::ClockSignal;
+use crate::godot::buildings::buildings_signal::{BuildingsObserver, BuildingsSignal};
 use crate::godot::game::GameSignal;
 use crate::godot::game_controller::GameController;
 use std::sync::Arc;
@@ -11,38 +10,37 @@ use std::sync::Arc;
 #[derive(NativeClass)]
 #[inherit(Node)]
 #[register_with(Self::register_signals)]
-pub struct Clock {
-    clock_observer: Option<Arc<ClockObserver>>,
+pub struct Buildings {
+    buildings_observer: Option<Arc<BuildingsObserver>>,
 }
 
-impl Clock {
+impl Buildings {
     fn new(_onwer: &Node) -> Self {
-        Clock {
-            clock_observer: None,
+        Buildings {
+            buildings_observer: None,
         }
     }
 }
 
 #[methods]
-impl Clock {
+impl Buildings {
     fn register_signals(builder: &ClassBuilder<Self>) {
         builder.add_signal(Signal {
-            name: ClockSignal::Tick.as_ref(),
-            args: &[SignalArgument {
-                name: "epoch",
-                default: Variant::from_i64(0),
-                export_info: ExportInfo::new(VariantType::I64),
-                usage: PropertyUsage::DEFAULT,
-            }],
-        });
-        builder.add_signal(Signal {
-            name: ClockSignal::Tock.as_ref(),
-            args: &[SignalArgument {
-                name: "epoch",
-                default: Variant::from_i64(0),
-                export_info: ExportInfo::new(VariantType::I64),
-                usage: PropertyUsage::DEFAULT,
-            }],
+            name: BuildingsSignal::Created.as_ref(),
+            args: &[
+                SignalArgument {
+                    name: "coordinate",
+                    default: Variant::from_i64(0),
+                    export_info: ExportInfo::new(VariantType::Vector3),
+                    usage: PropertyUsage::DEFAULT,
+                },
+                SignalArgument {
+                    name: "tile_name",
+                    default: Variant::from_i64(0),
+                    export_info: ExportInfo::new(VariantType::GodotString),
+                    usage: PropertyUsage::DEFAULT,
+                },
+            ],
         });
     }
 
@@ -66,8 +64,8 @@ impl Clock {
     fn _attach_game(&mut self, owner: TRef<Node>) {
         godot_print!("attaching clock to game now");
         let game = GameController::game().expect("game should be here");
-        let clock_observer = ClockObserver::new(game.clock(), owner.claim());
-        self.clock_observer.replace(clock_observer);
+        let buildings_observer = BuildingsObserver::new(&game.map().buildings, owner.claim());
+        self.buildings_observer.replace(buildings_observer);
     }
 
     #[export]

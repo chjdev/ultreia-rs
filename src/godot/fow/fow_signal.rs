@@ -16,7 +16,7 @@ impl From<&Uncover> for FOWSignal {
     }
 }
 
-struct FOWObserver {
+pub struct FOWObserver {
     owner: Ref<Node, Shared>,
 }
 
@@ -31,14 +31,10 @@ impl Observer<Uncover> for FOWObserver {
     }
 }
 
-pub struct FOWEvents {
-    observer: Arc<FOWObserver>,
-}
-
-impl FOWEvents {
-    pub fn new(fow: &FOW, owner: Ref<Node, Shared>) -> Self {
+impl FOWObserver {
+    pub fn new(fow: &FOW, owner: Ref<Node, Shared>) -> Arc<Self> {
         let observer = Arc::new(FOWObserver { owner });
         fow.observers().register(&observer);
-        FOWEvents { observer }
+        observer
     }
 }
