@@ -1,6 +1,7 @@
 extends Node2D
 
 signal hex_pressed
+signal hex_long_pressed
 signal hex_enter
 signal hex_exit
 
@@ -30,7 +31,10 @@ func _unhandled_input(event):
 				emit_signal("hex_exit", self.current_hex)
 			self.current_hex = hex
 			emit_signal("hex_enter", self.current_hex)
-	if event.is_action("action_context_menu"):
+	if event.is_action_released("action_context_menu") or event.is_action_released("action_select"):
 		var relative_pos = self.transform.affine_inverse() * get_local_mouse_position()
 		var hex = HexGrid.get_hex_at(relative_pos)
-		emit_signal("hex_pressed", hex)
+		if event.is_action_released("action_context_menu"):
+			emit_signal("hex_long_pressed", hex)
+		if event.is_action_released("action_select"):
+			emit_signal("hex_pressed", hex)

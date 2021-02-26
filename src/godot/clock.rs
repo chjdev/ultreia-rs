@@ -71,9 +71,7 @@ impl Clock {
     }
 
     #[export]
-    fn tick(&self, _owner: &Node) {
-        if let Some(game) = GameController::game() {
-            game.clock().tick();
-        }
+    fn tick(&self, _owner: &Node) -> Option<()> {
+        Some(GameController::game()?.clock().tick())
     }
 }

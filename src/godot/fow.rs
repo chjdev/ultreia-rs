@@ -7,7 +7,6 @@ use crate::godot::fow::fow_signal::{FOWObserver, FOWSignal};
 use crate::godot::game::GameSignal;
 use crate::godot::game_controller::GameController;
 use crate::map::minimap::{GetByCoordinate, Minimap};
-use crate::tile::TileName;
 use std::sync::Arc;
 
 #[derive(NativeClass)]
@@ -64,30 +63,6 @@ impl FOW {
     #[export]
     fn at(&self, _owner: &Node, coordinate: Coordinate) -> Option<bool> {
         Some(GameController::game()?.map().fow.get(&coordinate))
-    }
-
-    #[export]
-    fn uncover(
-        &self,
-        _owner: &Node,
-        _coordinate: Coordinate,
-        _maybe_radius: Option<u16>,
-    ) -> Option<()> {
-        // let radius = maybe_radius.unwrap_or(1);
-        // match radius {
-        //     0 => None,
-        //     1 => Some(GameController::game()?.map().fow().set(coordinate, true)),
-        //     some_radius => Some(
-        //         GameController::game()?
-        //             .map()
-        //             .fow()
-        //             .fill(&coordinate.circle(some_radius), true),
-        //     ),
-        // }
-        GameController::game()?
-            .buildings_controller()
-            .try_construct(_coordinate, &TileName::Warehouse);
-        None
     }
 
     #[export]

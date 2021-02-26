@@ -1,5 +1,5 @@
 use crate::map::territories::TerritoryID;
-use gdnative::prelude::{FromVariant, FromVariantError, ToVariant, Variant};
+use gdnative::prelude::{FromVariant, FromVariantError, ToVariant, Variant, VariantType};
 
 impl ToVariant for TerritoryID {
     fn to_variant(&self) -> Variant {
@@ -10,12 +10,12 @@ impl ToVariant for TerritoryID {
 
 impl FromVariant for TerritoryID {
     fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
-        if let Some(value) = variant.try_to_u64() {
-            Ok((value as usize).into())
-        } else {
-            Err(FromVariantError::custom(
-                "could not convert variant into a TerrainID",
-            ))
-        }
+        variant
+            .try_to_u64()
+            .ok_or(FromVariantError::InvalidVariantType {
+                variant_type: variant.get_type(),
+                expected: VariantType::I64,
+            })
+            .map(|value| (value as usize).into())
     }
 }

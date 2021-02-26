@@ -21,6 +21,17 @@ impl Territories {
             columns,
         }
     }
+
+    pub fn extend(&mut self, territory_id: &TerritoryID, range: Range) {
+        let filtered_range = range
+            .into_iter()
+            .filter(|coordinate| {
+                let maybe_territory_id: Option<TerritoryID> = self.get(coordinate);
+                maybe_territory_id.is_none()
+            })
+            .collect();
+        self.fill(filtered_range, Some(*territory_id));
+    }
 }
 
 impl WithGrid for Territories {

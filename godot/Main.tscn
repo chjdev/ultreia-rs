@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=2]
+[gd_scene load_steps=19 format=2]
 
 [ext_resource path="res://scripts/Main.gd" type="Script" id=1]
 [ext_resource path="res://scripts/cursor/Cursor.gd" type="Script" id=2]
@@ -14,6 +14,7 @@
 [ext_resource path="res://scripts/hexer/Terrain.gd" type="Script" id=12]
 [ext_resource path="res://scripts/hexer/Yield.gd" type="Script" id=13]
 [ext_resource path="res://scripts/hud/FOW.gd" type="Script" id=14]
+[ext_resource path="res://scripts/hexer/Buildings.gd" type="Script" id=15]
 
 [sub_resource type="TileSet" id=1]
 0/name = "TundraMarsh"
@@ -394,22 +395,24 @@
 26/shape_one_way_margin = 0.0
 26/shapes = [  ]
 26/z_index = 0
-27/name = "Warehouse"
-27/texture = ExtResource( 5 )
-27/tex_offset = Vector2( -4, -18 )
-27/modulate = Color( 1, 1, 1, 1 )
-27/region = Rect2( 0, 48, 32, 48 )
-27/tile_mode = 0
-27/occluder_offset = Vector2( 0, 0 )
-27/navigation_offset = Vector2( 0, 0 )
-27/shape_offset = Vector2( 0, 0 )
-27/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
-27/shape_one_way = false
-27/shape_one_way_margin = 0.0
-27/shapes = [  ]
-27/z_index = 0
 
 [sub_resource type="TileSet" id=2]
+0/name = "Warehouse"
+0/texture = ExtResource( 5 )
+0/tex_offset = Vector2( -4, -18 )
+0/modulate = Color( 1, 1, 1, 1 )
+0/region = Rect2( 0, 48, 32, 48 )
+0/tile_mode = 0
+0/occluder_offset = Vector2( 0, 0 )
+0/navigation_offset = Vector2( 0, 0 )
+0/shape_offset = Vector2( 0, 0 )
+0/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+0/shape_one_way = false
+0/shape_one_way_margin = 0.0
+0/shapes = [  ]
+0/z_index = 0
+
+[sub_resource type="TileSet" id=3]
 0/name = "HarvestableGood::Game"
 0/texture = ExtResource( 11 )
 0/tex_offset = Vector2( 0, 0 )
@@ -887,10 +890,24 @@ centered_textures = true
 format = 1
 script = ExtResource( 12 )
 
-[node name="Yield" type="TileMap" parent="Hexer"]
+[node name="Buildings" type="TileMap" parent="Hexer"]
 position = Vector2( -12, -14 )
 mode = 2
 tile_set = SubResource( 2 )
+cell_size = Vector2( 32, 48 )
+cell_quadrant_size = 32
+cell_custom_transform = Transform2D( 24, 0, 0, 28, 0, 0 )
+cell_half_offset = 4
+cell_tile_origin = 1
+cell_y_sort = true
+centered_textures = true
+format = 1
+script = ExtResource( 15 )
+
+[node name="Yield" type="TileMap" parent="Hexer"]
+position = Vector2( -12, -14 )
+mode = 2
+tile_set = SubResource( 3 )
 cell_size = Vector2( 24, 28 )
 cell_quadrant_size = 32
 cell_custom_transform = Transform2D( 24, 0, 0, 28, 0, 0 )
@@ -1088,5 +1105,6 @@ script = ExtResource( 8 )
 [connection signal="change" from="WorldCamera" to="HUD/Minimap" method="_on_WorldCamera_change"]
 [connection signal="hex_enter" from="Cursor" to="Hexer" method="_on_Cursor_hex_enter"]
 [connection signal="hex_exit" from="Cursor" to="Hexer" method="_on_Cursor_hex_exit"]
-[connection signal="hex_pressed" from="Cursor" to="ContextMenus/HexContextMenu" method="_on_Cursor_hex_pressed"]
+[connection signal="hex_long_pressed" from="Cursor" to="ContextMenus/HexContextMenu" method="_on_Cursor_hex_long_pressed"]
+[connection signal="hex_pressed" from="Cursor" to="Hexer" method="_on_Cursor_hex_pressed"]
 [connection signal="pressed" from="HUD/ControlsHContainer/ControlsVContainer/ClockControl" to="HUD/ControlsHContainer/ControlsVContainer/ClockControl" method="_on_ClockControl_pressed"]

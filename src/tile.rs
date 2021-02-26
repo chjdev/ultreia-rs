@@ -11,7 +11,7 @@ use crate::tile::warehouse::Warehouse;
 use std::collections::HashMap;
 use std::sync::{Arc, LockResult, RwLockReadGuard, RwLockWriteGuard};
 use strum::IntoEnumIterator;
-use strum_macros::{AsRefStr, EnumIter};
+use strum_macros::{AsRefStr, EnumIter, EnumString, EnumVariantNames};
 
 pub mod consumes;
 pub mod costs;
@@ -21,7 +21,7 @@ pub mod produces;
 pub mod state;
 mod warehouse;
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash, EnumIter, AsRefStr)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, EnumIter, AsRefStr, EnumString, EnumVariantNames)]
 pub enum TileName {
     Pioneer,
     Warehouse,

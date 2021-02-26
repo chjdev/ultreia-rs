@@ -2,10 +2,12 @@ mod buildings_signal;
 
 use gdnative::prelude::*;
 
+use crate::buildings_controller::ConstructionError;
 use crate::coordinate::Coordinate;
 use crate::godot::buildings::buildings_signal::{BuildingsObserver, BuildingsSignal};
 use crate::godot::game::GameSignal;
 use crate::godot::game_controller::GameController;
+use crate::tile::TileName;
 use std::sync::Arc;
 
 #[derive(NativeClass)]
@@ -79,9 +81,15 @@ impl Buildings {
     }
 
     #[export]
-    fn tick(&self, _owner: &Node) {
-        if let Some(game) = GameController::game() {
-            game.clock().tick();
-        }
+    fn try_construct(
+        &self,
+        _owner: &Node,
+        coordinate: Coordinate,
+        tile_name: TileName,
+    ) -> Option<Result<(), ConstructionError>> {
+        let result = GameController::game()?
+            .buildings_controller()
+            .try_construct(coordinate, &tile_name);
+        Some(result)
     }
 }

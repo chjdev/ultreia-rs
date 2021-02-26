@@ -67,7 +67,9 @@ func _on_game_start():
 
 func _on_Cursor_hex_enter(hex):
 	$Terrain.focus(hex)
-	FOW.uncover(hex.cube_coords, 3)
 
 func _on_Cursor_hex_exit(hex):
 	$Terrain.blur(hex)
+
+func _on_Cursor_hex_pressed(hex):
+	print(Buildings.try_construct(hex.cube_coords, "Warehouse"))

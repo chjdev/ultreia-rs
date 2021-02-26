@@ -56,11 +56,11 @@ impl SetByCoordinate<bool> for FOW {
 }
 
 impl FillByCoordinate<bool> for FOW {
-    fn fill(&mut self, range: &Range, value: bool) {
+    fn fill(&mut self, range: Range, value: bool) {
+        let uncover = Uncover::new(range.iter().copied().collect());
         range.into_iter().for_each(|c| {
-            self.set_silent(*c, value);
+            self.set_silent(c, value);
         });
-        let uncover = Uncover::new(range.into_iter().copied().collect());
         self.notify_all(&uncover)
     }
 }

@@ -3,33 +3,72 @@ use crate::coordinate::{Coordinate, Offset};
 
 pub trait GetByCoordinate<T> {
     fn get(&self, coordinate: &Coordinate) -> T;
-    fn range(&self, range: &Range) -> Vec<T> {
-        range.into_iter().map(|c| self.get(c)).collect()
+    fn get_range(&self, range: &Range) -> Vec<T> {
+        range
+            .into_iter()
+            .map(|coordinate| self.get(coordinate))
+            .collect()
     }
 }
 
 pub trait SetByCoordinate<T> {
     fn set(&mut self, coordinate: Coordinate, value: T);
-    fn range(&mut self, range: &Range, gen_value: &dyn Fn(&Coordinate) -> T) {
-        range.into_iter().for_each(|c| {
-            self.set(*c, gen_value(c));
-        });
+    fn set_range<F>(&mut self, range: Range, gen_value: F)
+    where
+        F: Fn(&Coordinate) -> T,
+    {
+        for coordinate in range {
+            let value = gen_value(&coordinate);
+            self.set(coordinate, value);
+        }
+    }
+}
+
+pub trait TrySetByCoordinate<T>: SetByCoordinate<T> + GetByCoordinate<T> {
+    fn try_set(&mut self, coordinate: Coordinate, value: T) -> bool;
+    fn try_set_range<F>(&mut self, range: Range, gen_value: F) -> bool
+    where
+        F: Fn(&Coordinate) -> T;
+}
+
+impl<S, T> TrySetByCoordinate<Option<S>> for T
+where
+    T: SetByCoordinate<Option<S>> + GetByCoordinate<Option<S>>,
+{
+    fn try_set(&mut self, coordinate: Coordinate, value: Option<S>) -> bool {
+        if self.get(&coordinate).is_some() {
+            return false;
+        }
+        self.set(coordinate, value);
+        true
+    }
+
+    fn try_set_range<F>(&mut self, range: Range, gen_value: F) -> bool
+    where
+        F: Fn(&Coordinate) -> Option<S>,
+    {
+        for coordinate in range.iter() {
+            if self.get(coordinate).is_some() {
+                return false;
+            }
+        }
+        for coordinate in range.into_iter() {
+            let value = gen_value(&coordinate);
+            self.set(coordinate, value);
+        }
+        true
     }
 }
 
 pub trait FillByCoordinate<T: Copy>: SetByCoordinate<T> {
-    fn fill(&mut self, range: &Range, value: T) {
-        range.into_iter().for_each(|c| {
-            self.set(*c, value);
-        });
+    fn fill(&mut self, range: Range, value: T) {
+        self.set_range(range, |_| value);
     }
 }
 
 pub trait FillClonedByCoordinate<T: Clone>: SetByCoordinate<T> {
-    fn fill_cloned(&mut self, range: &Range, value: T) {
-        range.into_iter().for_each(|c| {
-            self.set(*c, value.clone());
-        });
+    fn fill_cloned(&mut self, range: Range, value: T) {
+        self.set_range(range, |_| value.clone());
     }
 }
 

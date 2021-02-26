@@ -1,20 +1,21 @@
-use crate::coordinate::range::Range;
 use crate::coordinate::Coordinate;
-use crate::good::Inventory;
-use crate::map::minimap::SetByCoordinate;
+use crate::map::minimap::TrySetByCoordinate;
 use crate::map::minimap::{FillByCoordinate, GetByCoordinate};
+use crate::map::territories::TerritoryID;
 use crate::map::Map;
 use crate::tile::state::State;
 use crate::tile::{TileFactory, TileName};
 use std::error::Error;
 use std::fmt;
 use std::sync::{Arc, RwLock};
-use strum_macros::AsRefStr;
+use strum_macros::{AsRefStr, EnumString, EnumVariantNames};
 
-#[derive(Debug, AsRefStr)]
+#[derive(Debug, AsRefStr, EnumString, EnumVariantNames)]
 pub enum ConstructionError {
     InvalidTerrain,
+    InvalidTerritory,
     InsufficientResources,
+    CoordinateOccupied,
 }
 
 impl fmt::Display for ConstructionError {
@@ -39,12 +40,7 @@ impl BuildingsController {
         }
     }
 
-    pub fn territory_state(&mut self, coordinate: &Coordinate) -> Option<State> {
-        self.map
-            .write()
-            .unwrap()
-            .fow
-            .set(Coordinate::default(), true);
+    pub fn territory_state(&mut self, _coordinate: &Coordinate) -> Option<State> {
         // let territory_range: Option<Range> = self.map.territories().get(coordinate);
         // // territory_range.map(|range| range.into_iter().map(|coordinate| self.map.buildings().get(&coordinate)).filter(|some_tile_instance| ))
         //
@@ -72,11 +68,28 @@ impl BuildingsController {
         // }
         // Err(ConstructionError::InsufficientResources)
         let tile = self.tile_factory.tile(tile_name);
-        let influence = tile.influence_at(&coordinate);
         let mut mut_map = self.map.write().unwrap();
-        mut_map.fow.fill(&influence, true);
-        mut_map.buildings.set(coordinate, Some(tile.create()));
-        // todo update territories
+
+        let is_warehouse = tile_name == &TileName::Warehouse;
+        let territory_id: Option<TerritoryID> = mut_map.territories.get(&coordinate);
+        if territory_id.is_some() || is_warehouse {
+            if !mut_map.buildings.try_set(coordinate, Some(tile.create())) {
+                return Err(ConstructionError::CoordinateOccupied);
+            }
+        } else {
+            return Err(ConstructionError::InvalidTerritory);
+        }
+
+        let influence = tile.influence_at(&coordinate);
+        mut_map.fow.fill(influence.clone(), true);
+
+        if is_warehouse {
+            let maybe_territory_id: Option<TerritoryID> = mut_map.territories.get(&coordinate);
+            if let Some(territory_id) = maybe_territory_id {
+                mut_map.territories.extend(&territory_id, influence)
+            }
+        }
+
         Ok(())
     }
 }
