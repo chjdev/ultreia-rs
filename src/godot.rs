@@ -1,6 +1,7 @@
 mod arcer;
 mod buildings;
 mod clock;
+mod emit_deferred;
 mod fow;
 mod game;
 mod game_controller;

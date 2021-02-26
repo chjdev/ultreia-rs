@@ -1,3 +1,4 @@
+use crate::godot::emit_deferred::EmitDeferred;
 use crate::map::buildings::{BuildingCreated, BuildingDestroyed, Buildings};
 use crate::observable::{Observable, Observer};
 use gdnative::prelude::*;
@@ -28,30 +29,19 @@ pub struct BuildingsObserver {
 
 impl Observer<BuildingCreated> for BuildingsObserver {
     fn notify(&self, event: &BuildingCreated) {
-        unsafe {
-            self.owner.assume_safe().call_deferred(
-                "emit_signal",
-                &[
-                    BuildingsSignal::from(event).as_ref().to_variant(),
-                    event.coordinate.to_variant(),
-                    event.tile_name.to_variant(),
-                ],
-            );
-        }
+        self.owner.emit_deferred(
+            BuildingsSignal::from(event),
+            &[event.coordinate.to_variant(), event.tile_name.to_variant()],
+        )
     }
 }
 
 impl Observer<BuildingDestroyed> for BuildingsObserver {
     fn notify(&self, event: &BuildingDestroyed) {
-        unsafe {
-            self.owner.assume_safe().call_deferred(
-                "emit_signal",
-                &[
-                    BuildingsSignal::from(event).as_ref().to_variant(),
-                    event.coordinate.to_variant(),
-                ],
-            );
-        }
+        self.owner.emit_deferred(
+            BuildingsSignal::from(event),
+            &[event.coordinate.to_variant()],
+        );
     }
 }
 

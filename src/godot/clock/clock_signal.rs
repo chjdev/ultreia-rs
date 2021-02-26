@@ -1,4 +1,5 @@
 use crate::clock::{Clock, Tick, Tock};
+use crate::godot::emit_deferred::EmitDeferred;
 use crate::observable::Observer;
 use gdnative::prelude::*;
 use std::sync::Arc;
@@ -28,29 +29,19 @@ pub struct ClockObserver {
 
 impl Observer<Tick> for ClockObserver {
     fn notify(&self, tick: &Tick) {
-        unsafe {
-            self.owner.assume_safe().call_deferred(
-                "emit_signal",
-                &[
-                    ClockSignal::from(tick).as_ref().to_variant(),
-                    Variant::from_u64(tick.epoch() as u64),
-                ],
-            );
-        }
+        self.owner.emit_deferred(
+            ClockSignal::from(tick),
+            &[Variant::from_u64(tick.epoch() as u64)],
+        );
     }
 }
 
 impl Observer<Tock> for ClockObserver {
     fn notify(&self, tock: &Tock) {
-        unsafe {
-            self.owner.assume_safe().call_deferred(
-                "emit_signal",
-                &[
-                    ClockSignal::from(tock).as_ref().to_variant(),
-                    Variant::from_u64(tock.epoch() as u64),
-                ],
-            );
-        }
+        self.owner.emit_deferred(
+            ClockSignal::from(tock),
+            &[Variant::from_u64(tock.epoch() as u64)],
+        );
     }
 }
 
