@@ -25,16 +25,25 @@ pub trait RangeFactory {
         Range::from_iter(DIRECTIONS.iter().map(|d| coordinate + d))
     }
 
-    fn circle(center: &Coordinate, radius: u16) -> Range {
+    fn ring(center: &Coordinate, radius: u16) -> Range {
         let mut results = vec![];
         let i_radius = radius as i32;
         for x in -i_radius..=i_radius {
-            let lower = (-i_radius).max(-x - i_radius);
-            let upper = (i_radius).max(-x + i_radius);
-            for y in lower..=upper {
-                let offset = Coordinate::new(x, y);
-                results.push(center + offset);
+            for y in (-i_radius).max(-x - i_radius)..=i_radius.min(-x + i_radius) {
+                results.push(Coordinate::new(x, y) + *center)
             }
+        }
+        Range::from_iter(results)
+    }
+
+    fn ring0(radius: u16) -> Range {
+        Self::ring(&Default::default(), radius)
+    }
+
+    fn circle(center: &Coordinate, radius: u16) -> Range {
+        let mut results = vec![];
+        for sub_radius in 0..=radius {
+            results.extend(Range::ring(center, sub_radius).into_iter())
         }
         Range::from_iter(results)
     }
@@ -80,6 +89,7 @@ impl RangeFactory for Range {}
 pub trait RangeFrom {
     fn line_to(&self, end: &Coordinate) -> Range;
     fn circle(&self, radius: u16) -> Range;
+    fn ring(&self, radius: u16) -> Range;
     fn rectangle_to(&self, to_corner: &Coordinate) -> Range;
 }
 
@@ -90,6 +100,10 @@ impl RangeFrom for Coordinate {
 
     fn circle(&self, radius: u16) -> Range {
         Range::circle(self, radius)
+    }
+
+    fn ring(&self, radius: u16) -> Range {
+        Range::ring(self, radius)
     }
 
     fn rectangle_to(&self, to_corner: &Coordinate) -> Range {

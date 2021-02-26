@@ -23,9 +23,12 @@ pub struct FOWObserver {
 impl Observer<Uncover> for FOWObserver {
     fn notify(&self, uncover: &Uncover) {
         unsafe {
-            self.owner.assume_safe().emit_signal(
-                FOWSignal::from(uncover),
-                &[uncover.coordinates().to_variant()],
+            self.owner.assume_safe().call_deferred(
+                "emit_signal",
+                &[
+                    FOWSignal::from(uncover).as_ref().to_variant(),
+                    uncover.coordinates().to_variant(),
+                ],
             );
         }
     }

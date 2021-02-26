@@ -29,9 +29,12 @@ pub struct ClockObserver {
 impl Observer<Tick> for ClockObserver {
     fn notify(&self, tick: &Tick) {
         unsafe {
-            self.owner.assume_safe().emit_signal(
-                ClockSignal::from(tick),
-                &[Variant::from_u64(tick.epoch() as u64)],
+            self.owner.assume_safe().call_deferred(
+                "emit_signal",
+                &[
+                    ClockSignal::from(tick).as_ref().to_variant(),
+                    Variant::from_u64(tick.epoch() as u64),
+                ],
             );
         }
     }
@@ -40,9 +43,12 @@ impl Observer<Tick> for ClockObserver {
 impl Observer<Tock> for ClockObserver {
     fn notify(&self, tock: &Tock) {
         unsafe {
-            self.owner.assume_safe().emit_signal(
-                ClockSignal::from(tock),
-                &[Variant::from_u64(tock.epoch() as u64)],
+            self.owner.assume_safe().call_deferred(
+                "emit_signal",
+                &[
+                    ClockSignal::from(tock).as_ref().to_variant(),
+                    Variant::from_u64(tock.epoch() as u64),
+                ],
             );
         }
     }

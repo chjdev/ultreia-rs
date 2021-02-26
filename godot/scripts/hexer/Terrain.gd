@@ -61,8 +61,12 @@ func _find_tile_id(terrain):
 
 func focus(hex):
 	var hex_coords = hex.offset_coords
+	if self.get_cell(hex_coords.x, hex_coords.y) < 0:
+		return
 	self.set_cell(hex_coords.x, hex_coords.y, self._highlighted_tile_id(self.get_cell(hex_coords.x, hex_coords.y)))
 
 func blur(hex):
 	var hex_coords = hex.offset_coords
+	if self.get_cell(hex_coords.x, hex_coords.y) < 0:
+		return
 	self.set_cell(hex_coords.x, hex_coords.y, self._base_tile_id(self.get_cell(hex_coords.x, hex_coords.y)))
