@@ -19,7 +19,7 @@ impl Pioneer {
 }
 
 impl Tile for Pioneer {
-    fn tile(&self) -> &TileName {
+    fn name(&self) -> &TileName {
         &self.tile
     }
 

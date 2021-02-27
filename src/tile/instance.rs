@@ -16,7 +16,7 @@ impl DefaultInstance {
 
     pub fn from(tile: &(impl Tile + ?Sized)) -> SomeTileInstance {
         Arc::new(DefaultInstance::new(
-            *tile.tile(),
+            *tile.name(),
             State::from(tile.consumes(), tile.produces()),
         ))
     }

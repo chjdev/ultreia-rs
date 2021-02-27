@@ -27,7 +27,7 @@ impl Warehouse {
 }
 
 impl Tile for Warehouse {
-    fn tile(&self) -> &TileName {
+    fn name(&self) -> &TileName {
         &self.tile
     }
 

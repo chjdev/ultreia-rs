@@ -1,20 +1,21 @@
+use std::collections::HashMap;
+use std::sync::{Arc, LockResult, RwLockReadGuard, RwLockWriteGuard};
+
+use strum::IntoEnumIterator;
+use strum_macros::{AsRefStr, EnumIter, EnumString, EnumVariantNames};
+
 use crate::coordinate::range::Range;
 use crate::coordinate::Coordinate;
+use crate::good::costs::Costs;
 use crate::map::Map;
 use crate::tile::consumes::Consumes;
-use crate::tile::costs::Costs;
 use crate::tile::instance::DefaultInstance;
 use crate::tile::pioneer::Pioneer;
 use crate::tile::produces::Produces;
 use crate::tile::state::State;
 use crate::tile::warehouse::Warehouse;
-use std::collections::HashMap;
-use std::sync::{Arc, LockResult, RwLockReadGuard, RwLockWriteGuard};
-use strum::IntoEnumIterator;
-use strum_macros::{AsRefStr, EnumIter, EnumString, EnumVariantNames};
 
 pub mod consumes;
-pub mod costs;
 mod instance;
 mod pioneer;
 pub mod produces;
@@ -36,7 +37,7 @@ impl Default for TileName {
 pub type SomeTile = Box<dyn Tile>;
 
 pub trait Tile: Send + Sync {
-    fn tile(&self) -> &TileName;
+    fn name(&self) -> &TileName;
     fn costs(&self) -> Option<&Costs> {
         None
     }

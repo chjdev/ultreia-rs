@@ -1,7 +1,9 @@
-mod inventory;
+use strum_macros::{AsRefStr, EnumCount, EnumIter, IntoStaticStr};
 
 pub use self::inventory::{Inventory, InventoryAmount};
-use strum_macros::{AsRefStr, EnumCount, EnumIter, IntoStaticStr};
+
+pub mod costs;
+mod inventory;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, AsRefStr, IntoStaticStr, EnumIter, EnumCount)]
 pub enum NaturalGood {
