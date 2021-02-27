@@ -129,19 +129,6 @@ pub trait Observable<E: 'static + Send + Sync> {
     fn observers(&self) -> &Observers<E>;
 
     fn notify_all(&self, event: E) {
-        // self.observers()
-        //     .observers
-        //     .read()
-        //     .unwrap()
-        //     .par_iter()
-        //     .for_each(|registration| {
-        //         if let Some(observer) = registration.weak.upgrade() {
-        //             observer.notify(&event);
-        //         } else {
-        //             // the observer has since freed
-        //             self.observers().deregister(registration);
-        //         }
-        //     });
         self.observers().queue_event(event);
     }
 }
