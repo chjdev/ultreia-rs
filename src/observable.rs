@@ -1,7 +1,10 @@
+use crossbeam::channel::{bounded, Receiver, Sender};
 use rayon::prelude::*;
 use std::collections::HashSet;
 use std::hash::{Hash, Hasher};
 use std::sync::{Arc, RwLock, Weak};
+use std::thread;
+use std::thread::JoinHandle;
 
 pub trait Observer<E>: Send + Sync {
     fn notify(&self, event: &E);
@@ -41,16 +44,30 @@ impl<E> PartialEq for ObserverRegistration<E> {
 
 type ObserversStore<E> = HashSet<ObserverRegistration<E>>;
 
-#[derive(Default)]
 pub struct Observers<E> {
-    observers: RwLock<ObserversStore<E>>,
+    tx: Sender<E>,
+    observers: Arc<RwLock<ObserversStore<E>>>,
 }
 
-impl<E> Observers<E> {
+impl<E: 'static + Send + Sync> Default for Observers<E> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<E: 'static + Send + Sync> Observers<E> {
     pub fn new() -> Self {
-        Observers {
+        Self::with_capacity(100)
+    }
+
+    pub fn with_capacity(capacity: usize) -> Self {
+        let (tx, rx) = bounded(capacity);
+        let observer = Observers {
+            tx,
             observers: Default::default(),
-        }
+        };
+        observer.consume_event(rx);
+        observer
     }
 
     // register/derigster doesn't need locking back off since there are no cycles
@@ -70,24 +87,61 @@ impl<E> Observers<E> {
     pub fn deregister(&self, registration: &ObserverRegistration<E>) -> bool {
         self.observers.write().unwrap().remove(registration)
     }
+
+    fn queue_event(&self, event: E) {
+        self.tx.send(event).unwrap();
+    }
+
+    fn consume_event(&self, rx: Receiver<E>) {
+        let weak_observers = Arc::downgrade(&self.observers);
+        thread::spawn(move || loop {
+            let maybe_event = rx.recv();
+            if maybe_event.is_err() {
+                // we have become disconnected
+                return;
+            }
+            let event = maybe_event.unwrap();
+            let maybe_observers = weak_observers.upgrade();
+            if maybe_observers.is_none() {
+                // doesn't really happen since we'd be disconnected anyway
+                return;
+            }
+            let observers = maybe_observers.unwrap();
+
+            observers
+                .read()
+                .unwrap()
+                .par_iter()
+                .for_each(|registration| {
+                    if let Some(observer) = registration.weak.upgrade() {
+                        observer.notify(&event);
+                    } else {
+                        // the observer has since freed
+                        // todo move into own function
+                        observers.write().unwrap().remove(registration);
+                    }
+                });
+        });
+    }
 }
 
-pub trait Observable<E: Sync>: Sync {
+pub trait Observable<E: 'static + Send + Sync> {
     fn observers(&self) -> &Observers<E>;
 
     fn notify_all(&self, event: E) {
-        self.observers()
-            .observers
-            .read()
-            .unwrap()
-            .par_iter()
-            .for_each(|registration| {
-                if let Some(observer) = registration.weak.upgrade() {
-                    observer.notify(&event);
-                } else {
-                    // the observer has since freed
-                    self.observers().deregister(registration);
-                }
-            });
+        // self.observers()
+        //     .observers
+        //     .read()
+        //     .unwrap()
+        //     .par_iter()
+        //     .for_each(|registration| {
+        //         if let Some(observer) = registration.weak.upgrade() {
+        //             observer.notify(&event);
+        //         } else {
+        //             // the observer has since freed
+        //             self.observers().deregister(registration);
+        //         }
+        //     });
+        self.observers().queue_event(event);
     }
 }
