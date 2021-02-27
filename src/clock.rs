@@ -55,13 +55,13 @@ impl Clock {
     pub fn tick(&self) {
         self.epoch.fetch_add(1, Ordering::Release);
         let tick = Tick(self.epoch());
-        self.notify_all(&tick);
+        self.notify_all(tick);
         self.tock(tick);
     }
 
     fn tock(&self, tick: Tick) {
         let tock = Tock::from(tick);
-        self.notify_all(&tock);
+        self.notify_all(tock);
     }
 }
 

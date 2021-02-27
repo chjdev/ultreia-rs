@@ -1,3 +1,4 @@
+use rayon::prelude::*;
 use std::collections::HashSet;
 use std::hash::{Hash, Hasher};
 use std::sync::{Arc, RwLock, Weak};
@@ -52,6 +53,7 @@ impl<E> Observers<E> {
         }
     }
 
+    // register/derigster doesn't need locking back off since there are no cycles
     pub fn register<SO>(&self, observer: &Arc<SO>) -> ObserverRegistration<E>
     where
         SO: 'static + Observer<E>,
@@ -70,17 +72,22 @@ impl<E> Observers<E> {
     }
 }
 
-pub trait Observable<E> {
+pub trait Observable<E: Sync>: Sync {
     fn observers(&self) -> &Observers<E>;
 
-    fn notify_all(&self, event: &E) {
-        for registration in self.observers().observers.read().unwrap().iter() {
-            if let Some(observer) = registration.weak.upgrade() {
-                observer.notify(event);
-            } else {
-                // the observer has since freed
-                self.observers().deregister(registration);
-            }
-        }
+    fn notify_all(&self, event: E) {
+        self.observers()
+            .observers
+            .read()
+            .unwrap()
+            .par_iter()
+            .for_each(|registration| {
+                if let Some(observer) = registration.weak.upgrade() {
+                    observer.notify(&event);
+                } else {
+                    // the observer has since freed
+                    self.observers().deregister(registration);
+                }
+            });
     }
 }

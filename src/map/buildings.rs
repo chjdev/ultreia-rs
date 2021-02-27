@@ -47,14 +47,14 @@ impl SetByCoordinate<Option<SomeTileInstance>> for Buildings {
             Some(instance) => {
                 let tile_name = *instance.tile();
                 self.buildings.insert(coordinate, instance);
-                self.notify_all(&BuildingCreated {
+                self.notify_all(BuildingCreated {
                     coordinate,
                     tile_name,
                 });
             }
             None => {
                 self.buildings.remove(&coordinate);
-                self.notify_all(&BuildingDestroyed { coordinate });
+                self.notify_all(BuildingDestroyed { coordinate });
             }
         };
     }

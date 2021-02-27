@@ -51,7 +51,7 @@ impl SetByCoordinate<bool> for FOW {
     fn set(&mut self, coordinate: Coordinate, value: bool) {
         self.set_silent(coordinate, value);
         let uncover = Uncover::new(vec![coordinate]);
-        self.notify_all(&uncover)
+        self.notify_all(uncover)
     }
 }
 
@@ -61,7 +61,7 @@ impl FillByCoordinate<bool> for FOW {
         range.into_iter().for_each(|c| {
             self.set_silent(c, value);
         });
-        self.notify_all(&uncover)
+        self.notify_all(uncover)
     }
 }
 
