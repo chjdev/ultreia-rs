@@ -69,7 +69,6 @@ pub trait TileInstance: Send + Sync {
     fn state_mut(&self) -> Option<LockResult<RwLockWriteGuard<'_, State>>> {
         None
     }
-    fn update(&self);
 }
 
 pub struct TileFactory {

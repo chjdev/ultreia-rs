@@ -4,7 +4,6 @@ use std::collections::HashSet;
 use std::hash::{Hash, Hasher};
 use std::sync::{Arc, RwLock, Weak};
 use std::thread;
-use std::thread::JoinHandle;
 
 pub trait Observer<E>: Send + Sync {
     fn notify(&self, event: &E);

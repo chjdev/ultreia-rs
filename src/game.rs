@@ -1,8 +1,5 @@
-mod tile_updater;
-
 use crate::buildings_controller::BuildingsController;
 use crate::clock::Clock;
-use crate::game::tile_updater::TileUpdater;
 use crate::map::Map;
 use std::sync::{Arc, RwLock, RwLockReadGuard};
 
@@ -40,7 +37,6 @@ pub struct Game {
     clock: Clock,
     map: Arc<RwLock<Map>>,
     buildings_controller: BuildingsController,
-    tile_updater: Arc<TileUpdater>,
 }
 
 impl Game {
@@ -51,13 +47,11 @@ impl Game {
             configuration.columns,
             configuration.island_noise,
         )));
-        let tile_updater = TileUpdater::new(&clock, &map);
         Game {
             configuration,
             clock,
             buildings_controller: BuildingsController::new(map.clone()),
             map,
-            tile_updater,
         }
     }
 

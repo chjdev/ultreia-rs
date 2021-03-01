@@ -1,8 +1,12 @@
+mod instance;
+mod scout;
+
 use crate::coordinate::range::Range;
 use crate::coordinate::Coordinate;
 use crate::good::costs::Costs;
 use crate::good::Inventory;
 use crate::map::Map;
+use crate::unit::instance::DefaultInstance;
 use std::collections::HashMap;
 use std::sync::{Arc, RwLockReadGuard, RwLockWriteGuard};
 use strum::IntoEnumIterator;
@@ -41,8 +45,8 @@ pub trait Unit: Send + Sync {
     fn costs(&self) -> Option<&Costs> {
         None
     }
-    fn inventory(&self) -> Option<&Inventory> {
-        None
+    fn inventory_capacity(&self) -> usize {
+        0
     }
     fn combat(&self) -> &CombatMeta;
     fn movement_at(&self, at: &Coordinate) -> Range;
@@ -50,8 +54,14 @@ pub trait Unit: Send + Sync {
         self.movement_at(&Default::default())
     }
     fn create(&self) -> SomeUnitInstance {
-        // DefaultInstance::from(self)
-        unimplemented!()
+        DefaultInstance::new(
+            self,
+            if self.inventory_capacity() == 0 {
+                None
+            } else {
+                Some(Inventory::new())
+            },
+        )
     }
     fn allowed(&self, _at: &Coordinate, _map: &Map) -> bool {
         false
@@ -61,7 +71,7 @@ pub trait Unit: Send + Sync {
 pub type SomeUnitInstance = Arc<dyn UnitInstance>;
 
 pub trait UnitInstance: Send + Sync {
-    fn unit(&self) -> &'static dyn Unit;
+    fn unit(&self) -> &UnitName;
     fn inventory(&self) -> Option<RwLockReadGuard<'_, Inventory>> {
         None
     }

@@ -34,8 +34,4 @@ impl TileInstance for DefaultInstance {
     fn state_mut(&self) -> Option<LockResult<RwLockWriteGuard<'_, State>>> {
         self.state.as_ref().map(|rw_lock| rw_lock.write())
     }
-
-    fn update(&self) {
-        unimplemented!()
-    }
 }
