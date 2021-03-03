@@ -11,6 +11,26 @@ pub trait GetByCoordinate<T> {
     }
 }
 
+pub trait GetRefByCoordinate<'a, T> {
+    fn get(&'a self, coordinate: &Coordinate) -> T;
+    fn get_range(&'a self, range: &Range) -> Vec<T> {
+        range
+            .into_iter()
+            .map(|coordinate| self.get(coordinate))
+            .collect()
+    }
+}
+
+pub trait GetMutRefByCoordinate<'a, T> {
+    fn get_mut(&'a self, coordinate: &Coordinate) -> T;
+    fn get_mut_range(&'a self, range: &Range) -> Vec<T> {
+        range
+            .into_iter()
+            .map(|coordinate| self.get_mut(coordinate))
+            .collect()
+    }
+}
+
 pub trait SetByCoordinate<T> {
     fn set(&mut self, coordinate: Coordinate, value: T);
     fn set_range<F>(&mut self, range: Range, gen_value: F)
@@ -24,40 +44,8 @@ pub trait SetByCoordinate<T> {
     }
 }
 
-pub trait TrySetByCoordinate<T>: SetByCoordinate<T> + GetByCoordinate<T> {
+pub trait TrySetByCoordinate<T> {
     fn try_set(&mut self, coordinate: Coordinate, value: T) -> bool;
-    fn try_set_range<F>(&mut self, range: Range, gen_value: F) -> bool
-    where
-        F: Fn(&Coordinate) -> T;
-}
-
-impl<S, T> TrySetByCoordinate<Option<S>> for T
-where
-    T: SetByCoordinate<Option<S>> + GetByCoordinate<Option<S>>,
-{
-    fn try_set(&mut self, coordinate: Coordinate, value: Option<S>) -> bool {
-        if self.get(&coordinate).is_some() {
-            return false;
-        }
-        self.set(coordinate, value);
-        true
-    }
-
-    fn try_set_range<F>(&mut self, range: Range, gen_value: F) -> bool
-    where
-        F: Fn(&Coordinate) -> Option<S>,
-    {
-        for coordinate in range.iter() {
-            if self.get(coordinate).is_some() {
-                return false;
-            }
-        }
-        for coordinate in range.into_iter() {
-            let value = gen_value(&coordinate);
-            self.set(coordinate, value);
-        }
-        true
-    }
 }
 
 pub trait FillByCoordinate<T: Copy>: SetByCoordinate<T> {

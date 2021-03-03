@@ -4,7 +4,7 @@ use crate::good::{BuildingMaterial, Good, Inventory, InventoryAmount, Production
 use crate::map::minimap::GetByCoordinate;
 use crate::map::terrain::TerrainType;
 use crate::map::Map;
-use crate::tile::{Consumes, Tile, TileName};
+use crate::tile::{Consumes, Tile, TileInstance, TileName};
 use strum::IntoEnumIterator;
 
 pub struct Warehouse {
@@ -35,12 +35,16 @@ impl Tile for Warehouse {
         Some(&self.consumes)
     }
 
+    fn allowed(&self, at: &Coordinate, map: &Map) -> bool {
+        let terrain_tile: TerrainType = map.terrain.get(at);
+        terrain_tile == TerrainType::Grassland
+    }
+
     fn influence_at(&self, at: &Coordinate) -> Range {
         at.circle(6)
     }
 
-    fn allowed(&self, at: &Coordinate, map: &Map) -> bool {
-        let terrain_tile: TerrainType = map.terrain.get(at);
-        terrain_tile == TerrainType::Grassland
+    fn update(&self, _instance: &mut TileInstance) {
+        unimplemented!()
     }
 }

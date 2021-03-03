@@ -1,12 +1,17 @@
 use crate::coordinate::indexed::CoordinateIndexed;
 use crate::coordinate::Coordinate;
-use crate::map::minimap::{FillClonedByCoordinate, GetByCoordinate, SetByCoordinate, WithGrid};
+use crate::map::minimap::{
+    GetMutRefByCoordinate, GetRefByCoordinate, SetByCoordinate, TrySetByCoordinate, WithGrid,
+};
 use crate::observable::{Observable, Observers};
-use crate::tile::{SomeTileInstance, TileName};
+use crate::tile::{TileInstance, TileName};
+use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
+
+pub type SynchronizedInstance = RwLock<TileInstance>;
 
 #[derive(Default)]
 pub struct Buildings {
-    buildings: CoordinateIndexed<SomeTileInstance>,
+    buildings: CoordinateIndexed<SynchronizedInstance>,
     rows: usize,
     columns: usize,
     creators: Observers<BuildingCreated>,
@@ -35,18 +40,38 @@ impl WithGrid for Buildings {
     }
 }
 
-impl GetByCoordinate<Option<SomeTileInstance>> for Buildings {
-    fn get(&self, coordinate: &Coordinate) -> Option<SomeTileInstance> {
-        self.buildings.get(coordinate).cloned()
+impl<'reference, 'me: 'reference>
+    GetRefByCoordinate<'me, Option<RwLockReadGuard<'reference, TileInstance>>> for Buildings
+{
+    fn get(
+        &'me self,
+        coordinate: &Coordinate,
+    ) -> Option<RwLockReadGuard<'reference, TileInstance>> {
+        self.buildings
+            .get(coordinate)
+            .map(|sync| sync.read().unwrap())
     }
 }
 
-impl SetByCoordinate<Option<SomeTileInstance>> for Buildings {
-    fn set(&mut self, coordinate: Coordinate, maybe_instance: Option<SomeTileInstance>) {
+impl<'reference, 'me: 'reference>
+    GetMutRefByCoordinate<'me, Option<RwLockWriteGuard<'reference, TileInstance>>> for Buildings
+{
+    fn get_mut(
+        &'me self,
+        coordinate: &Coordinate,
+    ) -> Option<RwLockWriteGuard<'reference, TileInstance>> {
+        self.buildings
+            .get(coordinate)
+            .map(|sync| sync.write().unwrap())
+    }
+}
+
+impl SetByCoordinate<Option<TileInstance>> for Buildings {
+    fn set(&mut self, coordinate: Coordinate, maybe_instance: Option<TileInstance>) {
         match maybe_instance {
             Some(instance) => {
-                let tile_name = *instance.tile();
-                self.buildings.insert(coordinate, instance);
+                let tile_name = *instance.tile().name();
+                self.buildings.insert(coordinate, RwLock::new(instance));
                 self.notify_all(BuildingCreated {
                     coordinate,
                     tile_name,
@@ -60,7 +85,15 @@ impl SetByCoordinate<Option<SomeTileInstance>> for Buildings {
     }
 }
 
-impl FillClonedByCoordinate<Option<SomeTileInstance>> for Buildings {}
+impl TrySetByCoordinate<Option<TileInstance>> for Buildings {
+    fn try_set(&mut self, coordinate: Coordinate, maybe_instance: Option<TileInstance>) -> bool {
+        if self.buildings.contains_key(&coordinate) {
+            return false;
+        }
+        self.set(coordinate, maybe_instance);
+        true
+    }
+}
 
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 pub struct BuildingCreated {

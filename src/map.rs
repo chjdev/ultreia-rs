@@ -25,4 +25,5 @@ impl Map {
             buildings: Default::default(),
         }
     }
+    fn bugga() {}
 }

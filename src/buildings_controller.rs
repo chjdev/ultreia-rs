@@ -1,13 +1,15 @@
+use crate::clock::Tick;
 use crate::coordinate::Coordinate;
 use crate::map::minimap::TrySetByCoordinate;
 use crate::map::minimap::{FillByCoordinate, GetByCoordinate};
 use crate::map::territories::TerritoryID;
 use crate::map::Map;
+use crate::observable::Observer;
 use crate::tile::state::State;
 use crate::tile::{TileFactory, TileName};
 use std::error::Error;
 use std::fmt;
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, RwLock, Weak};
 use strum_macros::{AsRefStr, EnumString, EnumVariantNames};
 
 #[derive(Debug, AsRefStr, EnumString, EnumVariantNames)]
@@ -31,6 +33,18 @@ pub struct BuildingsController {
     map: Arc<RwLock<Map>>,
     tile_factory: TileFactory,
 }
+
+struct TileUpdater {
+    map: Weak<RwLock<Map>>,
+}
+
+// impl Observer<Tick> for TileUpdater {
+//     fn notify(&self, _event: &Tick) {
+//         if let Some(map) = self.map.upgrade().map(|m| m.read().unwrap()) {
+//             for building in map.buildings.par_iter() {}
+//         }
+//     }
+// }
 
 impl BuildingsController {
     pub fn new(map: Arc<RwLock<Map>>) -> Self {
@@ -73,7 +87,10 @@ impl BuildingsController {
         let is_warehouse = tile_name == &TileName::Warehouse;
         let territory_id: Option<TerritoryID> = mut_map.territories.get(&coordinate);
         if territory_id.is_some() || is_warehouse {
-            if !mut_map.buildings.try_set(coordinate, Some(tile.create())) {
+            if !mut_map
+                .buildings
+                .try_set(coordinate, Some(self.tile_factory.create(tile.name())))
+            {
                 return Err(ConstructionError::CoordinateOccupied);
             }
         } else {

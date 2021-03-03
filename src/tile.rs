@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::sync::{Arc, LockResult, RwLockReadGuard, RwLockWriteGuard};
 
 use strum::IntoEnumIterator;
 use strum_macros::{AsRefStr, EnumIter, EnumString, EnumVariantNames};
@@ -9,14 +8,12 @@ use crate::coordinate::Coordinate;
 use crate::good::costs::Costs;
 use crate::map::Map;
 use crate::tile::consumes::Consumes;
-use crate::tile::instance::DefaultInstance;
 use crate::tile::pioneer::Pioneer;
 use crate::tile::produces::Produces;
 use crate::tile::state::State;
 use crate::tile::warehouse::Warehouse;
 
 pub mod consumes;
-mod instance;
 mod pioneer;
 pub mod produces;
 pub mod state;
@@ -47,53 +44,70 @@ pub trait Tile: Send + Sync {
     fn produces(&self) -> Option<&Produces> {
         None
     }
+    fn allowed(&self, _at: &Coordinate, _map: &Map) -> bool {
+        false
+    }
     fn influence_at(&self, at: &Coordinate) -> Range;
     fn influence(&self) -> Range {
         self.influence_at(&Default::default())
     }
-    fn create(&self) -> SomeTileInstance {
-        DefaultInstance::from(self)
-    }
-    fn allowed(&self, _at: &Coordinate, _map: &Map) -> bool {
-        false
-    }
+    fn update(&self, instance: &mut TileInstance);
 }
 
-pub type SomeTileInstance = Arc<dyn TileInstance>;
+pub struct TileInstance {
+    tile: &'static dyn Tile,
+    state: Option<State>,
+}
 
-pub trait TileInstance: Send + Sync {
-    fn tile(&self) -> &TileName;
-    fn state(&self) -> Option<LockResult<RwLockReadGuard<'_, State>>> {
-        None
+impl TileInstance {
+    fn new(tile: &'static dyn Tile, state: Option<State>) -> Self {
+        TileInstance { tile, state }
     }
-    fn state_mut(&self) -> Option<LockResult<RwLockWriteGuard<'_, State>>> {
-        None
+
+    pub fn from(tile: &'static dyn Tile) -> Self {
+        TileInstance::new(tile, State::from(tile.consumes(), tile.produces()))
+    }
+
+    pub fn tile(&self) -> &'static dyn Tile {
+        self.tile
+    }
+
+    pub fn state(&self) -> Option<&State> {
+        self.state.as_ref()
+    }
+    pub fn state_mut(&mut self) -> Option<&mut State> {
+        self.state.as_mut()
     }
 }
 
 pub struct TileFactory {
-    tiles: HashMap<TileName, SomeTile>,
+    tiles: HashMap<TileName, &'static dyn Tile>,
+}
+
+lazy_static! {
+    static ref _pioneer: Pioneer = Pioneer::new();
+    static ref _warehouse: Warehouse = Warehouse::new();
 }
 
 impl TileFactory {
     pub fn new() -> Self {
-        let mut tiles: HashMap<TileName, SomeTile> = HashMap::new();
+        let mut tiles: HashMap<TileName, &'static dyn Tile> = HashMap::new();
         // so we don't forget one, match has to be exhaustive
         for tile_name in TileName::iter() {
-            let tile: SomeTile = match tile_name {
-                TileName::Pioneer => Box::new(Pioneer::new()),
-                TileName::Warehouse => Box::new(Warehouse::new()),
+            let tile: &'static dyn Tile = match tile_name {
+                TileName::Pioneer => &*_pioneer,
+                TileName::Warehouse => &*_warehouse,
             };
             tiles.insert(tile_name, tile);
         }
         TileFactory { tiles }
     }
 
-    pub fn create(&self, tile: &TileName) -> SomeTileInstance {
-        self.tiles.get(&tile).unwrap().create()
+    pub fn create(&self, tile_name: &TileName) -> TileInstance {
+        TileInstance::from(self.tile(tile_name))
     }
 
-    pub fn tile(&self, tile: &TileName) -> &dyn Tile {
-        self.tiles.get(tile).unwrap().as_ref()
+    pub fn tile(&self, tile_name: &TileName) -> &'static dyn Tile {
+        *self.tiles.get(tile_name).unwrap()
     }
 }
