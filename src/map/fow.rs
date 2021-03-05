@@ -1,7 +1,6 @@
 use crate::coordinate::range::Range;
 use crate::coordinate::Coordinate;
 use crate::map::minimap::{FillByCoordinate, GetByCoordinate, Minimap, SetByCoordinate, WithGrid};
-use crate::map::Map;
 use crate::observable::{Observable, Observers};
 use derive_more::{Constructor, From, Into};
 

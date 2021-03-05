@@ -2,8 +2,8 @@ mod buildings_signal;
 
 use gdnative::prelude::*;
 
-use crate::buildings_controller::ConstructionError;
 use crate::coordinate::Coordinate;
+use crate::game::buildings_controller::ConstructionError;
 use crate::godot::buildings::buildings_signal::{BuildingsObserver, BuildingsSignal};
 use crate::godot::game::GameSignal;
 use crate::godot::game_controller::GameController;

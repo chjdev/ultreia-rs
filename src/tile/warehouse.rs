@@ -4,11 +4,11 @@ use crate::good::{BuildingMaterial, Good, Inventory, InventoryAmount, Production
 use crate::map::minimap::GetByCoordinate;
 use crate::map::terrain::TerrainType;
 use crate::map::Map;
-use crate::tile::{Consumes, Tile, TileInstance, TileName};
+use crate::tile::{Consumes, Tile, TileName};
 use strum::IntoEnumIterator;
 
 pub struct Warehouse {
-    tile: TileName,
+    name: TileName,
     consumes: Consumes,
 }
 
@@ -20,7 +20,7 @@ impl Warehouse {
         pairs.extend(BuildingMaterial::iter().map(|g| (Good::BuildingMaterial(g), 100)));
         let inventory: Inventory = pairs.into_iter().collect();
         Warehouse {
-            tile: TileName::Warehouse,
+            name: TileName::Warehouse,
             consumes: inventory.into(),
         }
     }
@@ -28,9 +28,8 @@ impl Warehouse {
 
 impl Tile for Warehouse {
     fn name(&self) -> &TileName {
-        &self.tile
+        &self.name
     }
-
     fn consumes(&self) -> Option<&Consumes> {
         Some(&self.consumes)
     }
@@ -42,9 +41,5 @@ impl Tile for Warehouse {
 
     fn influence_at(&self, at: &Coordinate) -> Range {
         at.circle(6)
-    }
-
-    fn update(&self, _instance: &mut TileInstance) {
-        unimplemented!()
     }
 }

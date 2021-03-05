@@ -8,7 +8,6 @@ extern crate lazy_static;
 #[macro_use]
 extern crate pretty_assertions;
 
-mod buildings_controller;
 mod clock;
 mod coordinate;
 mod game;

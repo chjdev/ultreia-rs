@@ -1,15 +1,13 @@
-use crate::clock::Tick;
 use crate::coordinate::Coordinate;
 use crate::map::minimap::TrySetByCoordinate;
 use crate::map::minimap::{FillByCoordinate, GetByCoordinate};
 use crate::map::territories::TerritoryID;
 use crate::map::Map;
-use crate::observable::Observer;
 use crate::tile::state::State;
-use crate::tile::{TileFactory, TileName};
+use crate::tile::{Tile, TileInstance, TileName};
 use std::error::Error;
 use std::fmt;
-use std::sync::{Arc, RwLock, Weak};
+use std::sync::{Arc, RwLock};
 use strum_macros::{AsRefStr, EnumString, EnumVariantNames};
 
 #[derive(Debug, AsRefStr, EnumString, EnumVariantNames)]
@@ -31,27 +29,11 @@ impl Error for ConstructionError {}
 pub struct BuildingsController {
     // todo should it be weak? arc is more comfortable though
     map: Arc<RwLock<Map>>,
-    tile_factory: TileFactory,
 }
-
-struct TileUpdater {
-    map: Weak<RwLock<Map>>,
-}
-
-// impl Observer<Tick> for TileUpdater {
-//     fn notify(&self, _event: &Tick) {
-//         if let Some(map) = self.map.upgrade().map(|m| m.read().unwrap()) {
-//             for building in map.buildings.par_iter() {}
-//         }
-//     }
-// }
 
 impl BuildingsController {
     pub fn new(map: Arc<RwLock<Map>>) -> Self {
-        Self {
-            map,
-            tile_factory: TileFactory::new(),
-        }
+        Self { map }
     }
 
     pub fn territory_state(&mut self, _coordinate: &Coordinate) -> Option<State> {
@@ -64,6 +46,7 @@ impl BuildingsController {
 
         Default::default()
     }
+
     pub fn can_construct(
         &self,
         _coordinate: &Coordinate,
@@ -81,7 +64,7 @@ impl BuildingsController {
         //     return Err(construction_error);
         // }
         // Err(ConstructionError::InsufficientResources)
-        let tile = self.tile_factory.tile(tile_name);
+        let tile: &'static dyn Tile = tile_name.into();
         let mut mut_map = self.map.write().unwrap();
 
         let is_warehouse = tile_name == &TileName::Warehouse;
@@ -89,7 +72,7 @@ impl BuildingsController {
         if territory_id.is_some() || is_warehouse {
             if !mut_map
                 .buildings
-                .try_set(coordinate, Some(self.tile_factory.create(tile.name())))
+                .try_set(coordinate, Some(TileInstance::from(tile)))
             {
                 return Err(ConstructionError::CoordinateOccupied);
             }

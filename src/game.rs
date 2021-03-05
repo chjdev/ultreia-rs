@@ -1,7 +1,13 @@
-use crate::buildings_controller::BuildingsController;
-use crate::clock::Clock;
-use crate::map::Map;
 use std::sync::{Arc, RwLock, RwLockReadGuard};
+
+use buildings_controller::BuildingsController;
+
+use crate::clock::Clock;
+use crate::game::tile_updater::TileUpdater;
+use crate::map::Map;
+
+pub mod buildings_controller;
+mod tile_updater;
 
 #[derive(Copy, Clone)]
 pub struct Configuration {
@@ -37,6 +43,7 @@ pub struct Game {
     clock: Clock,
     map: Arc<RwLock<Map>>,
     buildings_controller: BuildingsController,
+    tile_updater: Arc<TileUpdater>,
 }
 
 impl Game {
@@ -49,8 +56,9 @@ impl Game {
         )));
         Game {
             configuration,
-            clock,
             buildings_controller: BuildingsController::new(map.clone()),
+            tile_updater: TileUpdater::new(&clock, Arc::downgrade(&map)),
+            clock,
             map,
         }
     }
@@ -74,11 +82,13 @@ impl Game {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use strum::EnumCount;
+
     use crate::coordinate::Coordinate;
     use crate::map::minimap::GetByCoordinate;
     use crate::map::terrain::{TerrainMeta, TerrainType};
-    use strum::EnumCount;
+
+    use super::*;
 
     #[test]
     fn test_smoke() {

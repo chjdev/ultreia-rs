@@ -6,6 +6,7 @@ use strum_macros::{AsRefStr, EnumIter, EnumString, EnumVariantNames};
 use crate::coordinate::range::Range;
 use crate::coordinate::Coordinate;
 use crate::good::costs::Costs;
+use crate::good::Inventory;
 use crate::map::Map;
 use crate::tile::consumes::Consumes;
 use crate::tile::pioneer::Pioneer;
@@ -51,7 +52,47 @@ pub trait Tile: Send + Sync {
     fn influence(&self) -> Range {
         self.influence_at(&Default::default())
     }
-    fn update(&self, instance: &mut TileInstance);
+}
+
+lazy_static! {
+    static ref PIONEER: Pioneer = Pioneer::new();
+    static ref WAREHOUSE: Warehouse = Warehouse::new();
+    static ref INSTANCES: HashMap<TileName, &'static dyn Tile> = {
+        let mut instances: HashMap<TileName, &'static dyn Tile> = HashMap::new();
+        // so we don't forget one, match has to be exhaustive
+        for tile_name in TileName::iter() {
+            let tile: &'static dyn Tile = match tile_name {
+                TileName::Pioneer => &*PIONEER,
+                TileName::Warehouse => &*WAREHOUSE,
+            };
+            instances.insert(tile_name, tile);
+        }
+        instances
+    };
+}
+
+impl Into<&'static dyn Tile> for &TileName {
+    fn into(self) -> &'static dyn Tile {
+        *INSTANCES.get(self).unwrap()
+    }
+}
+
+impl Into<&'static dyn Tile> for TileName {
+    fn into(self) -> &'static dyn Tile {
+        (&self).into()
+    }
+}
+
+impl<'a> From<&'a dyn Tile> for &'a TileName {
+    fn from(tile: &'a dyn Tile) -> Self {
+        tile.name()
+    }
+}
+
+impl From<&dyn Tile> for TileName {
+    fn from(tile: &dyn Tile) -> Self {
+        *tile.name()
+    }
 }
 
 pub struct TileInstance {
@@ -68,6 +109,10 @@ impl TileInstance {
         TileInstance::new(tile, State::from(tile.consumes(), tile.produces()))
     }
 
+    pub fn from_name(tile_name: &TileName) -> TileInstance {
+        TileInstance::from(tile_name.into())
+    }
+
     pub fn tile(&self) -> &'static dyn Tile {
         self.tile
     }
@@ -75,39 +120,77 @@ impl TileInstance {
     pub fn state(&self) -> Option<&State> {
         self.state.as_ref()
     }
-    pub fn state_mut(&mut self) -> Option<&mut State> {
+
+    fn state_mut(&mut self) -> Option<&mut State> {
         self.state.as_mut()
     }
-}
 
-pub struct TileFactory {
-    tiles: HashMap<TileName, &'static dyn Tile>,
-}
-
-lazy_static! {
-    static ref _pioneer: Pioneer = Pioneer::new();
-    static ref _warehouse: Warehouse = Warehouse::new();
-}
-
-impl TileFactory {
-    pub fn new() -> Self {
-        let mut tiles: HashMap<TileName, &'static dyn Tile> = HashMap::new();
-        // so we don't forget one, match has to be exhaustive
-        for tile_name in TileName::iter() {
-            let tile: &'static dyn Tile = match tile_name {
-                TileName::Pioneer => &*_pioneer,
-                TileName::Warehouse => &*_warehouse,
-            };
-            tiles.insert(tile_name, tile);
+    pub fn consume(&mut self, from: &mut Self) {
+        let maybe_consumes = self.tile.consumes();
+        if maybe_consumes.is_none() {
+            return;
         }
-        TileFactory { tiles }
+
+        let maybe_state = self.state_mut();
+        if maybe_state.is_none() {
+            return;
+        }
+        let state = maybe_state.unwrap();
+        let maybe_other_state = from.state_mut();
+        if maybe_other_state.is_none() {
+            return;
+        }
+        let other_state: &mut Inventory = maybe_other_state.unwrap().into();
+        for (consumption_good, amount) in maybe_consumes.unwrap().iter() {
+            if !other_state.contains_key(&consumption_good) {
+                continue;
+            }
+            let other_amount =
+                other_state[consumption_good].min(amount.saturating_sub(state[consumption_good]));
+            if other_amount > 0 {
+                state[consumption_good] += other_amount;
+                other_state[consumption_good] -= other_amount;
+            }
+        }
     }
 
-    pub fn create(&self, tile_name: &TileName) -> TileInstance {
-        TileInstance::from(self.tile(tile_name))
-    }
+    pub fn produce(&mut self) {
+        let maybe_produces = self.tile.produces();
+        if maybe_produces.is_none() {
+            return;
+        }
 
-    pub fn tile(&self, tile_name: &TileName) -> &'static dyn Tile {
-        *self.tiles.get(tile_name).unwrap()
+        let maybe_state = self.state_mut();
+        if maybe_state.is_none() {
+            return;
+        }
+        let state = maybe_state.unwrap();
+
+        // very simple variant, usually <2 goods produced with ~2 ingredients each
+        loop {
+            let mut some_produced = false;
+            for (production_good, ingredients) in maybe_produces.unwrap().iter() {
+                let mut consumed = Inventory::new();
+                let mut insufficient = false;
+                for (ingredient, ingredient_amount) in ingredients.iter() {
+                    if &state[ingredient] > ingredient_amount {
+                        consumed[ingredient] = *ingredient_amount;
+                    } else {
+                        insufficient = true;
+                        break;
+                    }
+                }
+                if insufficient {
+                    // move it back
+                    *state += State::new(consumed);
+                } else {
+                    some_produced = true;
+                    state[production_good] += 1;
+                }
+            }
+            if !some_produced {
+                break;
+            }
+        }
     }
 }
