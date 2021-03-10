@@ -19,7 +19,7 @@ impl Territory {
 impl Territory {
     #[export]
     fn at(&self, _owner: &Node, coordinate: Coordinate) -> Option<TerritoryID> {
-        GameController::game()?.map().territories.get(&coordinate)
+        GameController::game()?.map().territories().get(&coordinate)
     }
 
     #[export]
@@ -27,7 +27,7 @@ impl Territory {
         Some(
             GameController::game()?
                 .map()
-                .territories
+                .territories()
                 .minimap(width, height),
         )
     }

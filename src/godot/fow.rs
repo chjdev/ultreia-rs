@@ -56,17 +56,17 @@ impl FOW {
     fn _attach_game(&mut self, owner: TRef<Node>) {
         godot_print!("attaching clock to game now");
         let game = GameController::game().expect("game should be here");
-        let fow_observer = FOWObserver::new(&game.map().fow, owner.claim());
+        let fow_observer = FOWObserver::new(&game.map().fow(), owner.claim());
         self.fow_observer.replace(fow_observer);
     }
 
     #[export]
     fn at(&self, _owner: &Node, coordinate: Coordinate) -> Option<bool> {
-        Some(GameController::game()?.map().fow.get(&coordinate))
+        Some(GameController::game()?.map().fow().get(&coordinate))
     }
 
     #[export]
     fn minimap(&self, _owner: &Node, width: u16, height: u16) -> Option<Vec<bool>> {
-        Some(GameController::game()?.map().fow.minimap(width, height))
+        Some(GameController::game()?.map().fow().minimap(width, height))
     }
 }

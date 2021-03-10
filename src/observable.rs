@@ -1,7 +1,9 @@
 use crossbeam::channel::{bounded, Receiver, Sender};
+use derive_more::{From, Into};
 use rayon::prelude::*;
 use std::collections::HashSet;
 use std::hash::{Hash, Hasher};
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, RwLock, Weak};
 use std::thread;
 
@@ -12,24 +14,26 @@ pub trait Observer<E>: Send + Sync {
 /// weak pointer so it will deregister itself automatically when dropped
 type WeakObserver<E> = Weak<dyn Observer<E>>;
 
+#[derive(PartialEq, Eq, Hash, Copy, Clone, From, Into)]
+struct ObserverId(usize);
+
 pub struct ObserverRegistration<E> {
     weak: WeakObserver<E>,
-    // todo hmm is this safe? only used for the hash value
-    ptr: usize,
+    id: ObserverId,
 }
 
 impl<E> Clone for ObserverRegistration<E> {
     fn clone(&self) -> Self {
         ObserverRegistration {
             weak: Weak::clone(&self.weak),
-            ptr: self.ptr,
+            id: self.id,
         }
     }
 }
 
 impl<E> Hash for ObserverRegistration<E> {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        self.ptr.hash(state);
+        self.id.hash(state);
     }
 }
 
@@ -37,7 +41,7 @@ impl<E> Eq for ObserverRegistration<E> {}
 
 impl<E> PartialEq for ObserverRegistration<E> {
     fn eq(&self, other: &Self) -> bool {
-        self.ptr == other.ptr
+        self.id == other.id
     }
 }
 
@@ -53,6 +57,8 @@ impl<E: 'static + Send + Sync> Default for Observers<E> {
         Self::new()
     }
 }
+
+static OBSERVER_COUNTER: AtomicUsize = AtomicUsize::new(0);
 
 impl<E: 'static + Send + Sync> Observers<E> {
     pub fn new() -> Self {
@@ -75,9 +81,10 @@ impl<E: 'static + Send + Sync> Observers<E> {
         SO: 'static + Observer<E>,
     {
         let mut observers = self.observers.write().unwrap();
+        let id: ObserverId = OBSERVER_COUNTER.fetch_add(1, Ordering::Relaxed).into();
         let next_observer = ObserverRegistration {
             weak: Arc::downgrade(observer) as WeakObserver<E>,
-            ptr: Arc::as_ptr(observer) as usize,
+            id,
         };
         observers.insert(next_observer.clone());
         next_observer

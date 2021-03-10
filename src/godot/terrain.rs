@@ -51,11 +51,16 @@ impl Terrain {
 
     #[export]
     fn at(&self, _owner: &Node, coordinate: Coordinate) -> Option<TerrainMeta> {
-        Some(GameController::game()?.map().terrain.get(&coordinate))
+        Some(GameController::game()?.map().terrain().get(&coordinate))
     }
 
     #[export]
     fn minimap(&self, _owner: &Node, width: u16, height: u16) -> Option<Vec<TerrainType>> {
-        Some(GameController::game()?.map().terrain.minimap(width, height))
+        Some(
+            GameController::game()?
+                .map()
+                .terrain()
+                .minimap(width, height),
+        )
     }
 }

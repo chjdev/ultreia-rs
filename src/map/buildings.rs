@@ -1,12 +1,16 @@
+use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard, TryLockResult};
+
+use crossbeam::utils::Backoff;
+use rayon::iter::{ParallelBridge, ParallelIterator};
+
 use crate::coordinate::indexed::CoordinateIndexed;
 use crate::coordinate::Coordinate;
-use crate::map::minimap::{
-    GetMutRefByCoordinate, GetRefByCoordinate, SetByCoordinate, TrySetByCoordinate, WithGrid,
-};
+use crate::map::minimap::{GetRefByCoordinate, SetByCoordinate, TrySetByCoordinate, WithGrid};
 use crate::observable::{Observable, Observers};
 use crate::tile::{TileInstance, TileName};
-use rayon::iter::{IntoParallelIterator, IntoParallelRefIterator};
-use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard, TryLockResult};
+
+pub mod buildings_controller;
+pub mod buildings_updater;
 
 pub type SynchronizedInstance = RwLock<TileInstance>;
 
@@ -30,29 +34,25 @@ impl Buildings {
         }
     }
 
-    pub fn try_mut(
+    fn try_get_mut(
         &self,
         coordinate: &Coordinate,
     ) -> Option<TryLockResult<RwLockWriteGuard<TileInstance>>> {
         self.buildings.get(coordinate).map(|sync| sync.try_write())
     }
-}
 
-impl IntoIterator for Buildings {
-    type Item = (Coordinate, SynchronizedInstance);
-    type IntoIter = std::collections::hash_map::IntoIter<Coordinate, SynchronizedInstance>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.buildings.into_iter()
+    fn spin_get_mut(&self, coordinate: &Coordinate) -> RwLockWriteGuard<TileInstance> {
+        let backoff = Backoff::new();
+        let mut try_mut_instance = self.try_get_mut(coordinate).unwrap();
+        while try_mut_instance.is_err() {
+            try_mut_instance = self.try_get_mut(coordinate).unwrap();
+            backoff.spin()
+        }
+        try_mut_instance.unwrap()
     }
-}
 
-impl<'data> IntoParallelIterator for &'data Buildings {
-    type Iter = rayon::collections::hash_map::Iter<'data, Coordinate, SynchronizedInstance>;
-    type Item = (&'data Coordinate, &'data SynchronizedInstance);
-
-    fn into_par_iter(self) -> Self::Iter {
-        self.buildings.par_iter()
+    pub fn par_coordinates(&self) -> impl ParallelIterator<Item = &Coordinate> {
+        self.buildings.keys().par_bridge()
     }
 }
 
@@ -76,19 +76,6 @@ impl<'reference, 'me: 'reference>
         self.buildings
             .get(coordinate)
             .map(|sync| sync.read().unwrap())
-    }
-}
-
-impl<'reference, 'me: 'reference>
-    GetMutRefByCoordinate<'me, Option<RwLockWriteGuard<'reference, TileInstance>>> for Buildings
-{
-    fn get_mut(
-        &'me self,
-        coordinate: &Coordinate,
-    ) -> Option<RwLockWriteGuard<'reference, TileInstance>> {
-        self.buildings
-            .get(coordinate)
-            .map(|sync| sync.write().unwrap())
     }
 }
 

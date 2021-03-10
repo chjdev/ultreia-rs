@@ -2,12 +2,12 @@ use crate::coordinate::Coordinate;
 use crate::map::minimap::TrySetByCoordinate;
 use crate::map::minimap::{FillByCoordinate, GetByCoordinate};
 use crate::map::territories::TerritoryID;
-use crate::map::Map;
+use crate::map::MapStorage;
 use crate::tile::state::State;
 use crate::tile::{Tile, TileInstance, TileName};
 use std::error::Error;
 use std::fmt;
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 use strum_macros::{AsRefStr, EnumString, EnumVariantNames};
 
 #[derive(Debug, AsRefStr, EnumString, EnumVariantNames)]
@@ -27,12 +27,11 @@ impl fmt::Display for ConstructionError {
 impl Error for ConstructionError {}
 
 pub struct BuildingsController {
-    // todo should it be weak? arc is more comfortable though
-    map: Arc<RwLock<Map>>,
+    map: Arc<MapStorage>,
 }
 
 impl BuildingsController {
-    pub fn new(map: Arc<RwLock<Map>>) -> Self {
+    pub fn new(map: Arc<MapStorage>) -> Self {
         Self { map }
     }
 
@@ -65,13 +64,13 @@ impl BuildingsController {
         // }
         // Err(ConstructionError::InsufficientResources)
         let tile: &'static dyn Tile = tile_name.into();
-        let mut mut_map = self.map.write().unwrap();
 
         let is_warehouse = tile_name == &TileName::Warehouse;
-        let territory_id: Option<TerritoryID> = mut_map.territories.get(&coordinate);
+        let territory_id: Option<TerritoryID> = self.map.territories().get(&coordinate);
         if territory_id.is_some() || is_warehouse {
-            if !mut_map
-                .buildings
+            if !self
+                .map
+                .buildings_mut()
                 .try_set(coordinate, Some(TileInstance::from(tile)))
             {
                 return Err(ConstructionError::CoordinateOccupied);
@@ -81,12 +80,12 @@ impl BuildingsController {
         }
 
         let influence = tile.influence_at(&coordinate);
-        mut_map.fow.fill(influence.clone(), true);
+        self.map.fow_mut().fill(influence.clone(), true);
 
         if is_warehouse {
-            let maybe_territory_id: Option<TerritoryID> = mut_map.territories.get(&coordinate);
+            let maybe_territory_id: Option<TerritoryID> = self.map.territories().get(&coordinate);
             if let Some(territory_id) = maybe_territory_id {
-                mut_map.territories.extend(&territory_id, influence)
+                self.map.territories_mut().extend(&territory_id, influence)
             }
         }
 

@@ -3,10 +3,10 @@ mod buildings_signal;
 use gdnative::prelude::*;
 
 use crate::coordinate::Coordinate;
-use crate::game::buildings_controller::ConstructionError;
 use crate::godot::buildings::buildings_signal::{BuildingsObserver, BuildingsSignal};
 use crate::godot::game::GameSignal;
 use crate::godot::game_controller::GameController;
+use crate::map::buildings::buildings_controller::ConstructionError;
 use crate::tile::TileName;
 use std::sync::Arc;
 
@@ -76,7 +76,7 @@ impl Buildings {
     fn _attach_game(&mut self, owner: TRef<Node>) {
         godot_print!("attaching clock to game now");
         let game = GameController::game().expect("game should be here");
-        let buildings_observer = BuildingsObserver::new(&game.map().buildings, owner.claim());
+        let buildings_observer = BuildingsObserver::new(&game.map().buildings(), owner.claim());
         self.buildings_observer.replace(buildings_observer);
     }
 
@@ -88,6 +88,7 @@ impl Buildings {
         tile_name: TileName,
     ) -> Option<Result<(), ConstructionError>> {
         let result = GameController::game()?
+            .map()
             .buildings_controller()
             .try_construct(coordinate, &tile_name);
         Some(result)

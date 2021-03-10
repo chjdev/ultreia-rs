@@ -1,13 +1,5 @@
-use std::sync::{Arc, RwLock, RwLockReadGuard};
-
-use buildings_controller::BuildingsController;
-
 use crate::clock::Clock;
-use crate::game::tile_updater::TileUpdater;
 use crate::map::Map;
-
-pub mod buildings_controller;
-mod tile_updater;
 
 #[derive(Copy, Clone)]
 pub struct Configuration {
@@ -41,25 +33,21 @@ impl Configuration {
 pub struct Game {
     configuration: Configuration,
     clock: Clock,
-    map: Arc<RwLock<Map>>,
-    buildings_controller: BuildingsController,
-    tile_updater: Arc<TileUpdater>,
+    map: Map,
 }
 
 impl Game {
     pub fn new(configuration: Configuration) -> Self {
         let clock = Clock::new();
-        let map = Arc::new(RwLock::new(Map::new(
-            configuration.rows,
-            configuration.columns,
-            configuration.island_noise,
-        )));
         Game {
             configuration,
-            buildings_controller: BuildingsController::new(map.clone()),
-            tile_updater: TileUpdater::new(&clock, Arc::downgrade(&map)),
+            map: Map::new(
+                &clock,
+                configuration.rows,
+                configuration.columns,
+                configuration.island_noise,
+            ),
             clock,
-            map,
         }
     }
 
@@ -67,16 +55,12 @@ impl Game {
         &self.configuration
     }
 
-    pub fn map(&self) -> RwLockReadGuard<'_, Map> {
-        self.map.read().unwrap()
+    pub fn map(&self) -> &Map {
+        &self.map
     }
 
     pub fn clock(&self) -> &Clock {
         &self.clock
-    }
-
-    pub fn buildings_controller(&self) -> &BuildingsController {
-        &self.buildings_controller
     }
 }
 

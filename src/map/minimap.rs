@@ -21,16 +21,6 @@ pub trait GetRefByCoordinate<'a, T> {
     }
 }
 
-pub trait GetMutRefByCoordinate<'a, T> {
-    fn get_mut(&'a self, coordinate: &Coordinate) -> T;
-    fn get_mut_range(&'a self, range: &Range) -> Vec<T> {
-        range
-            .into_iter()
-            .map(|coordinate| self.get_mut(coordinate))
-            .collect()
-    }
-}
-
 pub trait SetByCoordinate<T> {
     fn set(&mut self, coordinate: Coordinate, value: T);
     fn set_range<F>(&mut self, range: Range, gen_value: F)

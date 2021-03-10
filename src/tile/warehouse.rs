@@ -35,7 +35,7 @@ impl Tile for Warehouse {
     }
 
     fn allowed(&self, at: &Coordinate, map: &Map) -> bool {
-        let terrain_tile: TerrainType = map.terrain.get(at);
+        let terrain_tile: TerrainType = map.terrain().get(at);
         terrain_tile == TerrainType::Grassland
     }
 
