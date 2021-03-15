@@ -4,6 +4,7 @@ use crate::good::Good::ProductionGood;
 use crate::good::ProductionGood::Fish;
 use crate::map::MapStorage;
 use crate::tile::{Consumes, Tile, TileName};
+use std::iter::FromIterator;
 
 pub struct Pioneer {
     name: TileName,
@@ -14,7 +15,7 @@ impl Pioneer {
     pub fn new() -> Self {
         Pioneer {
             name: TileName::Pioneer,
-            consumes: Consumes::from(&[(ProductionGood(Fish), 3)]),
+            consumes: Consumes::from_iter(vec![(ProductionGood(Fish), 3)].into_iter()),
         }
     }
 }

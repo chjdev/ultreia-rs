@@ -61,9 +61,9 @@ impl BuildingsController {
         }
 
         // do we have enough resources?
-        if let Some(cost) = tile.costs() {
+        if let Some(costs) = tile.costs() {
             let territory_state = TerritoriesState::freeze_mut(&map, &territory_id.unwrap());
-            if territory_state.inventory() < &cost.inventory {
+            if territory_state.state() < costs {
                 return Err(ConstructionError::InsufficientResources);
             }
             // we are updating it here so we can free up the state freeze and don't run into borrow mut after borrow immut

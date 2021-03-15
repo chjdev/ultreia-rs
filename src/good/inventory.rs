@@ -4,7 +4,7 @@ use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::iter::FromIterator;
 use std::marker::PhantomData;
-use std::ops::{Add, AddAssign, Deref, Index, IndexMut, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Deref, DerefMut, Index, IndexMut, Sub, SubAssign};
 
 #[derive(Default, Clone, PartialEq, Eq, From, Into, Deref, DerefMut, AsRef)]
 pub struct Inventory<T = u32>(HashMap<Good, T>);
@@ -135,9 +135,8 @@ impl<T> FromIterator<<Self as InventoryAmount>::Entry> for Inventory<T> {
     }
 }
 
-// todo this is a bit spaghetti with the new types (e.g. State) and references, clean up a bit
-impl<T: AddAssign + Copy> AddAssign for Inventory<T> {
-    fn add_assign(&mut self, rhs: Self) {
+impl<T: AddAssign + Copy> AddAssign<&Inventory<T>> for Inventory<T> {
+    fn add_assign(&mut self, rhs: &Self) {
         for (good, amount) in rhs.iter() {
             let maybe_current = self.0.get_mut(good);
             if let Some(current) = maybe_current {
@@ -146,6 +145,12 @@ impl<T: AddAssign + Copy> AddAssign for Inventory<T> {
                 self.0.insert(*good, *amount);
             }
         }
+    }
+}
+
+impl<T: AddAssign + Copy> AddAssign for Inventory<T> {
+    fn add_assign(&mut self, rhs: Self) {
+        self.add_assign(&rhs);
     }
 }
 
@@ -164,8 +169,8 @@ impl<T: Add<Output = T> + Copy> Add for Inventory<T> {
     }
 }
 
-impl<T: SubAssign + Copy> SubAssign for Inventory<T> {
-    fn sub_assign(&mut self, rhs: Self) {
+impl<T: SubAssign + Copy> SubAssign<&Inventory<T>> for Inventory<T> {
+    fn sub_assign(&mut self, rhs: &Self) {
         for (good, amount) in rhs.iter() {
             let maybe_current = self.0.get_mut(good);
             if let Some(current) = maybe_current {
@@ -174,6 +179,12 @@ impl<T: SubAssign + Copy> SubAssign for Inventory<T> {
                 self.0.insert(*good, *amount);
             }
         }
+    }
+}
+
+impl<T: SubAssign + Copy> SubAssign for Inventory<T> {
+    fn sub_assign(&mut self, rhs: Self) {
+        self.sub_assign(&rhs);
     }
 }
 
@@ -192,10 +203,28 @@ impl<T: Sub<Output = T> + Copy> Sub for Inventory<T> {
     }
 }
 
-#[derive(Default, Clone, PartialEq, Eq, PartialOrd)]
 pub struct SpecializedInventory<P, T = u32> {
     inventory: Inventory<T>,
     phantom: PhantomData<P>,
+}
+
+impl<P, T: Clone> Clone for SpecializedInventory<P, T> {
+    fn clone(&self) -> Self {
+        Self::new(self.inventory.clone())
+    }
+}
+
+impl<P, T: PartialEq> PartialEq for SpecializedInventory<P, T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.inventory.eq(other)
+    }
+}
+impl<P, T: PartialEq + Eq> Eq for SpecializedInventory<P, T> {}
+
+impl<P, T: PartialOrd> PartialOrd for SpecializedInventory<P, T> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        self.inventory.partial_cmp(other)
+    }
 }
 
 impl<P, T> SpecializedInventory<P, T> {
@@ -209,6 +238,16 @@ impl<P, T> SpecializedInventory<P, T> {
     pub fn inventory(&self) -> &Inventory<T> {
         &self.inventory
     }
+
+    pub fn inventory_mut(&mut self) -> &mut Inventory<T> {
+        &mut self.inventory
+    }
+}
+
+impl<P, T: Default> Default for SpecializedInventory<P, T> {
+    fn default() -> Self {
+        Self::new(Default::default())
+    }
 }
 
 impl<P, T> InventoryAmount for SpecializedInventory<P, T> {
@@ -221,6 +260,12 @@ impl<P, T> Deref for SpecializedInventory<P, T> {
 
     fn deref(&self) -> &Self::Target {
         self.inventory()
+    }
+}
+
+impl<P, T> DerefMut for SpecializedInventory<P, T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.inventory_mut()
     }
 }
 
@@ -253,15 +298,27 @@ impl<P, T> IntoIterator for SpecializedInventory<P, T> {
     }
 }
 
+impl<P, T> From<Inventory<T>> for SpecializedInventory<P, T> {
+    fn from(inventory: Inventory<T>) -> Self {
+        Self::new(inventory)
+    }
+}
+
 impl<P, T> FromIterator<<Self as InventoryAmount>::Entry> for SpecializedInventory<P, T> {
     fn from_iter<I: IntoIterator<Item = <Self as InventoryAmount>::Entry>>(iter: I) -> Self {
         Self::new(iter.into_iter().collect::<Inventory<T>>())
     }
 }
 
+impl<P, T: AddAssign + Copy> AddAssign<&SpecializedInventory<P, T>> for SpecializedInventory<P, T> {
+    fn add_assign(&mut self, rhs: &Self) {
+        self.inventory.add_assign(&rhs.inventory)
+    }
+}
+
 impl<P, T: AddAssign + Copy> AddAssign for SpecializedInventory<P, T> {
     fn add_assign(&mut self, rhs: Self) {
-        self.inventory.add_assign(rhs.inventory)
+        self.add_assign(&rhs)
     }
 }
 
@@ -273,9 +330,15 @@ impl<P, T: Add<Output = T> + Copy> Add for SpecializedInventory<P, T> {
     }
 }
 
+impl<P, T: SubAssign + Copy> SubAssign<&SpecializedInventory<P, T>> for SpecializedInventory<P, T> {
+    fn sub_assign(&mut self, rhs: &Self) {
+        self.inventory.sub_assign(&rhs.inventory)
+    }
+}
+
 impl<P, T: SubAssign + Copy> SubAssign for SpecializedInventory<P, T> {
     fn sub_assign(&mut self, rhs: Self) {
-        self.inventory.sub_assign(rhs.inventory)
+        self.sub_assign(&rhs)
     }
 }
 

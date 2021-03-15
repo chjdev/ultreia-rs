@@ -1,32 +1,11 @@
-use crate::good::Inventory;
+use crate::good::costs::Costs;
+use crate::good::{Inventory, SpecializedInventory};
 use crate::tile::consumes::Consumes;
 use crate::tile::produces::Produces;
-use derive_more::{
-    Add, AddAssign, Constructor, Deref, DerefMut, From, Index, IndexMut, Into, Sub, SubAssign,
-};
-use std::ops::{AddAssign, SubAssign};
+use std::cmp::Ordering;
 
-#[derive(
-    Constructor,
-    Default,
-    Clone,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    From,
-    Into,
-    Deref,
-    DerefMut,
-    Add,
-    AddAssign,
-    Sub,
-    SubAssign,
-    Index,
-    IndexMut,
-)]
-pub struct State {
-    pub inventory: Inventory,
-}
+pub struct StateMarker;
+pub type State = SpecializedInventory<StateMarker>;
 
 impl State {
     pub fn from(
@@ -36,45 +15,29 @@ impl State {
         if maybe_consumes.is_none() && maybe_produces.is_none() {
             return None;
         }
-        let mut state = State::default();
+        let mut inventory = Inventory::default();
         if let Some(consumes) = maybe_consumes {
             for good in consumes.keys() {
-                state.inventory.insert(*good, 0);
+                inventory.insert(*good, 0);
             }
         }
         if let Some(produces) = maybe_produces {
             for good in produces.keys() {
-                state.inventory.insert(*good, 0);
+                inventory.insert(*good, 0);
             }
         }
-        Some(state)
+        Some(inventory.into())
     }
 }
 
-// todo duplicates code in inventory
-impl AddAssign<&State> for State {
-    fn add_assign(&mut self, rhs: &State) {
-        for (good, amount) in rhs.iter() {
-            let maybe_current = self.inventory.get_mut(good);
-            if let Some(current) = maybe_current {
-                current.add_assign(*amount);
-            } else {
-                self.inventory.insert(*good, *amount);
-            }
-        }
+impl PartialEq<Costs> for State {
+    fn eq(&self, other: &Costs) -> bool {
+        self.inventory().eq(other.inventory())
     }
 }
 
-// todo duplicates code in inventory, overflow!
-impl SubAssign<&State> for State {
-    fn sub_assign(&mut self, rhs: &State) {
-        for (good, amount) in rhs.iter() {
-            let maybe_current = self.inventory.get_mut(good);
-            if let Some(current) = maybe_current {
-                current.sub_assign(*amount);
-            } else {
-                self.inventory.insert(*good, *amount);
-            }
-        }
+impl PartialOrd<Costs> for State {
+    fn partial_cmp(&self, other: &Costs) -> Option<Ordering> {
+        self.inventory().partial_cmp(other.inventory())
     }
 }

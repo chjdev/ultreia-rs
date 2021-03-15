@@ -1,4 +1,3 @@
-use crate::good::Inventory;
 /// located in this mod to gain access to mutable buildings
 use crate::map::minimap::GetRefByCoordinate;
 use crate::map::territories::TerritoryID;
@@ -36,10 +35,6 @@ impl<'reference> FrozenMutState<'reference> {
     pub fn state(&self) -> &State {
         self.as_ref()
     }
-
-    pub fn inventory(&self) -> &Inventory {
-        &self.state().inventory
-    }
 }
 
 impl FrozenMutState<'_> {
@@ -48,7 +43,7 @@ impl FrozenMutState<'_> {
 
 impl SubAssign<&State> for FrozenMutState<'_> {
     fn sub_assign(&mut self, rhs: &State) {
-        let mut new_state = self.frozen_state.clone();
+        let mut new_state: State = self.frozen_state.clone();
         new_state -= rhs;
         self.fair_match_diff(&new_state);
     }
@@ -56,7 +51,7 @@ impl SubAssign<&State> for FrozenMutState<'_> {
 
 impl AddAssign<&State> for FrozenMutState<'_> {
     fn add_assign(&mut self, rhs: &State) {
-        let mut new_state = self.frozen_state.clone();
+        let mut new_state: State = self.frozen_state.clone();
         new_state += rhs;
         self.fair_match_diff(&new_state);
     }
@@ -126,10 +121,6 @@ impl<'reference> FrozenState<'reference> {
 
     pub fn state(&self) -> &State {
         self.as_ref()
-    }
-
-    pub fn inventory(&self) -> &Inventory {
-        &self.state().inventory
     }
 }
 
