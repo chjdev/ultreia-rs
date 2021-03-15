@@ -1,13 +1,12 @@
 use crate::coordinate::Coordinate;
-use crate::map::minimap::TrySetByCoordinate;
-use crate::map::minimap::{FillByCoordinate, GetByCoordinate};
+use crate::map::minimap::{FillByCoordinate, GetByCoordinate, SetByCoordinate};
+use crate::map::minimap::{GetRefByCoordinate, TrySetByCoordinate};
 use crate::map::territories::{TerritoriesState, TerritoriesStateRw, TerritoryID};
 use crate::map::MapStorage;
-use crate::tile::state::State;
 use crate::tile::{Tile, TileInstance, TileName};
 use std::error::Error;
 use std::fmt;
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, RwLock, RwLockWriteGuard};
 use strum_macros::{AsRefStr, EnumString, EnumVariantNames};
 
 #[derive(Debug, AsRefStr, EnumString, EnumVariantNames)]
@@ -35,65 +34,65 @@ impl BuildingsController {
         Self { map_storage }
     }
 
-    pub fn territory_state(&mut self, _coordinate: &Coordinate) -> Option<State> {
-        // let territory_range: Option<Range> = self.map.territories().get(coordinate);
-        // // territory_range.map(|range| range.into_iter().map(|coordinate| self.map.buildings().get(&coordinate)).filter(|some_tile_instance| ))
-        //
-        // if maybe_territory_id.is_none() {
-        //     return None;
-        // }
-
-        Default::default()
-    }
-
-    pub fn can_construct(
-        &self,
-        _coordinate: &Coordinate,
-        _tile_name: &TileName,
-    ) -> Option<ConstructionError> {
-        None
-    }
-
     pub fn try_construct(
         &self,
         coordinate: Coordinate,
         tile_name: &TileName,
     ) -> Result<(), ConstructionError> {
-        // if let Some(construction_error) = self.can_construct(&coordinate, tile_name) {
-        //     return Err(construction_error);
-        // }
-        // Err(ConstructionError::InsufficientResources)
-        let tile: &'static dyn Tile = tile_name.into();
-        let is_warehouse = tile_name == &TileName::Warehouse;
-
         let mut map = self.map_storage.write().unwrap();
 
+        // are we in a valid territory?
         let territory_id: Option<TerritoryID> = map.territories.get(&coordinate);
-
-        {
-            let a = TerritoriesState::freeze(&map, &territory_id.unwrap());
-        }
-        if territory_id.is_some() || is_warehouse {
-            if !map
-                .buildings
-                .try_set(coordinate, Some(TileInstance::from(tile)))
-            {
-                return Err(ConstructionError::CoordinateOccupied);
-            }
-        } else {
+        let is_warehouse = tile_name == &TileName::Warehouse;
+        if !territory_id.is_some() && !is_warehouse {
+            // todo is owned
             return Err(ConstructionError::InvalidTerritory);
         }
 
+        // is the coordinate free?
+        if map.buildings.get(&coordinate).is_some() {
+            return Err(ConstructionError::CoordinateOccupied);
+        }
+
+        // is this tile even allowed here?
+        let tile: &'static dyn Tile = tile_name.into();
+        if !tile.allowed(&coordinate, &map) {
+            return Err(ConstructionError::InvalidTerrain);
+        }
+
+        // do we have enough resources?
+        // if let Some(cost) = tile.costs() {
+        //     let territory_state = TerritoriesState::freeze_mut(&map, &territory_id.unwrap());
+        //     if territory_state < cost {
+        //         return Err(ConstructionError::InsufficientResources);
+        //     }
+        //     // we are updating it here so we can free up the state freeze and don't run into borrow mut after borrow immut
+        //     territory_state -= cost;
+        // }
+        // WARNING: after the resource update the construction may _NOT_ fail anymore
+        Ok(Self::do_construct(map, coordinate, tile))
+    }
+
+    fn do_construct(
+        mut map: RwLockWriteGuard<MapStorage>,
+        coordinate: Coordinate,
+        tile: &'static dyn Tile,
+    ) {
+        // create the building
+        map.buildings
+            .set(coordinate, Some(TileInstance::from(tile)));
+
+        // update the fog of war
         let influence = tile.influence_at(&coordinate);
         map.fow.fill(influence.clone(), true);
 
+        // extend the territory
+        let is_warehouse = tile.name() == &TileName::Warehouse;
         if is_warehouse {
             let maybe_territory_id: Option<TerritoryID> = map.territories.get(&coordinate);
             if let Some(territory_id) = maybe_territory_id {
                 map.territories.extend(&territory_id, influence)
             }
         }
-
-        Ok(())
     }
 }

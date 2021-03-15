@@ -2,6 +2,7 @@ use crate::coordinate::range::{Range, RangeFrom};
 use crate::coordinate::Coordinate;
 use crate::good::Good::ProductionGood;
 use crate::good::ProductionGood::Fish;
+use crate::map::MapStorage;
 use crate::tile::{Consumes, Tile, TileName};
 
 pub struct Pioneer {
@@ -21,6 +22,10 @@ impl Pioneer {
 impl Tile for Pioneer {
     fn name(&self) -> &TileName {
         &self.name
+    }
+
+    fn allowed(&self, _at: &Coordinate, _map: &MapStorage) -> bool {
+        false
     }
 
     fn influence_at(&self, at: &Coordinate) -> Range {

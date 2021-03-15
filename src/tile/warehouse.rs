@@ -3,7 +3,7 @@ use crate::coordinate::Coordinate;
 use crate::good::{BuildingMaterial, Good, Inventory, InventoryAmount, ProductionGood, Weapon};
 use crate::map::minimap::GetByCoordinate;
 use crate::map::terrain::TerrainType;
-use crate::map::Map;
+use crate::map::MapStorage;
 use crate::tile::{Consumes, Tile, TileName};
 use strum::IntoEnumIterator;
 
@@ -34,8 +34,8 @@ impl Tile for Warehouse {
         Some(&self.consumes)
     }
 
-    fn allowed(&self, at: &Coordinate, map: &Map) -> bool {
-        let terrain_tile: TerrainType = map.terrain().get(at);
+    fn allowed(&self, at: &Coordinate, map: &MapStorage) -> bool {
+        let terrain_tile: TerrainType = map.terrain.get(at);
         terrain_tile == TerrainType::Grassland
     }
 

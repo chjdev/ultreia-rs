@@ -7,7 +7,7 @@ use crate::coordinate::range::Range;
 use crate::coordinate::Coordinate;
 use crate::good::costs::Costs;
 use crate::good::Inventory;
-use crate::map::Map;
+use crate::map::MapStorage;
 use crate::tile::consumes::Consumes;
 use crate::tile::pioneer::Pioneer;
 use crate::tile::produces::Produces;
@@ -45,9 +45,7 @@ pub trait Tile: Send + Sync {
     fn produces(&self) -> Option<&Produces> {
         None
     }
-    fn allowed(&self, _at: &Coordinate, _map: &Map) -> bool {
-        false
-    }
+    fn allowed(&self, at: &Coordinate, map: &MapStorage) -> bool;
     fn influence_at(&self, at: &Coordinate) -> Range;
     fn influence(&self) -> Range {
         self.influence_at(&Default::default())
