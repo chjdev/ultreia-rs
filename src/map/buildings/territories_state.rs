@@ -1,3 +1,4 @@
+/// located in this mod to gain access to mutable buildings
 use crate::map::minimap::GetRefByCoordinate;
 use crate::map::territories::TerritoryID;
 use crate::map::MapStorage;
