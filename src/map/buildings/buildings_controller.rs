@@ -1,6 +1,6 @@
 use crate::coordinate::Coordinate;
+use crate::map::minimap::GetRefByCoordinate;
 use crate::map::minimap::{FillByCoordinate, GetByCoordinate, SetByCoordinate};
-use crate::map::minimap::{GetRefByCoordinate, TrySetByCoordinate};
 use crate::map::territories::{TerritoriesState, TerritoriesStateRw, TerritoryID};
 use crate::map::MapStorage;
 use crate::tile::{Tile, TileInstance, TileName};
@@ -39,7 +39,7 @@ impl BuildingsController {
         coordinate: Coordinate,
         tile_name: &TileName,
     ) -> Result<(), ConstructionError> {
-        let mut map = self.map_storage.write().unwrap();
+        let map = self.map_storage.write().unwrap();
 
         // are we in a valid territory?
         let territory_id: Option<TerritoryID> = map.territories.get(&coordinate);
@@ -61,14 +61,14 @@ impl BuildingsController {
         }
 
         // do we have enough resources?
-        // if let Some(cost) = tile.costs() {
-        //     let territory_state = TerritoriesState::freeze_mut(&map, &territory_id.unwrap());
-        //     if territory_state < cost {
-        //         return Err(ConstructionError::InsufficientResources);
-        //     }
-        //     // we are updating it here so we can free up the state freeze and don't run into borrow mut after borrow immut
-        //     territory_state -= cost;
-        // }
+        if let Some(cost) = tile.costs() {
+            let territory_state = TerritoriesState::freeze_mut(&map, &territory_id.unwrap());
+            if territory_state.inventory() < &cost.inventory {
+                return Err(ConstructionError::InsufficientResources);
+            }
+            // we are updating it here so we can free up the state freeze and don't run into borrow mut after borrow immut
+            // territory_state -= cost;
+        }
         // WARNING: after the resource update the construction may _NOT_ fail anymore
         Ok(Self::do_construct(map, coordinate, tile))
     }

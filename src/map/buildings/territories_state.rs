@@ -1,9 +1,11 @@
+use crate::good::Inventory;
 /// located in this mod to gain access to mutable buildings
 use crate::map::minimap::GetRefByCoordinate;
 use crate::map::territories::TerritoryID;
 use crate::map::MapStorage;
 use crate::tile::state::State;
 use crate::tile::{TileInstance, TileName};
+use std::cmp::Ordering;
 use std::ops::{AddAssign, Deref, SubAssign};
 use std::sync::{RwLockReadGuard, RwLockWriteGuard};
 
@@ -30,6 +32,14 @@ impl<'reference> FrozenMutState<'reference> {
             frozen_state,
         }
     }
+
+    pub fn state(&self) -> &State {
+        self.as_ref()
+    }
+
+    pub fn inventory(&self) -> &Inventory {
+        &self.state().inventory
+    }
 }
 
 impl FrozenMutState<'_> {
@@ -52,25 +62,43 @@ impl AddAssign<&State> for FrozenMutState<'_> {
     }
 }
 
-impl Deref for FrozenMutState<'_> {
-    type Target = State;
+macro_rules! common_frozen {
+    ($type:ty) => {
+        impl Deref for $type {
+            type Target = State;
 
-    fn deref(&self) -> &Self::Target {
-        &self.frozen_state
+            fn deref(&self) -> &Self::Target {
+                &self.frozen_state
+            }
+        }
+
+        impl AsRef<State> for $type {
+            fn as_ref(&self) -> &State {
+                self
+            }
+        }
+
+        impl Into<State> for $type {
+            fn into(self) -> State {
+                self.frozen_state
+            }
+        }
+    };
+}
+
+impl PartialEq for FrozenMutState<'_> {
+    fn eq(&self, other: &Self) -> bool {
+        self.frozen_state.eq(&other.frozen_state)
     }
 }
 
-impl AsRef<State> for FrozenMutState<'_> {
-    fn as_ref(&self) -> &State {
-        self
+impl PartialOrd for FrozenMutState<'_> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        self.frozen_state.partial_cmp(&other.frozen_state)
     }
 }
 
-impl Into<State> for FrozenMutState<'_> {
-    fn into(self) -> State {
-        self.frozen_state
-    }
-}
+common_frozen!(FrozenMutState<'_>);
 
 pub struct FrozenState<'reference> {
     map_guard: SomeRwLockGuard<'reference>,
@@ -95,27 +123,17 @@ impl<'reference> FrozenState<'reference> {
             frozen_state,
         }
     }
-}
 
-impl Deref for FrozenState<'_> {
-    type Target = State;
+    pub fn state(&self) -> &State {
+        self.as_ref()
+    }
 
-    fn deref(&self) -> &Self::Target {
-        &self.frozen_state
+    pub fn inventory(&self) -> &Inventory {
+        &self.state().inventory
     }
 }
 
-impl AsRef<State> for FrozenState<'_> {
-    fn as_ref(&self) -> &State {
-        self
-    }
-}
-
-impl Into<State> for FrozenState<'_> {
-    fn into(self) -> State {
-        self.frozen_state
-    }
-}
+common_frozen!(FrozenState<'_>);
 
 enum SomeRwLockGuard<'reference> {
     Read(&'reference RwLockReadGuard<'reference, MapStorage>),

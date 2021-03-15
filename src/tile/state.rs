@@ -12,6 +12,7 @@ use std::ops::{AddAssign, SubAssign};
     Clone,
     PartialEq,
     Eq,
+    PartialOrd,
     From,
     Into,
     Deref,
@@ -23,7 +24,9 @@ use std::ops::{AddAssign, SubAssign};
     Index,
     IndexMut,
 )]
-pub struct State(Inventory);
+pub struct State {
+    pub inventory: Inventory,
+}
 
 impl State {
     pub fn from(
@@ -33,15 +36,15 @@ impl State {
         if maybe_consumes.is_none() && maybe_produces.is_none() {
             return None;
         }
-        let mut state = State(Default::default());
+        let mut state = State::default();
         if let Some(consumes) = maybe_consumes {
             for good in consumes.keys() {
-                state.0.insert(*good, 0);
+                state.inventory.insert(*good, 0);
             }
         }
         if let Some(produces) = maybe_produces {
             for good in produces.keys() {
-                state.0.insert(*good, 0);
+                state.inventory.insert(*good, 0);
             }
         }
         Some(state)
@@ -52,11 +55,11 @@ impl State {
 impl AddAssign<&State> for State {
     fn add_assign(&mut self, rhs: &State) {
         for (good, amount) in rhs.iter() {
-            let maybe_current = self.0.get_mut(good);
+            let maybe_current = self.inventory.get_mut(good);
             if let Some(current) = maybe_current {
                 current.add_assign(*amount);
             } else {
-                self.0.insert(*good, *amount);
+                self.inventory.insert(*good, *amount);
             }
         }
     }
@@ -66,11 +69,11 @@ impl AddAssign<&State> for State {
 impl SubAssign<&State> for State {
     fn sub_assign(&mut self, rhs: &State) {
         for (good, amount) in rhs.iter() {
-            let maybe_current = self.0.get_mut(good);
+            let maybe_current = self.inventory.get_mut(good);
             if let Some(current) = maybe_current {
                 current.sub_assign(*amount);
             } else {
-                self.0.insert(*good, *amount);
+                self.inventory.insert(*good, *amount);
             }
         }
     }

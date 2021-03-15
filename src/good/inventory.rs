@@ -1,8 +1,10 @@
 use super::Good;
 use derive_more::{AsRef, Deref, DerefMut, From, Into};
+use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::iter::FromIterator;
-use std::ops::{Add, AddAssign, Index, IndexMut, Sub, SubAssign};
+use std::marker::PhantomData;
+use std::ops::{Add, AddAssign, Deref, Index, IndexMut, Sub, SubAssign};
 
 #[derive(Default, Clone, PartialEq, Eq, From, Into, Deref, DerefMut, AsRef)]
 pub struct Inventory<T = u32>(HashMap<Good, T>);
@@ -20,6 +22,78 @@ impl<T> InventoryAmount for Inventory<T> {
 impl Inventory {
     pub fn contains_key(&self, key: &Good) -> bool {
         self.0.contains_key(key)
+    }
+}
+
+impl<T: PartialOrd> PartialOrd for Inventory<T> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        // only valid if they are subsets
+        if self.0.keys().all(|key| other.0.contains_key(key)) {
+            let mut ordering_acc = Ordering::Equal;
+            for (good, value) in self.0.iter() {
+                let maybe_value_ordering = value.partial_cmp(other.0.get(good).unwrap());
+                if let Some(value_ordering) = maybe_value_ordering {
+                    if ordering_acc == Ordering::Equal {
+                        ordering_acc = value_ordering;
+                    } else if value_ordering != Ordering::Equal && ordering_acc != value_ordering {
+                        return None;
+                    }
+                } else {
+                    return None;
+                }
+            }
+            // the values are same: so do we have the same amount of keys?
+            if ordering_acc == Ordering::Equal {
+                return if self.0.len() == other.0.len() {
+                    Some(Ordering::Equal)
+                } else {
+                    Some(Ordering::Less)
+                };
+            }
+            // the values might be greater but do we miss keys?
+            else if ordering_acc == Ordering::Greater {
+                return if self.0.len() == other.0.len() {
+                    Some(Ordering::Greater)
+                } else {
+                    return None;
+                };
+            }
+            return Some(ordering_acc);
+        }
+        // other direction, sameish idea
+        if other.0.keys().all(|key| self.0.contains_key(key)) {
+            let mut ordering_acc = Ordering::Equal;
+            for (good, value) in other.0.iter() {
+                let maybe_value_ordering = value.partial_cmp(self.0.get(good).unwrap());
+                if let Some(value_ordering) = maybe_value_ordering {
+                    if ordering_acc == Ordering::Equal {
+                        ordering_acc = value_ordering;
+                    } else if value_ordering != Ordering::Equal && ordering_acc != value_ordering {
+                        return None;
+                    }
+                } else {
+                    return None;
+                }
+            }
+            // the values are same: so do we have the same amount of keys?
+            if ordering_acc == Ordering::Equal {
+                return if self.0.len() == other.0.len() {
+                    Some(Ordering::Equal)
+                } else {
+                    Some(Ordering::Greater)
+                };
+            }
+            // the values might be less but does the other miss keys?
+            else if ordering_acc == Ordering::Less {
+                return if self.0.len() == other.0.len() {
+                    Some(Ordering::Less)
+                } else {
+                    return None;
+                };
+            }
+            return Some(ordering_acc);
+        }
+        None
     }
 }
 
@@ -75,19 +149,6 @@ impl<T: AddAssign + Copy> AddAssign for Inventory<T> {
     }
 }
 
-impl<T: AddAssign + Copy> AddAssign for &mut Inventory<T> {
-    fn add_assign(&mut self, rhs: Self) {
-        for (good, amount) in rhs.iter() {
-            let maybe_current = self.0.get_mut(good);
-            if let Some(current) = maybe_current {
-                current.add_assign(*amount);
-            } else {
-                self.0.insert(*good, *amount);
-            }
-        }
-    }
-}
-
 impl<T: Add<Output = T> + Copy> Add for Inventory<T> {
     type Output = Self;
 
@@ -128,5 +189,100 @@ impl<T: Sub<Output = T> + Copy> Sub for Inventory<T> {
             }
         }
         new_inventory
+    }
+}
+
+#[derive(Default, Clone, PartialEq, Eq, PartialOrd)]
+pub struct SpecializedInventory<P, T = u32> {
+    inventory: Inventory<T>,
+    phantom: PhantomData<P>,
+}
+
+impl<P, T> SpecializedInventory<P, T> {
+    pub fn new(inventory: Inventory<T>) -> Self {
+        Self {
+            inventory,
+            phantom: PhantomData,
+        }
+    }
+
+    pub fn inventory(&self) -> &Inventory<T> {
+        &self.inventory
+    }
+}
+
+impl<P, T> InventoryAmount for SpecializedInventory<P, T> {
+    type Amount = T;
+    type Entry = (Good, Self::Amount);
+}
+
+impl<P, T> Deref for SpecializedInventory<P, T> {
+    type Target = Inventory<T>;
+
+    fn deref(&self) -> &Self::Target {
+        self.inventory()
+    }
+}
+
+impl<P, T> AsRef<Inventory<T>> for SpecializedInventory<P, T> {
+    fn as_ref(&self) -> &Inventory<T> {
+        self
+    }
+}
+
+impl<P, T: Default> Index<&Good> for SpecializedInventory<P, T> {
+    type Output = <Inventory<T> as InventoryAmount>::Amount;
+
+    fn index(&self, index: &Good) -> &Self::Output {
+        &self.inventory[index]
+    }
+}
+
+impl<P, T: Default> IndexMut<&Good> for SpecializedInventory<P, T> {
+    fn index_mut(&mut self, index: &Good) -> &mut Self::Output {
+        &mut self.inventory[index]
+    }
+}
+
+impl<P, T> IntoIterator for SpecializedInventory<P, T> {
+    type Item = (Good, T);
+    type IntoIter = std::collections::hash_map::IntoIter<Good, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.inventory.into_iter()
+    }
+}
+
+impl<P, T> FromIterator<<Self as InventoryAmount>::Entry> for SpecializedInventory<P, T> {
+    fn from_iter<I: IntoIterator<Item = <Self as InventoryAmount>::Entry>>(iter: I) -> Self {
+        Self::new(iter.into_iter().collect::<Inventory<T>>())
+    }
+}
+
+impl<P, T: AddAssign + Copy> AddAssign for SpecializedInventory<P, T> {
+    fn add_assign(&mut self, rhs: Self) {
+        self.inventory.add_assign(rhs.inventory)
+    }
+}
+
+impl<P, T: Add<Output = T> + Copy> Add for SpecializedInventory<P, T> {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Self::new(self.inventory + rhs.inventory)
+    }
+}
+
+impl<P, T: SubAssign + Copy> SubAssign for SpecializedInventory<P, T> {
+    fn sub_assign(&mut self, rhs: Self) {
+        self.inventory.sub_assign(rhs.inventory)
+    }
+}
+
+impl<P, T: Sub<Output = T> + Copy> Sub for SpecializedInventory<P, T> {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Self::new(self.inventory - rhs.inventory)
     }
 }
