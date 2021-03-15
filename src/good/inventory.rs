@@ -1,10 +1,10 @@
 use super::Good;
-use derive_more::{Deref, DerefMut, From, Into};
+use derive_more::{AsRef, Deref, DerefMut, From, Into};
 use std::collections::HashMap;
 use std::iter::FromIterator;
 use std::ops::{Add, AddAssign, Index, IndexMut, Sub, SubAssign};
 
-#[derive(Default, Clone, PartialEq, Eq, From, Into, Deref, DerefMut)]
+#[derive(Default, Clone, PartialEq, Eq, From, Into, Deref, DerefMut, AsRef)]
 pub struct Inventory<T = u32>(HashMap<Good, T>);
 
 pub trait InventoryAmount {
@@ -61,7 +61,21 @@ impl<T> FromIterator<<Self as InventoryAmount>::Entry> for Inventory<T> {
     }
 }
 
+// todo this is a bit spaghetti with the new types (e.g. State) and references, clean up a bit
 impl<T: AddAssign + Copy> AddAssign for Inventory<T> {
+    fn add_assign(&mut self, rhs: Self) {
+        for (good, amount) in rhs.iter() {
+            let maybe_current = self.0.get_mut(good);
+            if let Some(current) = maybe_current {
+                current.add_assign(*amount);
+            } else {
+                self.0.insert(*good, *amount);
+            }
+        }
+    }
+}
+
+impl<T: AddAssign + Copy> AddAssign for &mut Inventory<T> {
     fn add_assign(&mut self, rhs: Self) {
         for (good, amount) in rhs.iter() {
             let maybe_current = self.0.get_mut(good);

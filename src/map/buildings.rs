@@ -11,6 +11,7 @@ use crate::tile::{TileInstance, TileName};
 
 pub mod buildings_controller;
 pub mod buildings_updater;
+pub mod territories_state;
 
 pub type SynchronizedInstance = RwLock<TileInstance>;
 
@@ -32,6 +33,16 @@ impl Buildings {
             creators: Default::default(),
             destroyers: Default::default(),
         }
+    }
+
+    fn get_lock(&self, coordinate: &Coordinate) -> Option<&SynchronizedInstance> {
+        self.buildings.get(coordinate)
+    }
+
+    fn get_mut(&self, coordinate: &Coordinate) -> Option<RwLockWriteGuard<TileInstance>> {
+        self.buildings
+            .get(coordinate)
+            .map(|sync| sync.write().unwrap())
     }
 
     fn try_get_mut(

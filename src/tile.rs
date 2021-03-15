@@ -140,7 +140,7 @@ impl TileInstance {
         if maybe_other_state.is_none() {
             return;
         }
-        let other_state: &mut Inventory = maybe_other_state.unwrap().into();
+        let other_state: &mut Inventory = &mut maybe_other_state.unwrap();
         for (consumption_good, amount) in maybe_consumes.unwrap().iter() {
             if !other_state.contains_key(&consumption_good) {
                 continue;

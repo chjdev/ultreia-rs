@@ -1,8 +1,10 @@
-use crate::good::{Good, Inventory, InventoryAmount};
+use crate::good::Inventory;
 use crate::tile::consumes::Consumes;
 use crate::tile::produces::Produces;
-use derive_more::{Add, AddAssign, Constructor, Deref, DerefMut, From, Into, Sub, SubAssign};
-use std::ops::{Index, IndexMut};
+use derive_more::{
+    Add, AddAssign, Constructor, Deref, DerefMut, From, Index, IndexMut, Into, Sub, SubAssign,
+};
+use std::ops::{AddAssign, SubAssign};
 
 #[derive(
     Constructor,
@@ -18,6 +20,8 @@ use std::ops::{Index, IndexMut};
     AddAssign,
     Sub,
     SubAssign,
+    Index,
+    IndexMut,
 )]
 pub struct State(Inventory);
 
@@ -44,22 +48,30 @@ impl State {
     }
 }
 
-impl Index<&Good> for State {
-    type Output = <Inventory as InventoryAmount>::Amount;
-
-    fn index(&self, index: &Good) -> &Self::Output {
-        &self.0[index]
+// todo duplicates code in inventory
+impl AddAssign<&State> for State {
+    fn add_assign(&mut self, rhs: &State) {
+        for (good, amount) in rhs.iter() {
+            let maybe_current = self.0.get_mut(good);
+            if let Some(current) = maybe_current {
+                current.add_assign(*amount);
+            } else {
+                self.0.insert(*good, *amount);
+            }
+        }
     }
 }
 
-impl IndexMut<&Good> for State {
-    fn index_mut(&mut self, index: &Good) -> &mut Self::Output {
-        &mut self.0[index]
-    }
-}
-
-impl<'a> Into<&'a mut Inventory> for &'a mut State {
-    fn into(self) -> &'a mut Inventory {
-        &mut self.0
+// todo duplicates code in inventory, overflow!
+impl SubAssign<&State> for State {
+    fn sub_assign(&mut self, rhs: &State) {
+        for (good, amount) in rhs.iter() {
+            let maybe_current = self.0.get_mut(good);
+            if let Some(current) = maybe_current {
+                current.sub_assign(*amount);
+            } else {
+                self.0.insert(*good, *amount);
+            }
+        }
     }
 }

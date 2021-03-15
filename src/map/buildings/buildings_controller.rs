@@ -1,13 +1,13 @@
 use crate::coordinate::Coordinate;
 use crate::map::minimap::TrySetByCoordinate;
 use crate::map::minimap::{FillByCoordinate, GetByCoordinate};
-use crate::map::territories::TerritoryID;
+use crate::map::territories::{TerritoriesState, TerritoriesStateRw, TerritoryID};
 use crate::map::MapStorage;
 use crate::tile::state::State;
 use crate::tile::{Tile, TileInstance, TileName};
 use std::error::Error;
 use std::fmt;
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 use strum_macros::{AsRefStr, EnumString, EnumVariantNames};
 
 #[derive(Debug, AsRefStr, EnumString, EnumVariantNames)]
@@ -27,12 +27,12 @@ impl fmt::Display for ConstructionError {
 impl Error for ConstructionError {}
 
 pub struct BuildingsController {
-    map: Arc<MapStorage>,
+    map_storage: Arc<RwLock<MapStorage>>,
 }
 
 impl BuildingsController {
-    pub fn new(map: Arc<MapStorage>) -> Self {
-        Self { map }
+    pub fn new(map_storage: Arc<RwLock<MapStorage>>) -> Self {
+        Self { map_storage }
     }
 
     pub fn territory_state(&mut self, _coordinate: &Coordinate) -> Option<State> {
@@ -64,13 +64,18 @@ impl BuildingsController {
         // }
         // Err(ConstructionError::InsufficientResources)
         let tile: &'static dyn Tile = tile_name.into();
-
         let is_warehouse = tile_name == &TileName::Warehouse;
-        let territory_id: Option<TerritoryID> = self.map.territories().get(&coordinate);
+
+        let mut map = self.map_storage.write().unwrap();
+
+        let territory_id: Option<TerritoryID> = map.territories.get(&coordinate);
+
+        {
+            let a = TerritoriesState::freeze(&map, &territory_id.unwrap());
+        }
         if territory_id.is_some() || is_warehouse {
-            if !self
-                .map
-                .buildings_mut()
+            if !map
+                .buildings
                 .try_set(coordinate, Some(TileInstance::from(tile)))
             {
                 return Err(ConstructionError::CoordinateOccupied);
@@ -80,12 +85,12 @@ impl BuildingsController {
         }
 
         let influence = tile.influence_at(&coordinate);
-        self.map.fow_mut().fill(influence.clone(), true);
+        map.fow.fill(influence.clone(), true);
 
         if is_warehouse {
-            let maybe_territory_id: Option<TerritoryID> = self.map.territories().get(&coordinate);
+            let maybe_territory_id: Option<TerritoryID> = map.territories.get(&coordinate);
             if let Some(territory_id) = maybe_territory_id {
-                self.map.territories_mut().extend(&territory_id, influence)
+                map.territories.extend(&territory_id, influence)
             }
         }
 
