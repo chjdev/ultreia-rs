@@ -38,7 +38,11 @@ impl<'reference> FrozenMutState<'reference> {
 }
 
 impl FrozenMutState<'_> {
-    fn fair_match_diff(&mut self, state: &State) {}
+    fn fair_match_diff(&mut self, state: &State) {
+        for (good, amount) in state.iter() {
+            let diff = self.frozen_state[good];
+        }
+    }
 }
 
 impl SubAssign<&State> for FrozenMutState<'_> {

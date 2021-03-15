@@ -6,7 +6,6 @@ use strum_macros::{AsRefStr, EnumIter, EnumString, EnumVariantNames};
 use crate::coordinate::range::Range;
 use crate::coordinate::Coordinate;
 use crate::good::costs::Costs;
-use crate::good::Inventory;
 use crate::map::MapStorage;
 use crate::tile::consumes::Consumes;
 use crate::tile::pioneer::Pioneer;
@@ -104,7 +103,7 @@ impl TileInstance {
     }
 
     pub fn from(tile: &'static dyn Tile) -> Self {
-        TileInstance::new(tile, State::from(tile.consumes(), tile.produces()))
+        TileInstance::new(tile, State::combine(tile.consumes(), tile.produces()))
     }
 
     pub fn from_name(tile_name: &TileName) -> TileInstance {
@@ -143,6 +142,7 @@ impl TileInstance {
             if !other_state.contains_key(&consumption_good) {
                 continue;
             }
+            assert!(state.contains_key(&consumption_good));
             let other_amount =
                 other_state[consumption_good].min(amount.saturating_sub(state[consumption_good]));
             if other_amount > 0 {
@@ -162,25 +162,26 @@ impl TileInstance {
         if maybe_state.is_none() {
             return;
         }
-        let state = maybe_state.unwrap();
+        let mut state = maybe_state.unwrap();
 
         // very simple variant, usually <2 goods produced with ~2 ingredients each
         loop {
             let mut some_produced = false;
             for (production_good, ingredients) in maybe_produces.unwrap().iter() {
-                let mut consumed = Inventory::new();
-                let mut insufficient = false;
+                let mut consumed = State::from_consumes(ingredients);
+                let mut insufficient_goods = false;
                 for (ingredient, ingredient_amount) in ingredients.iter() {
-                    if &state[ingredient] > ingredient_amount {
+                    if &state[ingredient] >= ingredient_amount {
+                        state[ingredient] -= ingredient_amount;
                         consumed[ingredient] = *ingredient_amount;
                     } else {
-                        insufficient = true;
+                        insufficient_goods = true;
                         break;
                     }
                 }
-                if insufficient {
+                if insufficient_goods {
                     // move it back
-                    *state += State::new(consumed);
+                    state += consumed;
                 } else {
                     some_produced = true;
                     state[production_good] += 1;

@@ -1,6 +1,6 @@
 use strum_macros::{AsRefStr, EnumCount, EnumIter, IntoStaticStr};
 
-pub use self::inventory::{Inventory, InventoryAmount, SpecializedInventory};
+pub use self::inventory::{Inventory, InventoryAmount, SpecializedInventory, WithFromInventory};
 
 pub mod costs;
 mod inventory;

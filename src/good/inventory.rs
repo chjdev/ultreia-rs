@@ -25,6 +25,15 @@ impl Inventory {
     }
 }
 
+impl<T> Inventory<T> {
+    pub fn get(&self, key: &Good) -> Option<&T> {
+        self.0.get(key)
+    }
+    pub fn get_mut(&mut self, key: &Good) -> Option<&mut T> {
+        self.0.get_mut(key)
+    }
+}
+
 impl<T: PartialOrd> PartialOrd for Inventory<T> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         // only valid if they are subsets
@@ -103,19 +112,16 @@ impl<T: Default> Inventory<T> {
     }
 }
 
-impl<T: Default> Index<&Good> for Inventory<T> {
+impl<T> Index<&Good> for Inventory<T> {
     type Output = <Inventory<T> as InventoryAmount>::Amount;
 
     fn index(&self, index: &Good) -> &Self::Output {
-        self.0.get(index).unwrap()
+        &self.0[index]
     }
 }
 
-impl<T: Default> IndexMut<&Good> for Inventory<T> {
+impl<T> IndexMut<&Good> for Inventory<T> {
     fn index_mut(&mut self, index: &Good) -> &mut Self::Output {
-        if !self.0.contains_key(index) {
-            self.0.insert(*index, Default::default());
-        }
         self.0.get_mut(index).unwrap()
     }
 }
@@ -208,6 +214,27 @@ pub struct SpecializedInventory<P, T = u32> {
     phantom: PhantomData<P>,
 }
 
+impl<P, T> SpecializedInventory<P, T> {
+    fn new(inventory: Inventory<T>) -> Self {
+        Self {
+            inventory,
+            phantom: PhantomData,
+        }
+    }
+
+    pub fn contains_key(&self, key: &Good) -> bool {
+        self.inventory.contains_key(key)
+    }
+
+    pub fn inventory(&self) -> &Inventory<T> {
+        &self.inventory
+    }
+
+    pub fn inventory_mut(&mut self) -> &mut Inventory<T> {
+        &mut self.inventory
+    }
+}
+
 impl<P, T: Clone> Clone for SpecializedInventory<P, T> {
     fn clone(&self) -> Self {
         Self::new(self.inventory.clone())
@@ -219,28 +246,12 @@ impl<P, T: PartialEq> PartialEq for SpecializedInventory<P, T> {
         self.inventory.eq(other)
     }
 }
+
 impl<P, T: PartialEq + Eq> Eq for SpecializedInventory<P, T> {}
 
 impl<P, T: PartialOrd> PartialOrd for SpecializedInventory<P, T> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         self.inventory.partial_cmp(other)
-    }
-}
-
-impl<P, T> SpecializedInventory<P, T> {
-    pub fn new(inventory: Inventory<T>) -> Self {
-        Self {
-            inventory,
-            phantom: PhantomData,
-        }
-    }
-
-    pub fn inventory(&self) -> &Inventory<T> {
-        &self.inventory
-    }
-
-    pub fn inventory_mut(&mut self) -> &mut Inventory<T> {
-        &mut self.inventory
     }
 }
 
@@ -298,13 +309,17 @@ impl<P, T> IntoIterator for SpecializedInventory<P, T> {
     }
 }
 
-impl<P, T> From<Inventory<T>> for SpecializedInventory<P, T> {
+pub trait WithFromInventory {}
+
+impl<P: WithFromInventory, T> From<Inventory<T>> for SpecializedInventory<P, T> {
     fn from(inventory: Inventory<T>) -> Self {
         Self::new(inventory)
     }
 }
 
-impl<P, T> FromIterator<<Self as InventoryAmount>::Entry> for SpecializedInventory<P, T> {
+impl<P: WithFromInventory, T> FromIterator<<Self as InventoryAmount>::Entry>
+    for SpecializedInventory<P, T>
+{
     fn from_iter<I: IntoIterator<Item = <Self as InventoryAmount>::Entry>>(iter: I) -> Self {
         Self::new(iter.into_iter().collect::<Inventory<T>>())
     }
@@ -319,6 +334,22 @@ impl<P, T: AddAssign + Copy> AddAssign<&SpecializedInventory<P, T>> for Speciali
 impl<P, T: AddAssign + Copy> AddAssign for SpecializedInventory<P, T> {
     fn add_assign(&mut self, rhs: Self) {
         self.add_assign(&rhs)
+    }
+}
+
+impl<P, T: AddAssign + Copy> AddAssign<SpecializedInventory<P, T>>
+    for &mut SpecializedInventory<P, T>
+{
+    fn add_assign(&mut self, rhs: SpecializedInventory<P, T>) {
+        self.add_assign(&rhs)
+    }
+}
+
+impl<P, T: AddAssign + Copy> AddAssign<&SpecializedInventory<P, T>>
+    for &mut SpecializedInventory<P, T>
+{
+    fn add_assign(&mut self, rhs: &SpecializedInventory<P, T>) {
+        self.inventory.add_assign(&rhs.inventory)
     }
 }
 
@@ -342,10 +373,35 @@ impl<P, T: SubAssign + Copy> SubAssign for SpecializedInventory<P, T> {
     }
 }
 
+impl<P, T: SubAssign + Copy> SubAssign<SpecializedInventory<P, T>>
+    for &mut SpecializedInventory<P, T>
+{
+    fn sub_assign(&mut self, rhs: SpecializedInventory<P, T>) {
+        self.sub_assign(&rhs)
+    }
+}
+
+impl<P, T: SubAssign + Copy> SubAssign<&SpecializedInventory<P, T>>
+    for &mut SpecializedInventory<P, T>
+{
+    fn sub_assign(&mut self, rhs: &SpecializedInventory<P, T>) {
+        self.inventory.sub_assign(&rhs.inventory)
+    }
+}
+
 impl<P, T: Sub<Output = T> + Copy> Sub for SpecializedInventory<P, T> {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self::Output {
         Self::new(self.inventory - rhs.inventory)
+    }
+}
+
+impl<P, T> SpecializedInventory<P, T> {
+    pub fn get(&self, key: &Good) -> Option<&T> {
+        self.inventory.get(key)
+    }
+    pub fn get_mut(&mut self, key: &Good) -> Option<&mut T> {
+        self.inventory.get_mut(key)
     }
 }
