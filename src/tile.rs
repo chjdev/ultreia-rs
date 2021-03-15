@@ -118,7 +118,7 @@ impl TileInstance {
         self.state.as_ref()
     }
 
-    fn state_mut(&mut self) -> Option<&mut State> {
+    pub fn state_mut(&mut self) -> Option<&mut State> {
         self.state.as_mut()
     }
 
@@ -168,7 +168,7 @@ impl TileInstance {
         loop {
             let mut some_produced = false;
             for (production_good, ingredients) in maybe_produces.unwrap().iter() {
-                let mut consumed = State::from_consumes(ingredients);
+                let mut consumed = State::zero(state);
                 let mut insufficient_goods = false;
                 for (ingredient, ingredient_amount) in ingredients.iter() {
                     if &state[ingredient] >= ingredient_amount {

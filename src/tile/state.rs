@@ -3,17 +3,12 @@ use crate::good::SpecializedInventory;
 use crate::tile::consumes::Consumes;
 use crate::tile::produces::Produces;
 use std::cmp::Ordering;
+use std::ops::AddAssign;
 
 pub struct StateMarker;
 pub type State = SpecializedInventory<StateMarker>;
 
 impl State {
-    pub fn from_consumes(consumes: &Consumes) -> State {
-        Self::combine(Some(consumes), None).unwrap()
-    }
-    pub fn from_produces(produces: &Produces) -> State {
-        Self::combine(None, Some(produces)).unwrap()
-    }
     pub fn combine(
         maybe_consumes: Option<&Consumes>,
         maybe_produces: Option<&Produces>,
@@ -35,12 +30,21 @@ impl State {
         Some(inventory)
     }
 
-    pub fn zero(state: &State) -> Self {
+    pub fn zero(state: &Self) -> Self {
         let mut inventory = State::default();
         for good in state.keys() {
             inventory.inventory_mut().insert(*good, 0);
         }
         inventory
+    }
+
+    pub fn try_convert<P>(state: &Self, other: &SpecializedInventory<P, u32>) -> Option<Self> {
+        if !other.keys().all(|key| state.contains_key(key)) {
+            return None;
+        }
+        let mut converted = Self::zero(state);
+        converted.inventory_mut().add_assign(other.inventory());
+        Some(converted)
     }
 }
 

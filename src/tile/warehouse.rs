@@ -1,10 +1,14 @@
 use crate::coordinate::range::{Range, RangeFrom};
 use crate::coordinate::Coordinate;
-use crate::good::{BuildingMaterial, Good, Inventory, InventoryAmount, ProductionGood, Weapon};
+use crate::good::costs::Costs;
+use crate::good::{
+    BuildingMaterial, Good, ImmaterialGood, Inventory, InventoryAmount, ProductionGood, Weapon,
+};
 use crate::map::minimap::GetByCoordinate;
 use crate::map::terrain::TerrainType;
 use crate::map::MapStorage;
 use crate::tile::{Consumes, Tile, TileName};
+use std::iter::FromIterator;
 use strum::IntoEnumIterator;
 
 pub struct Warehouse {
@@ -30,6 +34,7 @@ impl Tile for Warehouse {
     fn name(&self) -> &TileName {
         &self.name
     }
+
     fn consumes(&self) -> Option<&Consumes> {
         Some(&self.consumes)
     }

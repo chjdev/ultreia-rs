@@ -3,6 +3,7 @@ use crate::map::minimap::GetRefByCoordinate;
 use crate::map::minimap::{FillByCoordinate, GetByCoordinate, SetByCoordinate};
 use crate::map::territories::{TerritoriesState, TerritoriesStateRw, TerritoryID};
 use crate::map::MapStorage;
+use crate::tile::state::State;
 use crate::tile::{Tile, TileInstance, TileName};
 use std::error::Error;
 use std::fmt;
@@ -62,12 +63,13 @@ impl BuildingsController {
 
         // do we have enough resources?
         if let Some(costs) = tile.costs() {
-            let territory_state = TerritoriesState::freeze_mut(&map, &territory_id.unwrap());
+            let mut territory_state = TerritoriesState::freeze_mut(&map, &territory_id.unwrap());
             if territory_state.state() < costs {
                 return Err(ConstructionError::InsufficientResources);
             }
             // we are updating it here so we can free up the state freeze and don't run into borrow mut after borrow immut
-            // territory_state -= cost;
+            territory_state -= &State::try_convert(territory_state.state(), costs)
+                .expect("implementation error: costs is not a subset of the territory state!");
         }
         // WARNING: after the resource update the construction may _NOT_ fail anymore
         Ok(Self::do_construct(map, coordinate, tile))

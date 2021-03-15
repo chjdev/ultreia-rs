@@ -40,7 +40,34 @@ impl<'reference> FrozenMutState<'reference> {
 impl FrozenMutState<'_> {
     fn fair_match_diff(&mut self, state: &State) {
         for (good, amount) in state.iter() {
-            let diff = self.frozen_state[good];
+            if !self.frozen_state.contains_key(good) {
+                panic!("can't match difference, other state contains an invalid key!")
+            }
+            let mut diff = (*amount as i64) - (self.frozen_state[good] as i64);
+            let step: i8 = if diff < 0 { 1 } else { -1 };
+            while diff != 0 {
+                let mut check_impl = false;
+                for instance in self.write_guards.iter_mut() {
+                    if let Some(state) = instance.state_mut() {
+                        if !state.contains_key(good) {
+                            continue;
+                        }
+                        if step < 0 && state[good] > 0 || step > 0 && state[good] < u32::max_value()
+                        {
+                            if step < 0 {
+                                state[good] -= step.abs() as u32;
+                            } else {
+                                state[good] += step.abs() as u32;
+                            }
+                            diff += step as i64;
+                            check_impl = true;
+                        }
+                    }
+                }
+                if check_impl {
+                    panic!("goods in states don't match up or state difference can't be satisfied")
+                }
+            }
         }
     }
 }

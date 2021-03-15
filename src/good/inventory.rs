@@ -4,7 +4,7 @@ use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::iter::FromIterator;
 use std::marker::PhantomData;
-use std::ops::{Add, AddAssign, Deref, DerefMut, Index, IndexMut, Sub, SubAssign};
+use std::ops::{AddAssign, Deref, DerefMut, Index, IndexMut, SubAssign};
 
 #[derive(Default, Clone, PartialEq, Eq, From, Into, Deref, DerefMut, AsRef)]
 pub struct Inventory<T = u32>(HashMap<Good, T>);
@@ -147,8 +147,6 @@ impl<T: AddAssign + Copy> AddAssign<&Inventory<T>> for Inventory<T> {
             let maybe_current = self.0.get_mut(good);
             if let Some(current) = maybe_current {
                 current.add_assign(*amount);
-            } else {
-                self.0.insert(*good, *amount);
             }
         }
     }
@@ -160,29 +158,12 @@ impl<T: AddAssign + Copy> AddAssign for Inventory<T> {
     }
 }
 
-impl<T: Add<Output = T> + Copy> Add for Inventory<T> {
-    type Output = Self;
-
-    fn add(self, rhs: Self) -> Self::Output {
-        let mut new_inventory: Inventory<T> = self.0.into_iter().collect();
-        for (good, amount) in rhs.iter() {
-            let maybe_current = new_inventory.insert(*good, *amount);
-            if let Some(current) = maybe_current {
-                new_inventory.insert(*good, current.add(*amount));
-            }
-        }
-        new_inventory
-    }
-}
-
 impl<T: SubAssign + Copy> SubAssign<&Inventory<T>> for Inventory<T> {
     fn sub_assign(&mut self, rhs: &Self) {
         for (good, amount) in rhs.iter() {
             let maybe_current = self.0.get_mut(good);
             if let Some(current) = maybe_current {
                 current.sub_assign(*amount);
-            } else {
-                self.0.insert(*good, *amount);
             }
         }
     }
@@ -191,21 +172,6 @@ impl<T: SubAssign + Copy> SubAssign<&Inventory<T>> for Inventory<T> {
 impl<T: SubAssign + Copy> SubAssign for Inventory<T> {
     fn sub_assign(&mut self, rhs: Self) {
         self.sub_assign(&rhs);
-    }
-}
-
-impl<T: Sub<Output = T> + Copy> Sub for Inventory<T> {
-    type Output = Self;
-
-    fn sub(self, rhs: Self) -> Self::Output {
-        let mut new_inventory: Inventory<T> = self.0.into_iter().collect();
-        for (good, amount) in rhs.iter() {
-            let maybe_current = new_inventory.insert(*good, *amount);
-            if let Some(current) = maybe_current {
-                new_inventory.insert(*good, current.sub(*amount));
-            }
-        }
-        new_inventory
     }
 }
 
@@ -353,14 +319,6 @@ impl<P, T: AddAssign + Copy> AddAssign<&SpecializedInventory<P, T>>
     }
 }
 
-impl<P, T: Add<Output = T> + Copy> Add for SpecializedInventory<P, T> {
-    type Output = Self;
-
-    fn add(self, rhs: Self) -> Self::Output {
-        Self::new(self.inventory + rhs.inventory)
-    }
-}
-
 impl<P, T: SubAssign + Copy> SubAssign<&SpecializedInventory<P, T>> for SpecializedInventory<P, T> {
     fn sub_assign(&mut self, rhs: &Self) {
         self.inventory.sub_assign(&rhs.inventory)
@@ -386,14 +344,6 @@ impl<P, T: SubAssign + Copy> SubAssign<&SpecializedInventory<P, T>>
 {
     fn sub_assign(&mut self, rhs: &SpecializedInventory<P, T>) {
         self.inventory.sub_assign(&rhs.inventory)
-    }
-}
-
-impl<P, T: Sub<Output = T> + Copy> Sub for SpecializedInventory<P, T> {
-    type Output = Self;
-
-    fn sub(self, rhs: Self) -> Self::Output {
-        Self::new(self.inventory - rhs.inventory)
     }
 }
 
