@@ -1,12 +1,45 @@
-use strum_macros::{AsRefStr, EnumCount, EnumIter, IntoStaticStr};
+use strum_macros::{AsRefStr, Display, EnumCount, EnumIter, IntoStaticStr};
 
 pub use self::inventory::{Inventory, InventoryAmount, SpecializedInventory, WithFromInventory};
 
 pub mod costs;
 mod inventory;
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, AsRefStr, IntoStaticStr, EnumIter, EnumCount)]
-pub enum NaturalGood {
+macro_rules! make_good {
+    ($name:tt, default $default:tt, $($arg:tt),+) => {
+        #[derive(
+            Debug, Display, Copy, Clone, PartialEq, Eq, Hash, AsRefStr, IntoStaticStr, EnumIter, EnumCount,
+        )]
+        pub enum $name {
+            $($arg),+
+        }
+
+        impl Default for $name {
+            fn default() -> Self {
+                Self::$default
+            }
+        }
+
+        impl Into<Good> for $name {
+            fn into(self) -> Good {
+                Good::$name(self)
+            }
+        }
+
+        impl Good {
+        $(
+            #[allow(non_snake_case)]
+            pub const fn $arg() -> Self {
+                Good::$name($name::$arg)
+            }
+        )+
+        }
+    };
+}
+
+make_good!(
+    NaturalGood,
+    default FreshWater,
     CoalRepo,
     CopperOreRepo,
     FreshWater,
@@ -19,34 +52,24 @@ pub enum NaturalGood {
     StoneRepo,
     ClayRepo,
     Whale,
-    WildFish,
-}
+    WildFish
+);
 
-impl Default for NaturalGood {
-    fn default() -> Self {
-        Self::FreshWater
-    }
-}
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, AsRefStr, IntoStaticStr, EnumIter, EnumCount)]
-pub enum BuildingMaterial {
+make_good!(
+    BuildingMaterial,
+    default Wood,
     Bells,
     Brick,
     Engineer,
     Marble,
     Stone,
     Tool,
-    Wood,
-}
+    Wood
+);
 
-impl Default for BuildingMaterial {
-    fn default() -> Self {
-        Self::Wood
-    }
-}
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, AsRefStr, IntoStaticStr, EnumIter, EnumCount)]
-pub enum HarvestableGood {
+make_good!(
+    HarvestableGood,
+    default Tree,
     Cattle,
     CocoaPlant,
     CottonPlant,
@@ -65,17 +88,12 @@ pub enum HarvestableGood {
     SugarCanePlant,
     TobaccoPlant,
     Tree,
-    UntamedHorse,
-}
+    UntamedHorse
+);
 
-impl Default for HarvestableGood {
-    fn default() -> Self {
-        Self::Tree
-    }
-}
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, AsRefStr, IntoStaticStr, EnumIter, EnumCount)]
-pub enum ProductionGood {
+make_good!(
+    ProductionGood,
+    default Food,
     Alcohol,
     Amber,
     Beer,
@@ -137,49 +155,23 @@ pub enum ProductionGood {
     WhaleTallow,
     Wheat,
     Wine,
-    Wool,
-}
+    Wool
+);
 
-impl Default for ProductionGood {
-    fn default() -> Self {
-        Self::Food
-    }
-}
+make_good!(Weapon, default Sword, Armor, Cannon, Mortar, Musket, Pike, Sword, WarHorse);
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, AsRefStr, IntoStaticStr, EnumIter, EnumCount)]
-pub enum Weapon {
-    Armor,
-    Cannon,
-    Mortar,
-    Musket,
-    Pike,
-    Sword,
-    WarHorse,
-}
-
-impl Default for Weapon {
-    fn default() -> Self {
-        Self::Sword
-    }
-}
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, AsRefStr, IntoStaticStr, EnumIter, EnumCount)]
-pub enum ImmaterialGood {
+make_good!(
+    ImmaterialGood,
+    default Money,
     Culture,
     Education,
     Faith,
     Hygiene,
     Money,
-    Prestige,
-}
+    Prestige
+);
 
-impl Default for ImmaterialGood {
-    fn default() -> Self {
-        Self::Money
-    }
-}
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, AsRefStr, EnumIter, EnumCount)]
+#[derive(Debug, Display, Copy, Clone, PartialEq, Eq, Hash, AsRefStr, EnumIter, EnumCount)]
 pub enum Good {
     BuildingMaterial(BuildingMaterial),
     HarvestableGood(HarvestableGood),

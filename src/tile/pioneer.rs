@@ -1,7 +1,6 @@
 use crate::coordinate::range::{Range, RangeFrom};
 use crate::coordinate::Coordinate;
-use crate::good::Good::ProductionGood;
-use crate::good::ProductionGood::Fish;
+use crate::good::Good;
 use crate::map::MapStorage;
 use crate::tile::{Consumes, Tile, TileName};
 use std::iter::FromIterator;
@@ -15,7 +14,7 @@ impl Pioneer {
     pub fn new() -> Self {
         Pioneer {
             name: TileName::Pioneer,
-            consumes: Consumes::from_iter(vec![(ProductionGood(Fish), 3)].into_iter()),
+            consumes: Consumes::from_iter(vec![(Good::Fish(), 3)].into_iter()),
         }
     }
 }

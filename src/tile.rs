@@ -51,6 +51,14 @@ pub trait Tile: Send + Sync {
     }
 }
 
+impl PartialEq for dyn Tile {
+    fn eq(&self, other: &Self) -> bool {
+        self.name() == other.name()
+    }
+}
+
+impl Eq for dyn Tile {}
+
 lazy_static! {
     static ref PIONEER: Pioneer = Pioneer::new();
     static ref WAREHOUSE: Warehouse = Warehouse::new();
@@ -127,21 +135,28 @@ impl TileInstance {
         if maybe_consumes.is_none() {
             return;
         }
+        let consumes = maybe_consumes.unwrap();
 
         let maybe_state = self.state_mut();
         if maybe_state.is_none() {
             return;
         }
         let state = maybe_state.unwrap();
+        let maybe_other_produces = from.tile.produces();
+        if maybe_other_produces.is_none() {
+            return;
+        }
+        let other_produces = maybe_other_produces.unwrap();
         let maybe_other_state = from.state_mut();
         if maybe_other_state.is_none() {
             return;
         }
         let other_state: &mut State = &mut maybe_other_state.unwrap();
-        for (consumption_good, amount) in maybe_consumes.unwrap().iter() {
-            if !other_state.contains_key(&consumption_good) {
+        for (consumption_good, amount) in consumes.iter() {
+            if !other_produces.contains_key(&consumption_good) {
                 continue;
             }
+            assert!(other_state.contains_key(&consumption_good));
             assert!(state.contains_key(&consumption_good));
             let other_amount =
                 other_state[consumption_good].min(amount.saturating_sub(state[consumption_good]));
@@ -168,7 +183,7 @@ impl TileInstance {
         loop {
             let mut some_produced = false;
             for (production_good, ingredients) in maybe_produces.unwrap().iter() {
-                let mut consumed = State::zero(state);
+                let mut consumed = state.blueprint_zero();
                 let mut insufficient_goods = false;
                 for (ingredient, ingredient_amount) in ingredients.iter() {
                     if &state[ingredient] >= ingredient_amount {

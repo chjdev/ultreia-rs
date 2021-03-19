@@ -12,6 +12,7 @@ mod territories_storage;
 #[derive(Default)]
 pub struct Territories {
     territories: TerritoriesStorage,
+    next_territory_id: TerritoryID,
     rows: usize,
     columns: usize,
     joiners: Observers<TerritoryJoined>,
@@ -22,11 +23,19 @@ impl Territories {
     pub fn new(rows: usize, columns: usize) -> Self {
         Territories {
             territories: Default::default(),
+            next_territory_id: Default::default(),
             rows,
             columns,
             joiners: Default::default(),
             leavers: Default::default(),
         }
+    }
+
+    pub fn create(&mut self, range: Range) -> TerritoryID {
+        let territory_id = self.next_territory_id;
+        self.next_territory_id += 1.into();
+        self.extend(&territory_id, range);
+        territory_id
     }
 
     pub fn extend(&mut self, territory_id: &TerritoryID, range: Range) {

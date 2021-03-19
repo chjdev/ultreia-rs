@@ -6,7 +6,7 @@ use std::iter::FromIterator;
 use std::marker::PhantomData;
 use std::ops::{AddAssign, Deref, DerefMut, Index, IndexMut, SubAssign};
 
-#[derive(Default, Clone, PartialEq, Eq, From, Into, Deref, DerefMut, AsRef)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, From, Into, Deref, DerefMut, AsRef)]
 pub struct Inventory<T = u32>(HashMap<Good, T>);
 
 pub trait InventoryAmount {
@@ -175,6 +175,7 @@ impl<T: SubAssign + Copy> SubAssign for Inventory<T> {
     }
 }
 
+#[derive(Debug)]
 pub struct SpecializedInventory<P, T = u32> {
     inventory: Inventory<T>,
     phantom: PhantomData<P>,

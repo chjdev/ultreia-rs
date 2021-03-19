@@ -1,10 +1,12 @@
 use crate::good::costs::Costs;
-use crate::good::SpecializedInventory;
+use crate::good::{Inventory, InventoryAmount, SpecializedInventory};
 use crate::tile::consumes::Consumes;
 use crate::tile::produces::Produces;
 use std::cmp::Ordering;
+use std::iter::FromIterator;
 use std::ops::AddAssign;
 
+#[derive(Debug)]
 pub struct StateMarker;
 pub type State = SpecializedInventory<StateMarker>;
 
@@ -30,21 +32,28 @@ impl State {
         Some(inventory)
     }
 
-    pub fn zero(state: &Self) -> Self {
+    pub fn blueprint_zero(&self) -> Self {
         let mut inventory = State::default();
-        for good in state.keys() {
+        for good in self.keys() {
             inventory.inventory_mut().insert(*good, 0);
         }
         inventory
     }
 
-    pub fn try_convert<P>(state: &Self, other: &SpecializedInventory<P, u32>) -> Option<Self> {
-        if !other.keys().all(|key| state.contains_key(key)) {
+    pub fn blueprint(&self, other: &Inventory) -> Option<Self> {
+        if !self.keys().all(|key| self.contains_key(key)) {
             return None;
         }
-        let mut converted = Self::zero(state);
-        converted.inventory_mut().add_assign(other.inventory());
+        let mut converted = self.blueprint_zero();
+        converted.inventory_mut().add_assign(other);
         Some(converted)
+    }
+
+    pub fn blueprint_from_iter<I>(&self, iter: I) -> Option<Self>
+    where
+        I: IntoIterator<Item = <Self as InventoryAmount>::Entry>,
+    {
+        self.blueprint(&Inventory::from_iter(iter))
     }
 }
 

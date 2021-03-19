@@ -11,7 +11,7 @@ use std::sync::{RwLockReadGuard, RwLockWriteGuard};
 pub struct FrozenMutState<'reference> {
     map_guard: SomeRwLockGuard<'reference>,
     write_guards: Vec<RwLockWriteGuard<'reference, TileInstance>>,
-    frozen_state: State,
+    frozen_warehouse: TileInstance,
 }
 
 impl<'reference> FrozenMutState<'reference> {
@@ -19,8 +19,13 @@ impl<'reference> FrozenMutState<'reference> {
         map_guard: SomeRwLockGuard<'reference>,
         write_guards: Vec<RwLockWriteGuard<'reference, TileInstance>>,
     ) -> Self {
-        let mut frozen_state = State::default();
+        let mut frozen_warehouse = TileInstance::from_name(&TileName::Warehouse);
+        let mut frozen_state = frozen_warehouse.state_mut().unwrap();
         for guard in write_guards.iter() {
+            assert!(
+                guard.tile().name() == &TileName::Warehouse,
+                "only warehouses supported atm"
+            );
             if let Some(state) = guard.state() {
                 frozen_state += state;
             }
@@ -28,22 +33,30 @@ impl<'reference> FrozenMutState<'reference> {
         Self {
             map_guard,
             write_guards,
-            frozen_state,
+            frozen_warehouse,
         }
     }
 
-    pub fn state(&self) -> &State {
-        self.as_ref()
+    pub fn update(&mut self) {
+        let mut frozen_warehouse = TileInstance::from_name(&TileName::Warehouse);
+        let mut frozen_state = frozen_warehouse.state_mut().unwrap();
+        for guard in self.write_guards.iter() {
+            if let Some(state) = guard.state() {
+                frozen_state += state;
+            }
+        }
+        self.frozen_warehouse = frozen_warehouse;
     }
 }
 
 impl FrozenMutState<'_> {
     fn fair_match_diff(&mut self, state: &State) {
+        let mut change = false;
         for (good, amount) in state.iter() {
-            if !self.frozen_state.contains_key(good) {
+            if !self.state().contains_key(good) {
                 panic!("can't match difference, other state contains an invalid key!")
             }
-            let mut diff = (*amount as i64) - (self.frozen_state[good] as i64);
+            let mut diff = (*amount as i64) - (self.state()[good] as i64);
             let step: i8 = if diff < 0 { 1 } else { -1 };
             while diff != 0 {
                 let mut check_impl = false;
@@ -52,29 +65,33 @@ impl FrozenMutState<'_> {
                         if !state.contains_key(good) {
                             continue;
                         }
-                        if step < 0 && state[good] > 0 || step > 0 && state[good] < u32::max_value()
+                        if step < 0 && state[good] < u32::max_value() || step > 0 && state[good] > 0
                         {
                             if step < 0 {
-                                state[good] -= step.abs() as u32;
-                            } else {
                                 state[good] += step.abs() as u32;
+                            } else {
+                                state[good] -= step.abs() as u32;
                             }
                             diff += step as i64;
                             check_impl = true;
+                            change = true;
                         }
                     }
                 }
-                if check_impl {
-                    panic!("goods in states don't match up or state difference can't be satisfied")
+                if !check_impl {
+                    panic!("goods in states don't match up or state difference can't be satisfied",)
                 }
             }
+        }
+        if change {
+            self.update();
         }
     }
 }
 
 impl SubAssign<&State> for FrozenMutState<'_> {
     fn sub_assign(&mut self, rhs: &State) {
-        let mut new_state: State = self.frozen_state.clone();
+        let mut new_state: State = self.state().clone();
         new_state -= rhs;
         self.fair_match_diff(&new_state);
     }
@@ -82,7 +99,7 @@ impl SubAssign<&State> for FrozenMutState<'_> {
 
 impl AddAssign<&State> for FrozenMutState<'_> {
     fn add_assign(&mut self, rhs: &State) {
-        let mut new_state: State = self.frozen_state.clone();
+        let mut new_state: State = self.state().clone();
         new_state += rhs;
         self.fair_match_diff(&new_state);
     }
@@ -94,7 +111,7 @@ macro_rules! common_frozen {
             type Target = State;
 
             fn deref(&self) -> &Self::Target {
-                &self.frozen_state
+                self.state()
             }
         }
 
@@ -103,25 +120,24 @@ macro_rules! common_frozen {
                 self
             }
         }
+        impl PartialEq for $type {
+            fn eq(&self, other: &Self) -> bool {
+                self.state().eq(other.state())
+            }
+        }
 
-        impl Into<State> for $type {
-            fn into(self) -> State {
-                self.frozen_state
+        impl PartialOrd for $type {
+            fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+                self.state().partial_cmp(other.state())
+            }
+        }
+
+        impl $type {
+            pub fn state(&self) -> &State {
+                self.frozen_warehouse.state().unwrap()
             }
         }
     };
-}
-
-impl PartialEq for FrozenMutState<'_> {
-    fn eq(&self, other: &Self) -> bool {
-        self.frozen_state.eq(&other.frozen_state)
-    }
-}
-
-impl PartialOrd for FrozenMutState<'_> {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        self.frozen_state.partial_cmp(&other.frozen_state)
-    }
 }
 
 common_frozen!(FrozenMutState<'_>);
@@ -129,7 +145,7 @@ common_frozen!(FrozenMutState<'_>);
 pub struct FrozenState<'reference> {
     map_guard: SomeRwLockGuard<'reference>,
     read_guards: Vec<RwLockReadGuard<'reference, TileInstance>>,
-    frozen_state: State,
+    frozen_warehouse: TileInstance,
 }
 
 impl<'reference> FrozenState<'reference> {
@@ -137,7 +153,8 @@ impl<'reference> FrozenState<'reference> {
         map_guard: SomeRwLockGuard<'reference>,
         read_guards: Vec<RwLockReadGuard<'reference, TileInstance>>,
     ) -> Self {
-        let mut frozen_state = State::default();
+        let mut frozen_warehouse = TileInstance::from_name(&TileName::Warehouse);
+        let mut frozen_state = frozen_warehouse.state_mut().unwrap();
         for guard in read_guards.iter() {
             if let Some(state) = guard.state() {
                 frozen_state += state;
@@ -146,12 +163,8 @@ impl<'reference> FrozenState<'reference> {
         Self {
             map_guard,
             read_guards,
-            frozen_state,
+            frozen_warehouse,
         }
-    }
-
-    pub fn state(&self) -> &State {
-        self.as_ref()
     }
 }
 
@@ -237,5 +250,100 @@ impl<'reference> TerritoriesState {
             }
         }
         warehouse_write_guards
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::coordinate::Coordinate;
+    use crate::good::{Good, ImmaterialGood};
+    use crate::map::buildings::buildings_controller::BuildingsController;
+    use crate::map::minimap::GetByCoordinate;
+    use crate::map::terrain::Terrain;
+    use std::sync::{Arc, RwLock};
+
+    #[test]
+    fn test_simple_update() {
+        let map_storage = Arc::new(RwLock::new(MapStorage {
+            terrain: Terrain::new_seeded(3, 20, 20, 0.),
+            territories: Default::default(),
+            fow: Default::default(),
+            buildings: Default::default(),
+        }));
+        BuildingsController::do_construct(
+            map_storage.write().unwrap(),
+            Coordinate::default(),
+            (&TileName::Warehouse).into(),
+        );
+        BuildingsController::do_construct(
+            map_storage.write().unwrap(),
+            Coordinate::new(1, 1),
+            (&TileName::Warehouse).into(),
+        );
+        let map_storage_mut = map_storage.write().unwrap();
+        {
+            let warehouse1 = map_storage_mut
+                .buildings
+                .get(&Coordinate::default())
+                .unwrap();
+            assert!(warehouse1.tile().name() == &TileName::Warehouse);
+            let warehouse2 = map_storage_mut
+                .buildings
+                .get(&Coordinate::new(1, 1))
+                .unwrap();
+            assert!(warehouse2.tile().name() == &TileName::Warehouse);
+        }
+        let territory_id: Option<TerritoryID> =
+            map_storage_mut.territories.get(&Coordinate::default());
+        assert!(territory_id.unwrap() == TerritoryID::default());
+        {
+            let mut state = TerritoriesState::freeze_mut(&map_storage_mut, &territory_id.unwrap());
+            assert_eq!(state[&Good::ImmaterialGood(ImmaterialGood::Money)], 1000);
+            state += &state
+                .state()
+                .blueprint_from_iter(vec![(Good::Money(), 10)])
+                .unwrap();
+        }
+        {
+            let state = TerritoriesState::freeze(&map_storage_mut, &territory_id.unwrap());
+            assert_eq!(state[&Good::Money()], 1010);
+        }
+        {
+            let warehouse1 = map_storage_mut
+                .buildings
+                .get(&Coordinate::default())
+                .unwrap();
+            assert_eq!(warehouse1.state().unwrap()[&Good::Money()], 1005);
+            let warehouse2 = map_storage_mut
+                .buildings
+                .get(&Coordinate::new(1, 1))
+                .unwrap();
+            assert_eq!(warehouse2.state().unwrap()[&Good::Money()], 5);
+        }
+        {
+            let mut state = TerritoriesState::freeze_mut(&map_storage_mut, &territory_id.unwrap());
+            assert_eq!(state[&Good::Money()], 1010);
+            state -= &state
+                .state()
+                .blueprint_from_iter(vec![(Good::Money(), 25)])
+                .unwrap();
+        }
+        {
+            let state = TerritoriesState::freeze(&map_storage_mut, &territory_id.unwrap());
+            assert_eq!(state[&Good::Money()], 1010 - 25);
+        }
+        {
+            let warehouse1 = map_storage_mut
+                .buildings
+                .get(&Coordinate::default())
+                .unwrap();
+            assert_eq!(warehouse1.state().unwrap()[&Good::Money()], 1005 - 20);
+            let warehouse2 = map_storage_mut
+                .buildings
+                .get(&Coordinate::new(1, 1))
+                .unwrap();
+            assert_eq!(warehouse2.state().unwrap()[&Good::Money()], 0);
+        }
     }
 }

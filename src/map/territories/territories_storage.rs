@@ -1,9 +1,9 @@
 use crate::coordinate::range::Range;
 use crate::coordinate::Coordinate;
-use derive_more::{Constructor, From, Into};
+use derive_more::{AddAssign, Constructor, From, Into};
 use std::collections::HashMap;
 
-#[derive(Default, Hash, Clone, Copy, PartialEq, Eq, Constructor, From, Into)]
+#[derive(Default, Hash, Clone, Copy, PartialEq, Eq, Constructor, From, Into, AddAssign)]
 pub struct TerritoryID(usize);
 
 #[derive(Default)]

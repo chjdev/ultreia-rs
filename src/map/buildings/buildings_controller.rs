@@ -1,9 +1,9 @@
 use crate::coordinate::Coordinate;
+use crate::good::Good;
 use crate::map::minimap::GetRefByCoordinate;
 use crate::map::minimap::{FillByCoordinate, GetByCoordinate, SetByCoordinate};
 use crate::map::territories::{TerritoriesState, TerritoriesStateRw, TerritoryID};
 use crate::map::MapStorage;
-use crate::tile::state::State;
 use crate::tile::{Tile, TileInstance, TileName};
 use std::error::Error;
 use std::fmt;
@@ -43,10 +43,10 @@ impl BuildingsController {
         let map = self.map_storage.write().unwrap();
 
         // are we in a valid territory?
-        let territory_id: Option<TerritoryID> = map.territories.get(&coordinate);
+        let maybe_territory_id: Option<TerritoryID> = map.territories.get(&coordinate);
         let is_warehouse = tile_name == &TileName::Warehouse;
-        if !territory_id.is_some() && !is_warehouse {
-            // todo is owned
+        if !maybe_territory_id.is_some() && !is_warehouse {
+            // todo is territory owned by player?
             return Err(ConstructionError::InvalidTerritory);
         }
 
@@ -62,20 +62,23 @@ impl BuildingsController {
         }
 
         // do we have enough resources?
-        if let Some(costs) = tile.costs() {
-            let mut territory_state = TerritoriesState::freeze_mut(&map, &territory_id.unwrap());
+        if let (Some(costs), Some(territory_id)) = (tile.costs(), maybe_territory_id) {
+            let mut territory_state = TerritoriesState::freeze_mut(&map, &territory_id);
             if territory_state.state() < costs {
                 return Err(ConstructionError::InsufficientResources);
             }
             // we are updating it here so we can free up the state freeze and don't run into borrow mut after borrow immut
-            territory_state -= &State::try_convert(territory_state.state(), costs)
+            let costs_sub = territory_state
+                .state()
+                .blueprint(costs)
                 .expect("implementation error: costs is not a subset of the territory state!");
+            territory_state -= &costs_sub;
         }
         // WARNING: after the resource update the construction may _NOT_ fail anymore
         Ok(Self::do_construct(map, coordinate, tile))
     }
 
-    fn do_construct(
+    pub fn do_construct(
         mut map: RwLockWriteGuard<MapStorage>,
         coordinate: Coordinate,
         tile: &'static dyn Tile,
@@ -93,7 +96,16 @@ impl BuildingsController {
         if is_warehouse {
             let maybe_territory_id: Option<TerritoryID> = map.territories.get(&coordinate);
             if let Some(territory_id) = maybe_territory_id {
-                map.territories.extend(&territory_id, influence)
+                map.territories.extend(&territory_id, influence);
+            } else {
+                map.territories.create(influence);
+                // todo move to settler unit or something, just for testing atm
+                let mut instance = map.buildings.get_mut(&coordinate).unwrap();
+                let mut state = instance.state_mut().unwrap();
+                let add = state
+                    .blueprint_from_iter(vec![(Good::Money(), 1000)])
+                    .unwrap();
+                state += add;
             }
         }
     }
