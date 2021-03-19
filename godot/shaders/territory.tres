@@ -1,0 +1,42 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=2]
+
+[sub_resource type="Shader" id=1]
+code = "shader_type canvas_item;
+
+uniform vec2 node_size = vec2(16., 28.);
+varying vec2 vert;
+
+void vertex() {
+	vert = vec2(VERTEX);
+}
+
+const vec2 hex = vec2(0.5, 0.5);
+bool inside(vec2 pos, float scale) {
+	pos /= scale;
+	pos.x -= (1. - scale)/2. / scale;
+	float q2x = abs(pos.y);
+	float q2y = abs(pos.x - 0.5);
+	if (q2x > hex.x || q2y > hex.y*2.) return false;
+	return hex.y * 2. * hex.x - hex.y * q2x - 2. * hex.x * q2y >= 0.;
+}
+
+uniform float tex_pixel_size = 0.03125; // 1./32.
+
+void fragment() {
+	vec2 full_uv = (vert - vec2(-4., -10.)) / node_size;
+	full_uv.x += 1.;
+	full_uv.x /= 2.;
+	full_uv = round(full_uv / tex_pixel_size)*tex_pixel_size;
+	vec4 c = texture(TEXTURE, UV);
+
+	if (inside(full_uv, 0.7)) {
+		c.rgb += vec3(1., 0., 1.);
+		c.rgb /= 1.75;
+	}
+    COLOR = c;
+}"
+
+[resource]
+shader = SubResource( 1 )
+shader_param/node_size = Vector2( 16, 28 )
+shader_param/tex_pixel_size = 0.03125

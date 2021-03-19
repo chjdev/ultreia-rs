@@ -1,4 +1,4 @@
-[gd_scene load_steps=19 format=2]
+[gd_scene load_steps=20 format=2]
 
 [ext_resource path="res://scripts/Main.gd" type="Script" id=1]
 [ext_resource path="res://scripts/cursor/Cursor.gd" type="Script" id=2]
@@ -15,6 +15,7 @@
 [ext_resource path="res://scripts/hexer/Yield.gd" type="Script" id=13]
 [ext_resource path="res://scripts/hud/FOW.gd" type="Script" id=14]
 [ext_resource path="res://scripts/hexer/Buildings.gd" type="Script" id=15]
+[ext_resource path="res://shaders/territory.tres" type="Material" id=16]
 
 [sub_resource type="TileSet" id=1]
 0/name = "TundraMarsh"
@@ -90,6 +91,7 @@
 5/name = "Grassland"
 5/texture = ExtResource( 5 )
 5/tex_offset = Vector2( -4, -18 )
+5/material = ExtResource( 16 )
 5/modulate = Color( 1, 1, 1, 1 )
 5/region = Rect2( 0, 0, 32, 48 )
 5/tile_mode = 0
@@ -244,6 +246,7 @@
 16/name = "Hills"
 16/texture = ExtResource( 5 )
 16/tex_offset = Vector2( -4, -18 )
+16/material = ExtResource( 16 )
 16/modulate = Color( 1, 1, 1, 1 )
 16/region = Rect2( 96, 0, 32, 48 )
 16/tile_mode = 0
@@ -356,6 +359,7 @@
 24/name = "TropicalRainForest"
 24/texture = ExtResource( 5 )
 24/tex_offset = Vector2( -4, -18 )
+24/material = ExtResource( 16 )
 24/modulate = Color( 1, 1, 1, 1 )
 24/region = Rect2( 0, 192, 32, 48 )
 24/tile_mode = 0
@@ -888,6 +892,7 @@ cell_tile_origin = 1
 cell_y_sort = true
 centered_textures = true
 format = 1
+tile_data = PoolIntArray( 0, 16, 0, 196613, 5, 0 )
 script = ExtResource( 12 )
 
 [node name="Buildings" type="TileMap" parent="Hexer"]
@@ -1101,8 +1106,8 @@ margin_right = 46.0
 margin_bottom = 1340.0
 text = "Clock"
 script = ExtResource( 8 )
-[connection signal="change" from="WorldCamera" to="HUD/Minimap" method="_on_WorldCamera_change"]
 [connection signal="change" from="WorldCamera" to="Hexer" method="_on_WorldCamera_change" flags=3]
+[connection signal="change" from="WorldCamera" to="HUD/Minimap" method="_on_WorldCamera_change"]
 [connection signal="hex_enter" from="Cursor" to="Hexer" method="_on_Cursor_hex_enter"]
 [connection signal="hex_exit" from="Cursor" to="Hexer" method="_on_Cursor_hex_exit"]
 [connection signal="hex_long_pressed" from="Cursor" to="ContextMenus/HexContextMenu" method="_on_Cursor_hex_long_pressed"]
