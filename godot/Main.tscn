@@ -892,7 +892,6 @@ cell_tile_origin = 1
 cell_y_sort = true
 centered_textures = true
 format = 1
-tile_data = PoolIntArray( 0, 16, 0, 196613, 5, 0 )
 script = ExtResource( 12 )
 
 [node name="Buildings" type="TileMap" parent="Hexer"]
@@ -910,6 +909,7 @@ format = 1
 script = ExtResource( 15 )
 
 [node name="Yield" type="TileMap" parent="Hexer"]
+visible = false
 position = Vector2( -12, -14 )
 mode = 2
 tile_set = SubResource( 3 )
