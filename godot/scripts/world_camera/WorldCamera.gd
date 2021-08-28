@@ -3,7 +3,7 @@ extends Camera2D
 signal change
 
 export var move_speed = 30
-export var max_zoom = 1.5
+export var max_zoom = 2
 export var min_zoom = 0.33
 
 # Called when the node enters the scene tree for the first time.

@@ -124,6 +124,7 @@ impl<E: 'static + Send + Sync> Observers<E> {
                     } else {
                         // the observer has since freed
                         // todo move into own function
+                        // todo will deadlock!!!
                         observers.write().unwrap().remove(registration);
                     }
                 });
